@@ -4,3 +4,6 @@
 [submodule "services/fintracker-ledger"]
 	path = services/fintracker-ledger
 	url = https://github.com/vanKvo/fintracker-ledger.git
+[submodule "services/fintracker-user-profile"]
+	path = services/fintracker-user-profile
+	url = https://github.com/vanKvo/fintracker-user-profile.git
