@@ -7,3 +7,6 @@
 [submodule "services/fintracker-user-profile"]
 	path = services/fintracker-user-profile
 	url = https://github.com/vanKvo/fintracker-user-profile.git
+[submodule "services/fintracker-analytics"]
+	path = services/fintracker-analytics
+	url = https://github.com/vanKvo/fintracker-analytics.git
