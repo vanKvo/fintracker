@@ -10,3 +10,6 @@
 [submodule "services/fintracker-analytics"]
 	path = services/fintracker-analytics
 	url = https://github.com/vanKvo/fintracker-analytics.git
+[submodule "services/fintracker-data-pipeline"]
+	path = services/fintracker-data-pipeline
+	url = https://github.com/vanKvo/fintracker-data-pipeline.git
