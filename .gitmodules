@@ -1,0 +1,6 @@
+[submodule "fintracker-ui"]
+	path = fintracker-ui
+	url = https://github.com/vanKvo/fintracker-ui.git
+[submodule "fintracker-ledger"]
+	path = fintracker-ledger
+	url = https://github.com/vanKvo/fintracker-ledger.git
