@@ -1,12 +1,20 @@
 # FinTracker
 
-The FinTracker is a web-based personal financial management application that enables users to upload bank statements for automated transaction extractions, categorize spending automatically using AI, track expenses and incomes, set monthly budgets, and generate analytical financial reports. The system aims to provide simplicity, accurate tracking, and automated insights for individuals seeking to improve their financial habits.
+FinTracker is a privacy-first, web-based financial data platform that enables users to analyze and manage their finances by uploading bank statements instead of connecting bank accounts directly. The system transforms raw financial documents into structured, queryable data for spending analysis, budgeting, and financial reporting.
+
+Unlike traditional personal finance applications that rely on direct bank integrations, FinTracker is designed around a document-based ingestion model. Users can upload bank statements (e.g., PDF, CSV, or images), which are processed through an automated pipeline to extract, normalize, and categorize transactions.
+
+This approach allows users to maintain full control over their financial data while still benefiting from automated analysis, budgeting tools, and AI-driven insights.
+
+The platform is designed to support individuals and households who prefer a privacy-preserving alternative to bank-connected financial apps.
 
 ## Key Features & Impacts
-* **Automated Data Ingestion & Categorization:** Eliminates manual data entry via a specialized Data Pipeline that processes PDF/CSV bank statements using computer vision (YOLOv8-Nano) and OCR (AWS Textract) to automatically extract and classify transactions.
-* **ACID-Compliant Ledger:** Provides a highly reliable core financial engine built with Java Spring Boot and jOOQ, ensuring accurate tracking with strict tenant isolation and referential integrity.
-* **Real-Time Financial Dashboard:** Calculates "Safe to Spend" metrics, tracks upcoming bills, and monitors time-series budgets dynamically, powered by instantaneous WebSocket push notifications and optimized OLAP analytics.
-* **Intelligent Insights & Security:** Leverages AWS Bedrock for advanced spending anomaly detection while securing user authentication through AWS Cognito, ensuring total data privacy.
+* **Statement-Based Data Ingestion:** Upload bank statements (PDF/CSV/image) for automated extraction of financial transactions.
+* **Transaction Processing Pipeline:** Extract, normalize, and structure raw financial data into a unified schema for downstream analysis.
+* **Spending Categorization:** Classify transactions into meaningful categories using rule-based logic and AI-assisted models.
+* **Budget Tracking:** Define monthly budgets and track spending against categorized transaction data.
+* **Financial Reporting:** Generate structured summaries of income, expenses, and spending trends.
+* **AI-Powered Insights:** Generate natural-language explanations of spending patterns and budget variances using LLM-based services.
 
 ## Architecture
 FinTracker is designed as a distributed, event-driven microservices architecture built on AWS. 
@@ -19,8 +27,8 @@ FinTracker is designed as a distributed, event-driven microservices architecture
 ## Tech Stack
 * **Frontend:** Angular, TypeScript, Tailwind CSS
 * **Backend:** Python (FastAPI) / Java (Spring Boot), PostgreSQL, DynamoDB
-* **Cloud:** AWS (Lambda, S3, RDS, Bedrock, API Gateway, Step Functions, EventBridge, Cognito, Textract)
-* **DevOps:** GitHub Actions, Docker, AWS CDK, Maven, Poetry
+* **Cloud:** AWS (Lambda, S3, RDS, Comprehend, Bedrock, API Gateway, Step Functions, EventBridge, Cognito, Textract)
+* **DevOps:** GitHub Actions, Docker, AWS (CDK, SAM), Maven, Poetry
 
 ## Cloud & Security Best Practices
 * **Multi-Tenant Data Isolation:** API Gateway validates JWTs and injects an `X-Internal-User-Id` header. The backend intercepts this and unconditionally applies it to all SQL queries, preventing cross-tenant data leaks.
