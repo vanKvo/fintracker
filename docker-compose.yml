@@ -1,0 +1,20 @@
+# Aggregates each service's own docker-compose.yml so `docker compose up -d` at the
+# repo root can start everything at once. Each service's compose file remains the
+# source of truth and still works standalone if that service's submodule is checked
+# out on its own, outside this monorepo.
+include:
+  - services/fintracker-ledger/docker-compose.yml
+
+services:
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: fintracker-dynamodb-local
+    ports:
+      - "8000:8000"
+    working_dir: /home/dynamodblocal
+    # -inMemory: dev/test data only, resets on container restart. Avoids a known
+    # amazon/dynamodb-local issue where a mounted volume's ownership doesn't match
+    # the container's non-root user, causing every DB operation to hang/fail with
+    # "SQLiteException: unable to open database file".
+    command: "-jar DynamoDBLocal.jar -sharedDb -inMemory"
+

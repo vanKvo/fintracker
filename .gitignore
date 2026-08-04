@@ -1,0 +1,11 @@
+.DS_Store
+.agents/
+.idea/
+.vscode/
+CLAUDE.md
+docs/.DS_Store
+golden_test/
+images/
+openapi.yml
+scripts/
+skills/

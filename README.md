@@ -84,3 +84,6 @@ To ensure a consistent demonstration experience, the database can be initialized
 This will trigger the initialization scripts to recreate the database schemas and re-insert the original test data.
 
 </details>
+
+## License 
+MIT
