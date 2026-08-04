@@ -1,0 +1,38 @@
+Ledger API Endpoint Mapping to FinTracker UI
+Based on the controllers found in the ledger-service, here is the direct mapping to the fintracker-ui Angular feature modules:
+
+1. Dashboard Feature (src/app/features/dashboard)
+The dashboard provides a financial overview consisting of summary cards, charts, and recent bills/transactions.
+
+GET /api/v1/ledger/dashboard/aggregations: Used to populate the summaryCards, cashflowChartData, categoryChartData, and trendChartData.
+GET /api/v1/ledger/bills: Used to fetch the pending bills or recent transactions list for the table.
+POST /api/v1/ledger/bills/{id}/pay: Used if there's an action to mark a bill as paid directly from the dashboard.
+
+2. Transactions Feature (src/app/features/transactions)
+This module manages reviewing, approving, and splitting transactions.
+
+GET /api/v1/ledger/transactions: Populates the main transaction data table.
+PUT /api/v1/ledger/transactions/{id}/approve: Triggered when a user clicks 'Approve' on a pending transaction row.
+PUT /api/v1/ledger/transactions/{id}/exclude: Triggered when a user clicks 'Exclude' or 'Reject' on a row.
+POST /api/v1/ledger/transactions/{id}/split: Triggered when a user opens the "Split Transaction" side panel/dialog and saves.
+POST /api/v1/ledger/transactions/bulk: For batch operations (e.g., selecting multiple rows to update/approve).
+DELETE /api/v1/ledger/transactions/{id}: For removing a transaction entirely.
+
+3. Statements Feature (src/app/features/statements)
+Handles parsed bank statements uploaded via the UI.
+
+GET /api/v1/ledger/statements: Lists the uploaded/pending bank statements.
+DELETE /api/v1/ledger/statements/{id}: Removes a specific uploaded statement. (Note: Uploading logic usually involves multipart file post POST /api/v1/ledger/statements which might not be fully exposed yet visually in the controller snippet).
+
+4. Budgets Feature (src/app/features/budgets)
+Tracks monthly limits and usage against specific transaction categories.
+
+GET /api/v1/ledger/budgets: Fetches the BUDGET_DATA source to render the categories, spent, allocated, and remaining amounts.
+POST /api/v1/ledger/budgets: Saves a new budget or edits an existing budget configuration from the UI.
+Next Steps for Implementation
+To fully integrate these into fintracker-ui, an Angular service layer using HttpClient is required. The typical best practice implementation includes:
+
+DashboardService (/src/app/core/services/dashboard.service.ts)
+TransactionService (/src/app/core/services/transaction.service.ts)
+BudgetService (/src/app/core/services/budget.service.ts)
+StatementService (/src/app/core/services/statement.service.ts)

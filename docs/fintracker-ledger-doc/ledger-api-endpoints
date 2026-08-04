@@ -1,0 +1,24 @@
+# 1. Module: Transactions
+GET /api/v1/ledger/transactions: Fetches transactions with multi-field filtering (category, merchant, date range, tags, status).
+POST /api/v1/ledger/transactions/manual: Receives manual entry payloads.
+PUT /api/v1/ledger/transactions/{id}: Updates transaction row data (category, tags, etc.).
+POST /api/v1/ledger/transactions/{id}/split: Splits a transaction into multiple child transactions.
+POST /api/v1/ledger/transactions/bulk: Applies bulk tagging, approvals, or batch exclusions.
+DELETE /api/v1/ledger/transactions/{id}: Fails unless is_manual is true.
+
+# 2. Module: Budgets
+GET /api/v1/ledger/budgets: Retrieves budget lines and computes spent amount per category based on posted transactions in the current month.
+POST /api/v1/ledger/budgets: Creates a new budget or clones the previous month's budget lines.
+PUT /api/v1/ledger/budgets/{id}/lines: Modifies the limit_amount for specific categories.
+
+# 3. Module: Statements
+Note: Statement file parsing is handled by the data-pipeline Python service.
+GET /api/v1/ledger/statements: Fetches metadata of loaded statements and their processing statuses.
+DELETE /api/v1/ledger/statements/{id}: Hard deletes statements, invoking ON DELETE CASCADE for relevant transactions.
+
+# 4. Module: Dashboard
+GET /api/v1/ledger/dashboard/aggregations:
+Calculates Total Balance, Monthly Income, Monthly Expenses, Current Month Cash Flow, and Net Saving. Uses robust jOOQ queries for performant SUM() aggregations on the DB side.
+GET /api/v1/ledger/bills: Fetches upcoming bills.
+POST /api/v1/ledger/bills/{id}/pay: Records a bill payment.
+GET /api/v1/ledger/action-hub: Returns unread pending approvals count and over-budget alerts.

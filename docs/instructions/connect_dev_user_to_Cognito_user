@@ -1,0 +1,112 @@
+# Connect a Dev Cognito Account to the Local Ledger
+
+This guide explains what happens after you register a new Cognito account via the Hosted UI, why there is no internal user_id yet, and the steps to link that account to the seeded test data.
+
+---
+
+## What Cognito gives you after registration
+
+When you register and verify your email via the Hosted UI, Cognito creates one thing:
+
+- A **Cognito `sub`** — an opaque UUID-like identifier, e.g. `a3f81c20-4d2b-4e91-b1cc-9a5d003e5f77`
+
+That's it. Cognito has no knowledge of an internal user_id. The internal UUID (`e2b86a8a-...`) only exists in **our DynamoDB** and **our PostgreSQL**, and it gets created by the **Post-Confirmation Lambda trigger** (`post_confirmation_handler`).
+
+---
+
+## The problem: the Lambda trigger is not deployed locally
+
+In production this happens automatically:
+
+```
+Cognito email verified
+     → fires Post-Confirmation Lambda
+     → DynamoDB record created:
+         IDENTITY#<cognito_sub>  MAPPING  →  <new internal UUID>
+```
+
+Locally, that Lambda does not run. So after registration, there is **no internal UUID** — the DynamoDB mapping does not exist yet.
+
+---
+
+## How the dev flow connects everything
+
+```
+You log in via Cognito Hosted UI
+     ↓
+Dev interceptor (ignores which Cognito user is signed in)
+     ↓
+X-Internal-User-Id: e2b86a8a-b851-460d-8ea9-a1b66df8ae8e   ← always devUserId
+     ↓  proxy.conf.json → localhost:8081
+Spring Boot ledger: queries PostgreSQL for user_id = e2b86a8a-...
+     ↓
+Returns the seeded transactions / accounts / budgets
+```
+
+The dev interceptor bypasses the DynamoDB lookup entirely — it always sends the hardcoded `devUserId`. The DynamoDB step below is only needed to test **user-profile endpoints** (`GET /profile`, savings goals). For ledger testing you can skip it.
+
+---
+
+## Step-by-step
+
+### Step 1 — Register via Cognito Hosted UI
+
+1. Run `ng serve`, open `http://localhost:4200/auth/login`
+2. Click **"Sign in with FinTracker"** → Cognito Hosted UI opens
+3. Click **"Sign up"**
+4. Enter your email and a password (min 8 chars, upper + lower + number)
+5. Cognito sends a verification code to your email — enter it
+6. You are now signed in and redirected to `/dashboard`
+
+---
+
+### Step 2 — Find your Cognito `sub`
+
+**AWS Console → Cognito → User Pool → Users tab → click your user → copy the `sub` attribute**
+
+It looks like: `a3f81c20-4d2b-4e91-b1cc-9a5d003e5f77`
+
+---
+
+### Step 3 — Run `dev_setup_user.py`
+
+This simulates the Post-Confirmation trigger. It writes the DynamoDB mapping that links **your specific Cognito sub** to the `devUserId`:
+
+```bash
+export AWS_DEFAULT_REGION=us-east-1
+export DYNAMODB_TABLE_NAME=FinTracker_UserProfile
+
+python scripts/dev_setup_user.py \
+  --sub a3f81c20-4d2b-4e91-b1cc-9a5d003e5f77 \
+  --email your@email.com
+```
+
+After this runs:
+- DynamoDB knows: `IDENTITY#<your_sub>` → `e2b86a8a-b851-460d-8ea9-a1b66df8ae8e`
+- Your Cognito account is now "registered" in the system
+
+---
+
+### Step 4 — No additional seed data needed
+
+The `dev_seed_data.sql` you already ran created accounts and transactions for `devUserId = e2b86a8a-...`. Your new Cognito account is now mapped to that same UUID — so when you log in and navigate the app, the seeded data is already there.
+
+---
+
+## What each identifier represents
+
+| Identifier | Example | Where it lives | Created by |
+|---|---|---|---|
+| Cognito `sub` | `a3f81c20-4d2b-...` | Cognito User Pool | Cognito — on registration |
+| Internal `user_id` | `e2b86a8a-b851-...` | DynamoDB + PostgreSQL | Post-Confirmation Lambda (or `dev_setup_user.py` locally) |
+
+---
+
+## Summary
+
+| Step | Required for ledger testing | Required for user-profile testing |
+|---|---|---|
+| Register + verify via Hosted UI | ✅ Yes | ✅ Yes |
+| Find Cognito `sub` | ❌ Not needed | ✅ Yes |
+| Run `dev_setup_user.py` | ❌ Not needed | ✅ Yes |
+| PostgreSQL seed data (`dev_seed_data.sql`) | ✅ Already done | ✅ Already done |

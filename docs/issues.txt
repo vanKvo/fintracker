@@ -1,0 +1,8 @@
+Priority	Issue	Location
+Critical	findById() missing user scope → IDOR on delete/pay/approve	Ledger repositories
+Critical	No PostgreSQL RLS	All ledger migrations
+Critical	S3 metadata user_id unverified	Data pipeline orchestrator
+High	user_id as query param in analytics	Analytics routes.py
+High	Shared internal API key, no per-request user validation	Data dispatcher → Ledger
+High	No cross-tenant integration tests	All services
+Low	Mock auth hardcoded in Angular dev builds	auth.service.ts

@@ -1,0 +1,5 @@
+# Test GET ledger/dashboard/aggregations endpoint
+lsof -i :8081 && curl -v http://localhost:8081/api/v1/ledger/dashboard/aggregations -H "X-Internal-User-Id: d781b133-c49b-4ab1-a940-0019490da8ad"
+
+# Test GET ledger/transactions endpoint
+lsof -i :8081 && curl -v http://localhost:8081/api/v1/ledger/transactions -H "X-Internal-User-Id: d781b133-c49b-4ab1-a940-0019490da8ad"
