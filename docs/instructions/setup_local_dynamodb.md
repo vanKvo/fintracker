@@ -8,7 +8,7 @@ Run from the repo root:
 ```bash
 docker compose up -d dynamodb-local
 ```
-This starts `amazon/dynamodb-local` on `http://localhost:8000`, defined in the root `docker-compose.yml`. It runs with `-inMemory`, so its data resets every time the container restarts — that's intentional for throwaway dev/test data (avoids a known permission bug where a mounted volume's ownership doesn't match the container's non-root user).
+This starts `amazon/dynamodb-local` on `http://localhost:8000`, defined in the root `docker-compose.yml`. It persists data to a named Docker volume (`dynamodb-data`) via `-dbPath`, so data survives container restarts and `docker compose down`. The container runs as `root` to avoid a known permission bug where the image's non-root user can't write to a mounted volume.
 
 Step 2: Verify the container is up
 ```bash
@@ -40,7 +40,8 @@ aws dynamodb scan --table-name FinTracker_UserProfile --endpoint-url http://loca
 
 Step 6: Reset or tear down
 ```bash
-docker compose restart dynamodb-local   # wipes data (in-memory), keeps the container
-docker compose down                     # stops and removes the container entirely
+docker compose restart dynamodb-local   # data persists — table and items survive
+docker compose down                     # stops and removes the container — data persists (volume kept)
+docker compose down -v                  # stops the container AND deletes the volume — wipes all data
 ```
-Since the table is in-memory, either command clears all data — re-run Step 3 to recreate the table before using it again.
+Only `down -v` clears data. If you do wipe it, re-run Step 3 to recreate the table before using it again.
