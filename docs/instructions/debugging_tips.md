@@ -1,0 +1,2 @@
+# Look at the last Caused by to find the actual failed reason.
+Debugging takeaway for next time: with chained bean-wiring failures like this, always scroll to the last Caused by: in the stack trace — that's the actual failure; everything above it is just "the bean that needed this bean failed too."
