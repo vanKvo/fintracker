@@ -2,6 +2,11 @@
 # repo root can start everything at once. Each service's compose file remains the
 # source of truth and still works standalone if that service's submodule is checked
 # out on its own, outside this monorepo.
+#
+# Must match the `name:` pinned in services/fintracker-ledger/docker-compose.yml exactly —
+# see the comment there for why (otherwise running from here vs. from that directory
+# silently builds and runs two different, diverging containers for the same service).
+name: fintracker
 include:
   - services/fintracker-ledger/docker-compose.yml
 
@@ -9,12 +14,28 @@ services:
   dynamodb-local:
     image: amazon/dynamodb-local:latest
     container_name: fintracker-dynamodb-local
+    # Runs as root to sidestep a known amazon/dynamodb-local issue where the
+    # image's non-root user doesn't have write permission on a mounted volume,
+    # causing every DB operation to hang/fail with
+    # "SQLiteException: unable to open database file".
+    user: root
     ports:
       - "8000:8000"
     working_dir: /home/dynamodblocal
-    # -inMemory: dev/test data only, resets on container restart. Avoids a known
-    # amazon/dynamodb-local issue where a mounted volume's ownership doesn't match
-    # the container's non-root user, causing every DB operation to hang/fail with
-    # "SQLiteException: unable to open database file".
-    command: "-jar DynamoDBLocal.jar -sharedDb -inMemory"
+    volumes:
+      - dynamodb-data:/home/dynamodblocal/data
+    # -dbPath persists data to the named volume, so it survives container
+    # restarts and `docker compose down` (but not `down -v`, which deletes
+    # volumes — that's the intentional "reset seed data" escape hatch).
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
+
+  # No local S3 emulator (LocalStack) any more: the Ledger's presigned-upload flow and the
+  # Data Pipeline's S3-triggered ingestion both run against a real S3 bucket now, provisioned by
+  # services/fintracker-data-pipeline/infrastructure/terraform (see that directory's README for
+  # why — CORS/notification fidelity gaps in the LocalStack Community tier, and the direct-PUT
+  # flow needing to work against real S3 credentials/signing end to end). Point STATEMENTS_BUCKET_NAME
+  # at that Terraform-provisioned bucket for local Ledger runs.
+
+volumes:
+  dynamodb-data:
 
