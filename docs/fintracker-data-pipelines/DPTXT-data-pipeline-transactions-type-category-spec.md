@@ -6,7 +6,7 @@ Status: Problem list only. Requirements to be refined from these items.
 
 Related: [TXT: Transaction Types](../fintracker-ledger-doc/TXT-transaction-types-spec.md). The Ledger accepts only `EXPENSE`, `INCOME`, `REFUND`, `TRANSFER`, `ADJUSTMENT`, and every row must also carry a direction (`DEBIT` / `CREDIT`).
 
-**Interim behavior (TXT change, 2026-10-06):** the pipeline now uses the Ledger's types end to end. Until these problems are resolved, it assigns direction from the amount's sign and type from TXT-01's default (credit → INCOME, debit → EXPENSE). That means refunds and transfers are not yet recognized, and P-03 still inverts Chase rows.
+**Interim behavior (TXT change, 2026-10-06):** the pipeline now uses the Ledger's types end to end. Until these problems are resolved, it assigns direction from the amount's sign and an interim type from the direction (credit → INCOME, debit → EXPENSE). That means refunds and transfers are not yet recognized, and P-03 still inverts Chase rows. The Ledger no longer fills in a missing type (TXT-01 rejects it), so the pipeline must always send one.
 
 ---
 

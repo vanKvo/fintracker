@@ -44,12 +44,16 @@ Users viewing imported banking data struggle with ambiguous transaction categori
 ### TXT-01: Transaction Type Definition and Ingestion  `Priority: MVP`
 
 **Problem:** Inconsistent or ambiguous bank labels fail to clearly express whether a transaction is a purchase, refund, salary, or transfer.
-**Requirement:** The system must validate and store incoming transactions using strictly one of 5 supported primary types: `expense`, `income`, `refund`, `transfer`, or `adjustment`.
+**Requirement:** 
+- The system must validate and store incoming transactions using strictly one of 5 supported primary types: `expense`, `income`, `refund`, `transfer`, or `adjustment`.
+- EXPENSE require money out, and INCOME and REFUND require money in.
+
 **Acceptance Criteria:**
 - [Happy] Incoming transactions with valid types (`expense`, `income`, `refund`, `transfer`, `adjustment`) are accepted and saved with matching `direction` (`debit` or `credit`).
 - [Alt] An incoming credit transaction explicitly marked as a return/refund is stored as `type: "refund"` with `direction: "credit"`.
 - [Alt] An incoming transaction moving money between two owned user accounts is stored as `type: "transfer"` and omitted from spending calculations.
-- [Fail] An incoming transaction with missing type defaults to `type: "income"` if it is a credit, or `type: "expense"` if it is a debit, and logs a warning with the payload ID.
+- [Fail] An incoming transaction with missing type gets a 400 error.
+
 **Open Questions:** Should `refund` transactions require a valid `linked_transaction_id` pointing to an original `expense` at ingestion time Database Schema: Include linked_transaction_id as an optional/nullable field. Ingestion Pipeline: Ignore it completely during initial ingestion (leave it null). Analytics Engine: Compute category spend simply by looking at type = 'refund' and matching on category and date, without caring whether linked_transaction_id is populated or not.
 **Refs:** Appendix A
 
