@@ -1,0 +1,455 @@
+package com.fintracker.ledger.transaction.service.impl;
+
+import com.fintracker.ledger.account.repository.AccountRepository;
+import com.fintracker.ledger.statement.exception.StatementNotFoundException;
+import com.fintracker.ledger.statement.model.Statement;
+import com.fintracker.ledger.statement.repository.StatementRepository;
+import com.fintracker.ledger.statement.service.StatementService;
+import com.fintracker.ledger.transaction.dto.BulkCreateTransactionsRequest;
+import com.fintracker.ledger.transaction.dto.BulkCreateTransactionsResponse;
+import com.fintracker.ledger.transaction.dto.ManualTransactionRequest;
+import com.fintracker.ledger.transaction.model.Transaction;
+import com.fintracker.ledger.transaction.model.TransactionCategory;
+import com.fintracker.ledger.transaction.model.TransactionFilter;
+import com.fintracker.ledger.transaction.repository.TransactionRepository;
+import com.fintracker.ledger.transaction.service.TransactionService;
+import com.fintracker.ledger.transaction.exception.TransactionNotFoundException;
+import com.fintracker.ledger.transaction.exception.IllegalStateTransitionException;
+import com.fintracker.ledger.transaction.exception.SplitAmountMismatchException;
+import com.fintracker.ledger.transaction.exception.TooManyTagsException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+public class TransactionServiceImpl implements TransactionService {
+
+    private static final Logger log = LoggerFactory.getLogger(TransactionServiceImpl.class);
+    private static final int MAX_TAGS_PER_TRANSACTION = 10;
+
+    // ledger.transactions.amount is DECIMAL(15,2) (V1): at most 13 integer digits and
+    // 2 fraction digits. Rows outside that shape would abort the whole multi-row insert
+    // with a numeric-overflow error at the DB, so they are rejected per row instead.
+    private static final BigDecimal MAX_STATEMENT_ROW_AMOUNT = new BigDecimal("9999999999999.99");
+
+    private static final java.util.regex.Pattern CURRENCY_CODE = java.util.regex.Pattern.compile("[A-Z]{3}");
+
+    private static final String TYPE_DIRECTION_RULE =
+            "EXPENSE must be a DEBIT; INCOME and REFUND must be a CREDIT";
+
+    private final TransactionRepository transactionRepository;
+    private final StatementRepository statementRepository;
+    private final StatementService statementService;
+    private final AccountRepository accountRepository;
+
+    public TransactionServiceImpl(TransactionRepository transactionRepository,
+                                  StatementRepository statementRepository,
+                                  StatementService statementService,
+                                  AccountRepository accountRepository) {
+        this.transactionRepository = transactionRepository;
+        this.statementRepository = statementRepository;
+        this.statementService = statementService;
+        this.accountRepository = accountRepository;
+    }
+
+    @Override
+    public List<Transaction> getTransactions(TransactionFilter filter) {
+        return transactionRepository.findAll(filter);
+    }
+
+    /**
+     * REQ-STMT-02. The multi-tenant guard is the whole point of the internal route's
+     * design: SigV4 proves the caller is the dispatcher role, but a compromised
+     * dispatcher could sign requests naming any statement — so the statementId in the
+     * body is still checked against the X-Internal-User-Id the caller claims, exactly
+     * the way UserContextFilter scopes a regular user request. The account every row
+     * lands in comes from that verified statement, never from the request body (which
+     * deliberately carries no accountId/userId field).
+     */
+    @Override
+    public BulkCreateTransactionsResponse bulkCreateFromStatement(
+            UUID statementId, UUID userId, List<BulkCreateTransactionsRequest.TransactionLine> lines) {
+        var statement = statementRepository.findByIdAndUserId(statementId, userId)
+                .orElseThrow(() -> new StatementNotFoundException(statementId));
+
+        // Per-row checks mirror the constraints the multi-row insert would otherwise hit
+        // at the DB (NOT NULLs, lengths, the amount != 0 CHECK and DECIMAL(15,2) shape
+        // from V1): one genuinely malformed row is reported back as a FailedRow instead
+        // of aborting the batch for every other row in it. Amounts may be positive or
+        // negative — the sign is the row's own semantics — but exactly zero is rejected,
+        // matching the DB CHECK and createManualTransaction/updateAmount's rule.
+        var failedRows = new ArrayList<BulkCreateTransactionsResponse.FailedRow>();
+        var rows = new ArrayList<Transaction>();
+        for (int i = 0; i < lines.size(); i++) {
+            var line = lines.get(i);
+            var rejection = validateLine(line);
+            if (rejection != null) {
+                failedRows.add(new BulkCreateTransactionsResponse.FailedRow(i, rejection));
+                continue;
+            }
+            var direction = Transaction.TransactionDirection.valueOf(line.direction());
+            if (line.type() == null) {
+                log.warn("Statement row has no type; defaulting from direction statementId={} rowIndex={} direction={}",
+                        statementId, i, direction);
+            }
+            rows.add(new Transaction(
+                    null, statement.accountId(), statementId, null, null,
+                    line.amount(), line.merchant(), line.category(), null,
+                    List.of(), line.date(),
+                    Transaction.TransactionSource.STATEMENT_UPLOAD,
+                    resolveType(line.type(), direction),
+                    Transaction.TransactionStatus.PENDING,
+                    false, false, null, line.rowFingerprint(),
+                    direction, currencyOrDefault(line.currency()), null, null));
+        }
+
+        int insertedCount = rows.isEmpty()
+                ? 0
+                : transactionRepository.bulkInsertIgnoringDuplicates(statementId, rows);
+        var response = new BulkCreateTransactionsResponse(
+                insertedCount, rows.size() - insertedCount, failedRows);
+        log.info("Bulk-created statement transactions statementId={} userId={} inserted={} skippedDuplicates={} failed={}",
+                statementId, userId, insertedCount, rows.size() - insertedCount, failedRows.size());
+        return response;
+    }
+
+    /**
+     * @return the rejection reason for a genuinely malformed line, or {@code null} if the
+     *         line is acceptable. Bean Validation ({@code @Valid} on the request DTO) has
+     *         already rejected structurally malformed JSON before this runs at the HTTP
+     *         edge; these checks keep the same guarantee for any direct service caller.
+     */
+    private String validateLine(BulkCreateTransactionsRequest.TransactionLine line) {
+        if (line.date() == null) {
+            return "date is required";
+        }
+        if (line.merchant() == null || line.merchant().isBlank()) {
+            return "merchant must not be blank";
+        }
+        if (line.merchant().length() > 255) {
+            return "merchant must be at most 255 characters";
+        }
+        if (line.amount() == null) {
+            return "amount is required";
+        }
+        if (line.amount().compareTo(BigDecimal.ZERO) == 0) {
+            return "amount must not be zero";
+        }
+        if (line.amount().abs().compareTo(MAX_STATEMENT_ROW_AMOUNT) > 0) {
+            return "amount exceeds the DECIMAL(15,2) range";
+        }
+        // stripTrailingZeros so 25.500 is judged as 25.5 (the DB would store 25.50
+        // either way) — what is rejected is value-carrying precision beyond cents,
+        // which the NUMERIC(15,2) column would otherwise silently round.
+        if (line.amount().stripTrailingZeros().scale() > 2) {
+            return "amount must have at most 2 decimal places";
+        }
+        if (line.category() == null || line.category().isBlank()) {
+            return "category must not be blank";
+        }
+        if (line.category().length() > 100) {
+            return "category must be at most 100 characters";
+        }
+        if (line.type() != null && !isEnumValue(Transaction.TransactionType.class, line.type())) {
+            return "type must be one of %s.".formatted(
+                    Arrays.toString(Transaction.TransactionType.values()));
+        }
+        if (line.direction() == null || !isEnumValue(Transaction.TransactionDirection.class, line.direction())) {
+            return "direction must be one of %s.".formatted(
+                    Arrays.toString(Transaction.TransactionDirection.values()));
+        }
+        if (line.type() != null && !Transaction.TransactionType.valueOf(line.type())
+                .allows(Transaction.TransactionDirection.valueOf(line.direction()))) {
+            return TYPE_DIRECTION_RULE;
+        }
+        if (line.currency() != null && !CURRENCY_CODE.matcher(line.currency()).matches()) {
+            return "currency must be a 3-letter ISO 4217 code";
+        }
+        if (line.rowFingerprint() == null || line.rowFingerprint().isBlank()) {
+            return "rowFingerprint is required";
+        }
+        return null;
+    }
+
+    @Override
+    public Transaction createManualTransaction(ManualTransactionRequest request, UUID userId) {
+        // The Angular "Add Transaction" dropdown only ever lists the user's own accounts, but a
+        // direct API call could submit any accountId — the backend must not rely on the UI alone
+        // to enforce this (REQ-1.1's multi-tenant isolation premise).
+        if (!accountRepository.existsByIdAndUserId(request.accountId(), userId)) {
+            throw new IllegalArgumentException(
+                    "Account %s does not belong to the requesting user.".formatted(request.accountId()));
+        }
+
+        if (request.amount().compareTo(BigDecimal.ZERO) == 0) {
+            throw new IllegalArgumentException("Transaction amount must not be zero.");
+        }
+
+        if (request.direction() == null
+                || !isEnumValue(Transaction.TransactionDirection.class, request.direction())) {
+            throw new IllegalArgumentException("direction must be one of %s.".formatted(
+                    Arrays.toString(Transaction.TransactionDirection.values())));
+        }
+        var direction = Transaction.TransactionDirection.valueOf(request.direction());
+
+        if (request.type() != null && !isEnumValue(Transaction.TransactionType.class, request.type())) {
+            throw new IllegalArgumentException("type must be one of %s.".formatted(
+                    Arrays.toString(Transaction.TransactionType.values())));
+        }
+        if (request.type() == null) {
+            log.warn("Manual transaction has no type; defaulting from direction accountId={} direction={}",
+                    request.accountId(), direction);
+        }
+        var type = resolveType(request.type(), direction);
+        if (!type.allows(direction)) {
+            throw new IllegalArgumentException(TYPE_DIRECTION_RULE);
+        }
+
+        if (request.currency() != null && !CURRENCY_CODE.matcher(request.currency()).matches()) {
+            throw new IllegalArgumentException("currency must be a 3-letter ISO 4217 code");
+        }
+        if (request.linkedTransactionId() != null) {
+            requireOwnLinkTarget(request.linkedTransactionId(), userId);
+        }
+
+        // REQ-2.3.1.D: date defaults to today when the request omits it.
+        var txDate = request.txDate() != null ? request.txDate() : LocalDate.now();
+
+        // REQ-2.3.1.C/D: source, isManual, and status are fixed for a manually-inserted row —
+        // never taken from the request.
+        var transaction = new Transaction(
+                null, request.accountId(), null, null, null,
+                request.amount(), request.merchant(), request.category(), null,
+                request.tags(), txDate,
+                Transaction.TransactionSource.MANUAL_ENTRY, type,
+                Transaction.TransactionStatus.POSTED,
+                false, true, null, null,
+                direction, currencyOrDefault(request.currency()),
+                request.isRecurring(), request.linkedTransactionId());
+
+        var saved = transactionRepository.save(transaction);
+        log.info("Created manual transaction transactionId={} userId={}", saved.transactionId(), userId);
+        return saved;
+    }
+
+    @Override
+    public void approveTransaction(UUID transactionId, UUID userId) {
+        var transaction = transactionRepository.findByIdAndUserId(transactionId, userId)
+                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+
+        if (transaction.status() != Transaction.TransactionStatus.PENDING) {
+            throw new IllegalStateTransitionException(
+                    "Transaction %s is not in PENDING state.".formatted(transactionId));
+        }
+
+        transactionRepository.updateStatus(transactionId, Transaction.TransactionStatus.POSTED);
+        log.info("Approved transaction transactionId={}", transactionId);
+
+        if (transaction.statementId() != null) {
+            checkAndCompleteStatement(transaction.statementId());
+        }
+    }
+
+    private void checkAndCompleteStatement(UUID statementId) {
+        int pendingCount = transactionRepository.countPendingByStatementId(statementId);
+        if (pendingCount == 0) {
+            statementService.updateStatus(statementId, Statement.StatementStatus.COMPLETED);
+            log.info("All transactions approved. Marked statement COMPLETED. statementId={}", statementId);
+        }
+    }
+
+    @Override
+    public List<Transaction> splitTransaction(UUID parentId, List<SplitRequest> splits, UUID userId) {
+        var parent = transactionRepository.findByIdAndUserId(parentId, userId)
+                .orElseThrow(() -> new TransactionNotFoundException(parentId));
+
+        if (parent.status() == Transaction.TransactionStatus.POSTED) {
+            throw new IllegalStateTransitionException(
+                    "Posted transactions cannot be split. transactionId=" + parentId);
+        }
+
+        BigDecimal totalSplit = splits.stream()
+                .map(SplitRequest::amount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (parent.amount().abs().compareTo(totalSplit.abs()) != 0) {
+            throw new SplitAmountMismatchException(parent.amount(), totalSplit);
+        }
+
+        List<Transaction> children = splits.stream()
+                .map(split -> buildChildTransaction(parent, split))
+                .toList();
+
+        return transactionRepository.saveAll(children);
+    }
+
+    @Override
+    public void bulkApprove(List<UUID> transactionIds, UUID userId) {
+        transactionIds.forEach(id -> approveTransaction(id, userId));
+    }
+
+    @Override
+    public void toggleExclude(UUID transactionId, boolean exclude, UUID userId) {
+        transactionRepository.findByIdAndUserId(transactionId, userId)
+                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+        transactionRepository.toggleExcluded(transactionId, exclude);
+    }
+
+    @Override
+    public void updateCategory(UUID transactionId, String category, UUID userId) {
+        transactionRepository.findByIdAndUserId(transactionId, userId)
+                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+        transactionRepository.updateCategory(transactionId, TransactionCategory.resolve(category).label());
+    }
+
+    @Override
+    public void updateAmount(UUID transactionId, BigDecimal amount, UUID userId) {
+        transactionRepository.findByIdAndUserId(transactionId, userId)
+                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+
+        if (amount.compareTo(BigDecimal.ZERO) == 0) {
+            throw new IllegalArgumentException("Transaction amount must not be zero.");
+        }
+
+        transactionRepository.updateAmount(transactionId, amount);
+    }
+
+    @Override
+    public void updateTypeAndDirection(UUID transactionId, String type, String direction, UUID userId) {
+        var transaction = transactionRepository.findByIdAndUserId(transactionId, userId)
+                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+
+        var newType = type != null ? Transaction.TransactionType.valueOf(type) : transaction.type();
+        var newDirection = direction != null
+                ? Transaction.TransactionDirection.valueOf(direction) : transaction.direction();
+        if (!newType.allows(newDirection)) {
+            throw new IllegalArgumentException(TYPE_DIRECTION_RULE);
+        }
+        transactionRepository.updateTypeAndDirection(transactionId, newType, newDirection);
+    }
+
+    @Override
+    public void updateRecurring(UUID transactionId, boolean isRecurring, UUID userId) {
+        transactionRepository.findByIdAndUserId(transactionId, userId)
+                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+        transactionRepository.updateIsRecurring(transactionId, isRecurring);
+    }
+
+    @Override
+    public void linkTransaction(UUID transactionId, UUID linkedTransactionId, UUID userId) {
+        transactionRepository.findByIdAndUserId(transactionId, userId)
+                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+        if (transactionId.equals(linkedTransactionId)) {
+            throw new IllegalArgumentException("A transaction cannot be linked to itself.");
+        }
+        requireOwnLinkTarget(linkedTransactionId, userId);
+        transactionRepository.updateLinkedTransactionId(transactionId, linkedTransactionId);
+    }
+
+    /** The link target must be the caller's own — never trust an ID from the request body. */
+    private void requireOwnLinkTarget(UUID linkedTransactionId, UUID userId) {
+        if (transactionRepository.findByIdAndUserId(linkedTransactionId, userId).isEmpty()) {
+            throw new IllegalArgumentException("linkedTransactionId must be one of your transactions.");
+        }
+    }
+
+    @Override
+    public void appendTags(UUID transactionId, List<String> newTags, UUID userId) {
+        // REQ-2.2 "Tag Array Appending". Tags are user-scoped free text (no global registry).
+        // Character/length/blank validation happens at the DTO layer (AppendTagsRequest); this
+        // layer owns normalization (lowercase, for case-insensitive dedup/search) and the
+        // transformation logic (dedup against existing tags, both within this request and against
+        // what the transaction already has, plus the max-tag-count business rule).
+        var transaction = transactionRepository.findByIdAndUserId(transactionId, userId)
+                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+
+        var existingNormalized = transaction.tags().stream()
+                .map(String::toLowerCase)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        var toAppend = newTags.stream()
+                .map(String::toLowerCase)
+                .filter(tag -> !existingNormalized.contains(tag))
+                .distinct()
+                .toList();
+
+        if (existingNormalized.size() + toAppend.size() > MAX_TAGS_PER_TRANSACTION) {
+            throw new TooManyTagsException(MAX_TAGS_PER_TRANSACTION);
+        }
+
+        if (!toAppend.isEmpty()) {
+            transactionRepository.appendTags(transactionId, toAppend);
+        }
+    }
+
+    @Override
+    public void deleteManualTransaction(UUID transactionId, UUID userId) {
+        var transaction = transactionRepository.findByIdAndUserId(transactionId, userId)
+                .orElseThrow(() -> new TransactionNotFoundException(transactionId));
+
+        if (!transaction.isManual()) {
+            throw new IllegalStateTransitionException(
+                    "Only manual transactions can be hard-deleted. transactionId=" + transactionId);
+        }
+        transactionRepository.deleteManualTransaction(transactionId);
+    }
+
+    @Override
+    public BigDecimal sumMonthlyIncome(UUID userId, LocalDate start, LocalDate end) {
+        return transactionRepository.sumMonthlyIncome(userId, start, end);
+    }
+
+    @Override
+    public BigDecimal sumMonthlyExpenses(UUID userId, LocalDate start, LocalDate end) {
+        return transactionRepository.sumMonthlyExpenses(userId, start, end);
+    }
+
+    @Override
+    public BigDecimal sumMonthlyExpensesPerCategory(UUID userId, LocalDate start, LocalDate end, String category) {
+        return transactionRepository.sumMonthlyExpensesPerCategory(userId, start, end, category);
+    }
+
+    @Override
+    public Map<LocalDate, Map<String, BigDecimal>> sumExpensesByMonthAndCategory(
+            UUID userId, LocalDate start, LocalDate end) {
+        return transactionRepository.sumExpensesByMonthAndCategory(userId, start, end);
+    }
+
+    private Transaction buildChildTransaction(Transaction parent, SplitRequest split) {
+        return new Transaction(
+                null, parent.accountId(), parent.statementId(), parent.transactionId(),
+                null, split.amount(), parent.merchant(), TransactionCategory.resolve(split.category()).label(),
+                parent.description(), new ArrayList<>(), parent.txDate(), parent.source(), parent.type(),
+                parent.status(), parent.isExcluded(), parent.isManual(), null, null,
+                parent.direction(), parent.currency(), parent.isRecurring(), null
+        );
+    }
+
+    /** TXT-01 [Fail]: a missing type defaults to INCOME for a credit, EXPENSE for a debit. */
+    private static Transaction.TransactionType resolveType(String type, Transaction.TransactionDirection direction) {
+        if (type != null) {
+            return Transaction.TransactionType.valueOf(type);
+        }
+        return direction == Transaction.TransactionDirection.CREDIT
+                ? Transaction.TransactionType.INCOME
+                : Transaction.TransactionType.EXPENSE;
+    }
+
+    private static String currencyOrDefault(String currency) {
+        return currency != null ? currency : Transaction.DEFAULT_CURRENCY;
+    }
+
+    private static <E extends Enum<E>> boolean isEnumValue(Class<E> enumType, String value) {
+        return Arrays.stream(enumType.getEnumConstants()).anyMatch(e -> e.name().equals(value));
+    }
+}

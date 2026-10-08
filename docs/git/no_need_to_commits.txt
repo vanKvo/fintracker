@@ -1,0 +1,13 @@
+[commit]
+repo: .
+message: DP-LEDGER-CATEGORIES-05: Listed the spec changes the category integration plan depends on so the user can update the spec files.
+docs/integration/dp_ledger_categories_spec_changes_considered.md
+
+[commit]
+repo: .
+message: DP-LEDGER-CATEGORIES-01: Added a pending-commits file and scripts so agent changes are reviewed and committed in one run, and commit messages can be reworded in bulk.
+docs/git/pending_commits.md
+docs/git/pending_commits.txt
+docs/git/commit_pending.sh
+docs/git/reword_messages_data_pipeline.txt
+docs/git/reword_data_pipeline_commits.sh

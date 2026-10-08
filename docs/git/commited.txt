@@ -1,0 +1,356 @@
+# ===========================================================================
+# REQ-DP-09 (Comprehend removal, 2026-09-26): root-repo docs
+# ===========================================================================
+
+[commit]
+repo: .
+message: REQ-DP-09: Documented the Uncategorized merchant-cache bug and the REQ-DP-09 test inventory so the Comprehend removal has a recorded root cause and test coverage.
+docs/bugs/2026-09-26_bug_unknown_merchants_cached_as_uncategorized.md
+docs/fintracker-data-pipelines/data-pipeline-tests-02.md
+
+# ===========================================================================
+# DP-Ledger Categories, Phase 0: housekeeping (root-repo docs)
+# ===========================================================================
+
+[commit]
+repo: .
+message: REQ-DP-03: Documented why the Ledger push idempotency test failed so the fix to Ledger-side dedup and the fail-fast URL check are traceable.
+docs/bugs/2026-09-28_bug_ledger_push_idempotency_test_signing_crash.md
+
+[commit]
+repo: .
+message: DP-LEDGER-CATEGORIES-06: Added the merchant category seed using existing Ledger codes (healthcare, food-and-drink) so every pattern maps to a real category.
+docs/data/merchant_category_map_seed.md
+
+[commit]
+repo: .
+message: DP-LEDGER-CATEGORIES-03: Added a high-level diagram of the target statement workflow so the new category resolution and Ledger review flow is easy to follow.
+docs/fintracker-data-pipelines/flows/data-pipeline-target-flow.md
+
+# ===========================================================================
+# DP-Ledger Categories, Phase 1: Ledger foundation (T1–T3)
+# The Ledger repo is on `main`. To keep this work on its own branch, run first:
+#   git -C services/fintracker-ledger switch -c dp-ledger-categories
+# ===========================================================================
+
+# --- Bug found while building T1: statement owner lookup fails on a reused connection ---
+
+[commit]
+repo: services/fintracker-ledger
+message: REQ-DP-05: Added a failing test showing the internal statement owner lookup fails on a pooled connection that already served a user request.
+src/test/java/com/fintracker/ledger/statement/repository/JooqStatementRepositoryIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: REQ-DP-05: Fixed the internal statement owner lookup failing on reused database connections so the Data Pipeline's ownership check no longer returns 500.
+src/main/java/com/fintracker/ledger/statement/repository/JooqStatementRepository.java
+
+[commit]
+repo: .
+message: REQ-DP-05: Documented why the statement owner lookup failed on reused connections and how it was fixed.
+docs/bugs/2026-09-29_bug_statement_owner_lookup_fails_on_reused_connection.md
+
+# --- T1: SYSTEM category code, is_active, others -> uncategorized, dining -> Food & Drink ---
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-01: Added failing tests for an immutable code on SYSTEM categories and the uncategorized and Food & Drink renames.
+src/test/java/com/fintracker/ledger/category/CategoryCodeMigrationIT.java
+src/test/java/com/fintracker/ledger/transaction/model/TransactionCategoryTest.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionServiceTest.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-01/TransactionServiceTest.java
+src/test/java/com/fintracker/ledger/category/repository/JooqCategoryRepositoryIT.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-01/JooqCategoryRepositoryIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-01: Added an immutable code to SYSTEM categories and renamed others to uncategorized and dining to Food & Drink, keeping their IDs, to have a stable identifier for system categories across environments.
+src/main/resources/db/migration/V21__Add_Category_Code_And_Is_Active.sql
+src/main/resources/db/migration/R__System_Categories.sql
+src/main/java/com/fintracker/ledger/category/model/Category.java
+src/main/java/com/fintracker/ledger/category/dto/CustomCategoryResponse.java
+src/main/java/com/fintracker/ledger/transaction/model/TransactionCategory.java
+src/main/java/com/fintracker/ledger/category/repository/JooqCategoryRepository.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-01/JooqCategoryRepository.java
+
+# --- T2: deactivate categories instead of deleting them ---
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-02: Added failing tests for deactivating categories instead of deleting them and reactivating a re-created name.
+src/test/java/com/fintracker/ledger/category/service/CategoryServiceTest.java
+src/test/java/com/fintracker/ledger/category/CategoryControllerIT.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-02/CategoryControllerIT.java
+src/test/java/com/fintracker/ledger/category/repository/JooqCategoryRepositoryIT.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-02/JooqCategoryRepositoryIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-02: Deactivated categories instead of deleting them so category IDs on existing transactions stay valid.
+src/main/java/com/fintracker/ledger/category/repository/CategoryRepository.java
+src/main/java/com/fintracker/ledger/category/repository/JooqCategoryRepository.java
+src/main/java/com/fintracker/ledger/category/service/impl/CategoryServiceImpl.java
+
+# --- T3: internal category read APIs for the Data Pipeline ---
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-02: Added failing tests for the internal SYSTEM and per-user category read endpoints with ETag support.
+src/test/java/com/fintracker/ledger/category/InternalCategoryControllerIT.java
+src/test/java/com/fintracker/ledger/config/InternalCallerFilterTest.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-02: Added internal read endpoints for SYSTEM categories (with ETag) and a user's own categories so the Data Pipeline can cache valid Ledger categories.
+src/main/java/com/fintracker/ledger/category/controller/InternalCategoryController.java
+src/main/java/com/fintracker/ledger/category/dto/InternalSystemCategoryResponse.java
+src/main/java/com/fintracker/ledger/category/dto/InternalUserCategoriesResponse.java
+src/main/java/com/fintracker/ledger/category/exception/InternalUserMismatchException.java
+src/main/java/com/fintracker/ledger/category/repository/CategoryReadRepository.java
+src/main/java/com/fintracker/ledger/category/repository/JooqCategoryReadRepository.java
+src/main/java/com/fintracker/ledger/category/service/CategoryCatalogService.java
+src/main/java/com/fintracker/ledger/config/InternalCategoryEtagFilterConfig.java
+src/main/java/com/fintracker/ledger/config/InternalCallerFilterConfig.java
+src/main/java/com/fintracker/ledger/config/GlobalExceptionHandler.java
+
+[commit]
+repo: .
+message: DP-LEDGER-CATEGORIES-02: Documented the Phase 1 Ledger test inventory for category codes, deactivation and the internal read endpoints.
+docs/integration/dp-ledger-categories-tests-01.md
+
+# ===========================================================================
+# Analytics AI architecture docs (2026-10-06): root-repo docs
+# ===========================================================================
+
+[commit]
+repo: .
+message: Added architecture and governance diagrams for the three Analytics AI integrations so their workflows, trust boundaries and central eval/audit design are documented.
+docs/fintracker-analytics/flows/ai-integration-architecture.md
+docs/fintracker-analytics/flows/ai-governance-monitoring.md
+
+# ===========================================================================
+# TXT: Transaction Types (2026-10-06) — Ledger, Data Pipeline, Analytics, UI, root docs
+# Ledger test files shared with DP-Ledger Categories are committed there from snapshots
+# (above) and here in full, so this phase must be committed after that one.
+# ===========================================================================
+
+# --- Ledger ---
+
+[commit]
+repo: services/fintracker-ledger
+message: TXT-01: Added failing tests for the five transaction types, the direction, currency, is_recurring and linked_transaction_id columns, and refund-offset spending totals.
+src/test/java/com/fintracker/ledger/transaction/repository/TransactionTypeIT.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionTypeServiceTest.java
+src/test/java/com/fintracker/ledger/budget/BudgetRefundOffsetIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetSpendEnrichmentIT.java
+src/test/java/com/fintracker/ledger/budget/AbstractBudgetIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetDeletionIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetLineServiceIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetPeriodNormalizationIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetQuickStartIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetYearListingIT.java
+src/test/java/com/fintracker/ledger/InternalApiSecurityIT.java
+src/test/java/com/fintracker/ledger/category/CategoryControllerIT.java
+src/test/java/com/fintracker/ledger/category/TransactionCategoryLinkIT.java
+src/test/java/com/fintracker/ledger/category/repository/JooqCategoryRepositoryIT.java
+src/test/java/com/fintracker/ledger/config/InternalEndpointSecurityIT.java
+src/test/java/com/fintracker/ledger/statement/service/StatementOverwriteIT.java
+src/test/java/com/fintracker/ledger/transaction/controller/InternalTransactionControllerTest.java
+src/test/java/com/fintracker/ledger/transaction/repository/BulkTransactionInsertIT.java
+src/test/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepositoryIT.java
+src/test/java/com/fintracker/ledger/transaction/service/BulkCreateAmountValidationTest.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionServiceTest.java
+
+[commit]
+repo: services/fintracker-ledger
+message: TXT-01: Replaced PURCHASE/CREDIT with five transaction types plus direction, currency, is_recurring and linked_transaction_id, and netted refunds out of spending so budgets and dashboard totals reflect real spend.
+src/main/resources/db/migration/V22__Transaction_Types_And_Direction.sql
+src/main/java/com/fintracker/ledger/transaction/model/Transaction.java
+src/main/java/com/fintracker/ledger/transaction/dto/BulkCreateTransactionsRequest.java
+src/main/java/com/fintracker/ledger/transaction/dto/ManualTransactionRequest.java
+src/main/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionService.java
+src/main/java/com/fintracker/ledger/transaction/service/impl/TransactionServiceImpl.java
+
+# --- Data Pipeline ---
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: TXT-01: Added failing tests for normalizing rows into the Ledger's five types with a direction and sending them without translation.
+tests/test_normalizer.py
+tests/test_data_dispatcher_ledger_push.py
+tests/test_data_dispatcher_security.py
+tests/test_data_pipeline_spec_acceptance.py
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: TXT-01: Switched the pipeline to the Ledger's transaction types and direction end to end and removed the SALE/RETURN mapping so statement pushes match the new Ledger contract.
+src/normalizer/schemas.py
+src/normalizer/service.py
+src/data_dispatcher/service.py
+
+# --- Analytics (see pending_commits.md: depends on the uncommitted Analytics refactor) ---
+
+[commit]
+repo: services/fintracker-analytics
+message: TXT-02: Added failing Testcontainers tests for dashboard, report, trend and insights totals using the five transaction types with refunds offsetting spending.
+tests/integration/__init__.py
+tests/integration/conftest.py
+tests/integration/test_transaction_type_queries.py
+pyproject.toml
+poetry.lock
+
+[commit]
+repo: services/fintracker-analytics
+message: TXT-02: Updated Analytics queries to the five transaction types with refunds offsetting spending, and fixed the spending report and monthly trend queries that failed on every call.
+src/dashboard/repository.py
+src/insights/repository.py
+src/reports/repository.py
+
+# --- UI ---
+
+[commit]
+repo: fintracker-ui
+message: TXT-01: Added failing tests for choosing one of the five transaction types and a direction when adding a transaction manually.
+src/app/features/transactions/add-transaction-dialog/add-transaction-dialog.spec.ts
+
+[commit]
+repo: fintracker-ui
+message: TXT-01: Replaced the Purchase/Credit choice with the five transaction types and a money in/out direction in the Add Transaction dialog.
+src/app/core/services/transaction.service.ts
+src/app/features/transactions/add-transaction-dialog/add-transaction-dialog.ts
+src/app/features/transactions/add-transaction-dialog/add-transaction-dialog.html
+
+# --- Root docs ---
+
+[commit]
+repo: .
+message: TXT-01: Updated the transaction-types spec's Appendix A to the Ledger table, added the test inventory, logged the pipeline type/category gaps, and documented the Analytics report query bug.
+docs/fintracker-ledger-doc/TXT-transaction-types-spec.md
+docs/fintracker-ledger-doc/TXT-transaction-types-tests.md
+docs/fintracker-data-pipelines/DPTXT-data-pipeline-transactions-type-category-spec.md
+docs/bugs/2026-10-06_bug_analytics_reports_queries_fail_on_postgres.md
+
+
+# ===========================================================================
+# TXT follow-ups (2026-10-08): type/direction rule, transactions API fields, schema-only V22,
+# Analytics dashboard balance bug, greenlet dependency
+# ===========================================================================
+
+# --- Ledger ---
+
+[commit]
+repo: services/fintracker-ledger
+message: TXT-01: Added failing tests for the EXPENSE-debit / INCOME-REFUND-credit rule, the type fallback over HTTP, and the transactions API's new fields, filters and updates.
+src/test/java/com/fintracker/ledger/category/CategoryCodeMigrationIT.java
+src/test/java/com/fintracker/ledger/transaction/controller/TransactionControllerIT.java <= snapshots/fintracker-ledger/TXT-01-followups/TransactionControllerIT.java
+src/test/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepositoryIT.java
+src/test/java/com/fintracker/ledger/transaction/repository/TransactionTypeIT.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionServiceTest.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionTypeServiceTest.java <= snapshots/fintracker-ledger/TXT-01-followups/TransactionTypeServiceTest.java
+
+[commit]
+repo: services/fintracker-ledger
+message: TXT-01: Made V22 schema-only and moved removal of legacy PURCHASE/CREDIT rows to a one-time script so migrations never carry data updates.
+src/main/resources/db/migration/V22__Transaction_Types_And_Direction.sql
+scripts/one-time/2026-10-08_TXT-01_remove_pre_txt_transactions.sql
+
+[commit]
+repo: services/fintracker-ledger
+message: TXT-01: Enforced EXPENSE as money out and INCOME/REFUND as money in, and exposed type, direction, currency, isRecurring and linkedTransactionId through the transactions API's create, list filters and updates.
+src/main/resources/db/migration/V23__Transaction_Type_Direction_Check.sql
+src/main/java/com/fintracker/ledger/transaction/controller/TransactionController.java
+src/main/java/com/fintracker/ledger/transaction/dto/ManualTransactionRequest.java <= snapshots/fintracker-ledger/TXT-01-followups/ManualTransactionRequest.java
+src/main/java/com/fintracker/ledger/transaction/dto/UpdateTransactionRequest.java
+src/main/java/com/fintracker/ledger/transaction/model/Transaction.java
+src/main/java/com/fintracker/ledger/transaction/model/TransactionFilter.java
+src/main/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/repository/TransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionService.java
+src/main/java/com/fintracker/ledger/transaction/service/impl/TransactionServiceImpl.java <= snapshots/fintracker-ledger/TXT-01-followups/TransactionServiceImpl.java
+
+# --- Data Pipeline ---
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: TXT-01: Added failing tests for rejecting normalized rows whose type contradicts their direction.
+tests/test_normalizer.py <= snapshots/fintracker-data-pipeline/TXT-01-followups/test_normalizer.py
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: TXT-01: Rejected normalized rows with EXPENSE as money in or INCOME/REFUND as money out so the pipeline never sends rows the Ledger refuses.
+src/normalizer/schemas.py
+
+# --- Analytics ---
+
+[commit]
+repo: services/fintracker-analytics
+message: REQ-6.1: Added failing tests showing the dashboard total balance and Safe to Spend count an account's balance once per transaction, and Safe to Spend never subtracts pending spending.
+tests/integration/conftest.py
+tests/integration/test_transaction_type_queries.py
+tests/integration/test_dashboard_balance.py
+
+[commit]
+repo: services/fintracker-analytics
+message: REQ-6.1: Fixed the dashboard total balance and Safe to Spend counting balances and bills once per joined transaction, and made Safe to Spend subtract pending money out so it reflects money already committed.
+src/dashboard/repository.py
+
+[commit]
+repo: services/fintracker-analytics
+message: TXT-02: Added greenlet as a direct dependency so async database access works on every platform, including Apple Silicon.
+pyproject.toml
+poetry.lock
+
+# --- UI ---
+
+[commit]
+repo: fintracker-ui
+message: TXT-01: Added failing tests for locking direction by type and for the transaction client's new fields, filters and updates.
+src/app/core/services/transaction.service.spec.ts
+src/app/features/transactions/add-transaction-dialog/add-transaction-dialog.spec.ts
+
+[commit]
+repo: fintracker-ui
+message: TXT-01: Locked the direction for EXPENSE, INCOME and REFUND and added type, direction, currency, isRecurring and linkedTransactionId to the transaction client.
+src/app/core/services/transaction.service.ts
+src/app/features/transactions/add-transaction-dialog/add-transaction-dialog.ts
+src/app/features/transactions/add-transaction-dialog/add-transaction-dialog.html
+src/app/features/transactions/transactions.ts
+
+# --- Root docs ---
+
+[commit]
+repo: .
+message: TXT-01: Updated the TXT test inventory and Ledger API endpoint doc for the type/direction rule and new transaction fields, and documented the dashboard balance bug.
+docs/fintracker-ledger-doc/TXT-transaction-types-tests.md <= snapshots/root/TXT-01-followups/TXT-transaction-types-tests.md
+docs/fintracker-ledger-doc/ledger-api-endpoints <= snapshots/root/TXT-01-followups/ledger-api-endpoints
+docs/bugs/2026-10-08_bug_analytics_dashboard_balance_counted_per_transaction.md
+
+# ===========================================================================
+# TXT-01 Option A (2026-10-08): a missing transaction type is rejected (400), never defaulted.
+# Files shared with the follow-up blocks above are committed there from snapshots and here in
+# full, so commit this phase after that one.
+# ===========================================================================
+
+[commit]
+repo: services/fintracker-ledger
+message: TXT-01: Added failing tests for rejecting a transaction with no type instead of defaulting it from the direction.
+src/test/java/com/fintracker/ledger/transaction/service/TransactionTypeServiceTest.java
+src/test/java/com/fintracker/ledger/transaction/controller/TransactionControllerIT.java
+src/test/java/com/fintracker/ledger/transaction/controller/InternalTransactionControllerTest.java
+
+[commit]
+repo: services/fintracker-ledger
+message: TXT-01: Rejected transactions with no type with a 400 instead of defaulting them to INCOME or EXPENSE, so every stored type was chosen explicitly.
+src/main/java/com/fintracker/ledger/transaction/dto/BulkCreateTransactionsRequest.java
+src/main/java/com/fintracker/ledger/transaction/dto/ManualTransactionRequest.java
+src/main/java/com/fintracker/ledger/transaction/service/impl/TransactionServiceImpl.java
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: TXT-01: Reworded the normalizer's type comments to describe its interim direction-based type now that the Ledger no longer defaults a missing type.
+src/normalizer/service.py
+tests/test_normalizer.py
+
+[commit]
+repo: .
+message: TXT-01: Changed the spec so a missing transaction type is rejected with 400, and updated the test inventory, API endpoint doc and DPTXT notes to match.
+docs/fintracker-ledger-doc/TXT-transaction-types-spec.md
+docs/fintracker-ledger-doc/TXT-transaction-types-tests.md
+docs/fintracker-ledger-doc/ledger-api-endpoints
+docs/fintracker-data-pipelines/DPTXT-data-pipeline-transactions-type-category-spec.md

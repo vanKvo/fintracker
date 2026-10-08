@@ -1,0 +1,10 @@
+1861e0936afc2bff5f91c47b4d7ebf1d1c69b8e4 REQ-DP-01: Documented the CSV bank-statement processing flow so the column-mapping and parsing path is explained end to end.
+95c4a441452da5bf4347dad8c05a92027b567379 DATA-PIPELINE-SPEC-01: Renamed test_not_yet_implemented.py to test_data_pipeline_spec_acceptance.py so the file name matches the spec-01 acceptance coverage it holds.
+445c7b7a3e92359fff8f211f0dc2a1c5538fe37c REQ-DP-06: Removed the unused internal API key from Ledger calls, since the Ledger authenticates internal callers by signed request rather than a shared secret.
+6ec99e4fdc8dde901e101af433a3065146f547b4 REQ-DP-06: Added failing tests for signing internal Ledger calls with the Lambda's own AWS identity.
+f7221a351f2c954f3746944c1516c4fd3e92cac3 REQ-DP-06: Signed internal Ledger calls with the Lambda's own AWS identity so the Ledger can verify the caller without a shared secret.
+d95ec887f356272c83c06fc15d8f589675738e2f REQ-DP-09: Added failing tests for categorizing transactions without Comprehend or a shared merchant cache.
+0abfa8cb2262d1d55bf89c93d1d2e308f825dd8f REQ-DP-09: Replaced Comprehend and the shared merchant cache with bank-provided categories to remove the idle classifier cost.
+79c564a0ca4a0fe3783d9050e7e56a0ecfc42eeb REQ-DP-01: Renamed MappingConfirmation to CsvColMappingConfirmation so the CSV column-mapping step is not confused with category mapping.
+5470d229a11a9bc75f548e5db25565e734d59ae6 REQ-DP-03: Rewrote the Ledger push idempotency test to the Ledger-side dedup contract and added failing tests for a missing Ledger URL.
+a29a0b4e98f508e68e42eed5f2af82cae4e14bd6 REQ-DP-03: Made the Ledger push fail with LEDGER_NOT_CONFIGURED when the Ledger URL is unset instead of crashing during request signing.

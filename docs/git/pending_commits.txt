@@ -1,0 +1,11 @@
+# Pending commits, grouped by implementation phase. Commit with docs/git/commit_pending.sh
+# (use --dry-run first). Blocks are committed top to bottom, so under TDD a phase's
+# failing-tests block always comes before its implementation block.
+#
+# Block format:
+#   [commit]
+#   repo: <path from the fintracker root; "." is the root repo>
+#   message: <requirement id>: <short description of the change and its impact>
+#   <one changed path per line, relative to that repo; list both sides of a rename>
+#
+# Remove blocks after they are committed.
