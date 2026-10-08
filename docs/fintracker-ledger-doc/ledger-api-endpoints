@@ -1,7 +1,7 @@
 # 1. Module: Transactions
-GET /api/v1/ledger/transactions: Fetches transactions with multi-field filtering (category, merchant, date range, tags, status).
-POST /api/v1/ledger/transactions/manual: Receives manual entry payloads.
-PUT /api/v1/ledger/transactions/{id}: Updates transaction row data (category, tags, etc.).
+GET /api/v1/ledger/transactions: Fetches transactions with multi-field filtering (category, merchant, date range, tags, status, type, direction). Each row includes type, direction, currency, isRecurring and linkedTransactionId.
+POST /api/v1/ledger/transactions: Receives manual entry payloads, including type (EXPENSE, INCOME, REFUND, TRANSFER, ADJUSTMENT; a missing type defaults to INCOME for a CREDIT and EXPENSE for a DEBIT), direction (DEBIT/CREDIT, required), currency (defaults to USD), isRecurring, and linkedTransactionId (must be one of the user's own transactions). EXPENSE must be a DEBIT; INCOME and REFUND must be a CREDIT.
+PATCH /api/v1/ledger/transactions/{id}: Updates category, amount, type, direction, isRecurring and/or linkedTransactionId. An omitted type or direction keeps its stored value, and the resulting pair must follow the same type/direction rule.
 POST /api/v1/ledger/transactions/{id}/split: Splits a transaction into multiple child transactions.
 POST /api/v1/ledger/transactions/bulk: Applies bulk tagging, approvals, or batch exclusions.
 DELETE /api/v1/ledger/transactions/{id}: Fails unless is_manual is true.
