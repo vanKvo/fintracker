@@ -32,15 +32,17 @@ Turning a user's own figures into clear, personalized takeaways adds value. The 
 ```
 [User selects period] ──► FS-01
         │
-[API resolves userId from auth session] ──► FS-02
+[Lambda authorizer resolves userId] ──► FS-02
         │
-[Cache check (user + period + data version)] ──► FS-14 ── hit ──► render
+[Cache check (user, period, facts hash, prompt version, model)] ──► FS-14 ── hit ──► render
         │ miss
-[Facts engine computes facts payload] ──► FS-03 … FS-08, FS-19
+[Facts engine computes facts payload] ──► FS-03 … FS-08, FS-19, FS-23
+        │
+[Detectors emit insight candidates] ──► FS-24 … FS-30
         │
 [Cost guard: per-user cap, daily budget, input size] ──► FS-21 ── over ──► fallback
         │
-[LLM invoked with read-only MCP tools] ──► FS-09, FS-10
+[LLM invoked with facts payload as JSON data] ──► FS-09, FS-10
         │
 [Validate: schema → grounding → advice guardrails] ──► FS-11, FS-12
         │
@@ -71,7 +73,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 | FS-06 | Unusual transactions and new merchants | Facts engine | MVP |
 | FS-07 | Recurring charges and upcoming bills | Facts engine | Later |
 | FS-08 | Budget vs. actual | Facts engine | MVP |
-| FS-09 | MCP tools for the LLM | AI integration | MVP |
+| FS-09 | Facts delivery to the LLM | AI integration | MVP |
 | FS-10 | Structured summary generation | AI integration | MVP |
 | FS-11 | Grounding validation | AI integration | MVP |
 | FS-12 | Advice scope guardrails | AI safety | MVP |
@@ -85,6 +87,14 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 | FS-20 | Prompt evaluation set | Quality | MVP |
 | FS-21 | LLM cost controls | Performance / cost | MVP |
 | FS-22 | Evaluation run modes and cost guard | Quality | MVP |
+| FS-23 | Transaction inclusion and data quality flags | Facts engine | MVP |
+| FS-24 | Insight candidate framework | Detectors | MVP |
+| FS-25 | Fee detector | Detectors | MVP |
+| FS-26 | Free-trial conversion detector | Detectors | MVP |
+| FS-27 | Duplicate charge detector | Detectors | MVP |
+| FS-28 | Small-purchase leakage detector | Detectors | MVP |
+| FS-29 | Cash timing detector | Detectors | Later |
+| FS-30 | Spending velocity detector | Detectors | MVP |
 
 ---
 
@@ -93,7 +103,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 ### FS-01: Summary period selection  `Priority: MVP`
 
 **Problem:** Users think about money over different time windows and need to choose which one is summarized.
-**Requirement:** The Financial Summary panel has a period dropdown: *This month, Last month, Last 3 months, Year to date, Last 12 months*.
+**Requirement:** The Financial Summary panel on the Reports page has a period dropdown: *This month, Last month, Last 3 months, Year to date, Last 12 months*.
 **Acceptance Criteria:**
 - [Happy] Default selection is *Last month* (a complete period). Changing the selection loads that period's summary.
 - [Happy] The selected period and its comparison period are shown as labels (e.g., "Sep 2026 vs. Aug 2026").
@@ -108,11 +118,14 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 ### FS-02: User scoping from auth session  `Priority: MVP`
 
 **Problem:** If the LLM could pass a `userId`, a prompt injection or hallucination could read another user's data.
-**Requirement:** `userId` is resolved only from the authenticated session and injected into tool execution context on the server. No MCP tool accepts `userId` as a parameter.
+**Requirement:** `userId` is the internal user ID returned by the shared FinTracker Lambda authorizer (outside this spec) and read from the API Gateway authorizer request context (`requestContext.authorizer.user_id`), and is passed to facts functions through a server-side context (FS-09). No facts function or tool accepts `userId` as a parameter.
 **Acceptance Criteria:**
 - [Happy] All facts queries are scoped to the session's `userId`.
+- [Happy] All Analytics routes and tools use this same mechanism.
+- [Fail] User IDs in headers, query strings or request bodies are ignored. A request with a forged user ID header returns only the caller's data.
+- [Alt] Calls from Analytics to other FinTracker services use IAM authentication. A user ID passed between services is trusted only on IAM-authenticated calls.
 - [Alt] A tool call that includes a `userId`/`user_id` argument is rejected by schema validation and logged as a security event (FS-18).
-- [Fail] Missing or expired session → HTTP 401; the LLM is never invoked.
+- [Fail] Request denied by the authorizer, or no `user_id` in the context → HTTP 401; no facts are computed and the LLM is never invoked.
 **Refs:** FS-09, FS-16, FS-18
 
 ---
@@ -127,18 +140,16 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 |---|---|
 | This month (MTD) | Same day range in the previous month |
 | Last month | The month before |
-| Last 3 months | The preceding 3 months |
+| Last 3 months (3 complete calendar months) | The preceding 3 complete months |
 | Year to date | Same date range last year |
-| Last 12 months | The preceding 12 months |
+| Last 12 months (12 complete calendar months) | The preceding 12 complete months |
 
 **Acceptance Criteria:**
 - [Happy] The payload includes `schema_version`, `period`, `comparison_period`, `generated_at`, and a `data_quality` block.
 - [Happy] The same inputs always produce an identical payload (unit-tested with fixtures).
+- [Happy] Period boundaries use the user's profile timezone.
 - [Alt] If there is no data for the comparison period, the `change` fields are `null` and `data_quality.flags` includes `no_comparison_data`.
-- [Alt] Transfers between the user's own accounts are excluded from both income and expenses.
-- [Alt] Pending transactions are excluded; their count is reported in `data_quality.pending_count`.
-- [Fail] If any account's last sync is older than 72 hours, `data_quality.flags` includes `stale_account:<name>`.
-**Refs:** Appendix A
+**Refs:** Appendix A, FS-23
 
 ---
 
@@ -190,23 +201,26 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 **Acceptance Criteria:**
 - [Happy] Each entry includes `category`, `budget`, `actual`, `remaining`, `pct_used`, `pace_status` (`under | on_track | over`). Entries are sorted by `pct_used`, highest first.
 - [Happy] For multi-month periods, `budget` is the sum of the monthly budgets in effect for each month in the range.
-- [Alt] For *This month* (MTD), the entry also includes `pct_of_period_elapsed`. `pace_status` is `over` when `pct_used` exceeds `pct_of_period_elapsed` by more than 10 percentage points.
+- [Happy] Complete periods: `over` above 100%, `on_track` 90–100%, `under` below 90% of budget.
+- [Alt] *This month* (MTD): `budgets.pct_of_period_elapsed` is set at block level. `over` when `pct_used` exceeds it by more than 10 points, `under` when it is more than 10 points below, otherwise `on_track`.
 - [Alt] Spend in categories with no budget is reported as `unbudgeted_total`.
 - [Alt] No budgets in the period → `budgets` is `null` and `data_quality.flags` includes `no_budgets`. FS-11 drops any `budget` insight.
 **Refs:** Appendix A `budgets`, FS-11; split: emergency fund moved to FS-19
 
 ---
 
-### FS-09: MCP tools for the LLM  `Priority: MVP`
+### FS-09: Facts delivery to the LLM  `Priority: MVP`
 
-**Problem:** The LLM needs facts, but must not be able to query raw data or act on the account.
-**Requirement:** Expose read-only MCP tools that return sections of the precomputed facts payload. For example: `get_cash_flow`, `get_category_changes`, `get_anomalies`, `get_recurring`, `get_emergency_fund`, `get_budgets`. Each tool takes only `period` as input.
+**Problem:** The LLM needs facts, but must not be able to query raw data or act on the account. An MCP server adds deployment, transport and auth work that isn't needed while the facts payload is small.
+**Requirement:** For MVP, the full facts payload is passed to the LLM inline, as one JSON data block in the prompt, with no tool calling. Each payload section is produced by a plain read-only function in a single registry, so the same functions can later be exposed as Bedrock tools or MCP tools through an adapter, without changing their logic.
 **Acceptance Criteria:**
-- [Happy] Tools return data from the cached facts payload (FS-03). They never run free-form queries.
-- [Alt] Tools for unavailable sections (e.g., no budgets) return `{ "available": false, "reason": "..." }`.
-- [Fail] More than 10 tool calls in one generation → the run is aborted and falls back (FS-15).
-**Open Questions:** Should the full payload go directly into the prompt instead? Yes. It's cheaper and simpler, and the facts are small. Tools add value only if the payload grows large beyond reasonable context sizes (e.g., >20–30 KB of raw JSON)
-**Refs:** FS-02, FS-03
+- [Happy] Each section (e.g., `cash_flow`, `categories`, `anomalies`, `budgets`) is produced by a read-only function `(ctx, period) → section`. It is registered with a name, description, input schema and output schema, and reads only from the facts engine (FS-03), never via free-form queries.
+- [Happy] `ctx` carries `user_id` from the auth session (FS-02). No registered function takes `user_id` as input.
+- [Happy] The prompt builder calls every registered function and embeds the combined payload as one JSON block, validated against Appendix A.
+- [Alt] Unavailable sections (e.g., no budgets) return `{ "available": false, "reason": "..." }`.
+- [Alt] If the payload grows beyond about 20 KB of JSON, switch to tool calling: an adapter exposes the same registry as Bedrock tool definitions or an MCP server, with no changes to the functions.
+- [Fail] When tool calling is enabled, more than 10 tool calls in one generation → the run is aborted and falls back (FS-15).
+**Refs:** FS-02, FS-03, FS-16, FS-21
 
 ---
 
@@ -216,11 +230,11 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 - [Happy] The response passes JSON Schema validation, including the enums and max lengths.
 - [Happy] The free-text fields contain no currency amounts or percentages. To mention a figure, the text uses a `{{metric_id}}` token, and the UI replaces it with the formatted fact.
 - [Alt] At most 3 highlights, 5 insights and 3 recommendations.
-- [Fail] Schema validation fails → retry once with the validation errors included; fails again → fallback (FS-15).
-- [Fail] LLM call times out after 20 seconds → fallback (FS-15).
+- [Fail] Schema validation fails → retry with the validation errors included, if the retry is unused; otherwise fallback (FS-15). FS-10 and FS-11 share one retry per generation.
+- [Fail] Each request has a 25 s overall deadline. Each LLM call times out at min(15 s, remaining time − 2 s). With less than 10 s remaining, there is no retry; fallback (FS-15).
 - [Happy] The model is referenced by a pinned version ID in config, never by a "latest" alias.
 **Decision (model):** Use the cheapest Amazon Bedrock model that passes FS-20. Candidates are tried in price order, and the next one is tried only if the previous one fails `core`: Amazon Nova Micro → Amazon Nova Lite → Amazon Nova 2 Lite → Claude Haiku 4.5. The chosen model is pinned by its Bedrock model ID (e.g., `amazon.nova-lite-v1:0`). Re-check prices on the AWS Bedrock pricing page before choosing.
-**Refs:** Appendix B, FS-20, FS-21
+**Refs:** Appendix B, FS-20, FS-21, FS-24
 
 ---
 
@@ -231,7 +245,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 **Acceptance Criteria:**
 - [Happy] Every `evidence` path and `{{metric_id}}` token resolves to a non-null value in the facts payload.
 - [Alt] An insight with an unresolvable reference is dropped. A recommendation whose `related_insight_id` was dropped is also dropped.
-- [Alt] Free text that contains a digit-based amount (regex: currency symbol, `%`, or a number with 3 or more digits) is rejected → retry once, then that item is dropped.
+- [Alt] Free text that contains a digit-based amount (regex: currency symbol, `%`, or a number with 3 or more digits) is rejected → retry if the shared retry (FS-10) is unused; otherwise that item is dropped.
 - [Fail] If at least half the items are dropped, the whole summary is discarded and the fallback (FS-15) is shown.
 **Refs:** FS-10, Appendix B
 
@@ -250,19 +264,21 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 ---
 
 ### FS-13: Summary rendering  `Priority: MVP`
-**Requirement:** The UI combines facts (numbers) with LLM output (text).
+**Requirement:** On the Reports page, replacing the mocked narrative, the UI combines facts (numbers) with LLM output (text).
 **Acceptance Criteria:**
 - [Happy] Layout order: headline + overall status badge → highlights (metric value from facts + commentary) → insights (sorted warning, positive, info) → recommendations → data caveats → disclaimer.
 - [Happy] `{{metric_id}}` tokens are rendered with the user's currency and locale.
 - [Happy] Each insight's "Why?" expander shows the evidence facts it references.
 - [Alt] A loading skeleton is shown while generating. Facts-only content may render first.
 - [Alt] Sections with no items are hidden. No empty headers are shown.
-**Refs:** FS-10, FS-15
+- [Happy] Data caveats are rendered by code from `data_quality.flags` using fixed templates; `account_ref` is resolved to the account nickname in the UI.
+- [Happy] The old insights endpoint and mocked narrative are removed when this panel ships.
+**Refs:** FS-10, FS-15, FS-23
 
 ---
 
 ### FS-14: Caching and regeneration  `Priority: MVP`
-**Requirement:** Summaries are cached by `(userId, period, facts_hash)` to control cost and latency.
+**Requirement:** Summaries are cached by `(userId, period, facts_hash, prompt_template_version, model_id)` to control cost and latency.
 **Acceptance Criteria:**
 - [Happy] Opening the same period again with unchanged data returns the cached summary, with no LLM call.
 - [Alt] New transactions change `facts_hash`, so the next view regenerates the summary.
@@ -316,7 +332,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 **Problem:** Without a record of what produced each summary, wrong or disputed summaries can't be investigated or reproduced. Logging raw financial data creates a privacy risk.
 **Requirement:** Every summary generation writes one audit record and structured logs that contain references and metadata only, never financial values or generated text.
 **Acceptance Criteria:**
-- [Happy] Each generation writes an audit record: `summary_id`, `user_id`, `period`, `payload_id`, `payload_hash`, `prompt_template_version`, `model_id`, `input_tokens`, `output_tokens`, `retry_count`, `outcome` (`success | fallback:<reason> | blocked:<reason>`), `created_at`.
+- [Happy] Each generation writes an audit record: `summary_id`, `user_id` (internal opaque ID, never email), `period`, `payload_id`, `payload_hash`, `prompt_template_version`, `model_id`, `input_tokens`, `output_tokens`, `retry_count`, `outcome` (`success | fallback:<reason> | blocked:<reason>`), `created_at`.
 - [Happy] The facts payload snapshot and LLM response are stored encrypted, keyed by `payload_id` / `summary_id`, and deleted automatically after 30 days. This allows any summary from the last 30 days to be reproduced.
 - [Happy] Audit records and operational metadata (token counts, latency, tool names, validation outcomes) are retained for 12 months.
 - [Alt] Security events (rejected `userId` argument, tool-call limit exceeded, guardrail hits) are written with `severity: security` and are searchable by `user_id`.
@@ -356,20 +372,21 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 - [Happy] A run passes only with 100% schema-valid output, 0 grounding failures (FS-11), 0 guardrail hits (FS-12), and 0 followed injection instructions. Generation runs at temperature 0, and a failure in any run of a fixture counts as a failure.
 - [Happy] The report shows, per fixture and per run: `input_tokens`, `output_tokens`, retries and cost. It also shows the average and maximum, the total cost of the run, the projected cost of the next tier, and the change from the last passing run of the same tier.
 - [Fail] The run fails if the average tokens per summary exceeds the token budget, or if any single summary exceeds 2× the budget (retries included).
-- [Fail] Results are saved with `tier`, `prompt_template_version`, `model_id` and output schema version, pass or fail.
+- [Fail] Results are saved to S3 (Appendix C) with `tier`, `prompt_template_version`, `model_id` and output schema version, pass or fail.
 **Open Questions:** What is the token budget per summary? Proposed: set it after the first passing `core` run, at about 20% above the measured average.
 **Refs:** FS-10, FS-11, FS-12, FS-16, FS-18, FS-22; split from FS-17
+
 ---
 
 ### FS-21: LLM cost controls  `Priority: MVP`
 
 **Problem:** LLM cost scales with usage, retries and payload size. Without hard limits, a bug, a retry loop or abuse can produce a surprise bill.
-**Requirement:** Limit LLM spend at four levels: per request, per user, per day for the whole app, and at the provider/cloud account. When a limit is reached, show the facts-only fallback (FS-15); never fail open.
+**Requirement:** Limit LLM spend at four levels: per request, per user, per day for the whole app, and at the AWS account. The app's daily circuit breaker is the real-time hard stop. When a limit is reached, show the facts-only fallback (FS-15); never fail open.
 **Acceptance Criteria:**
 - [Happy] **Per request:** output is capped with `max_tokens` (default 1,200). The input is token-counted before the call, and payloads above 8,000 input tokens are rejected and logged. At most 1 retry (FS-10).
 - [Happy] **Per user:** at most 10 LLM generations per user per day, including manual refreshes (FS-14). Cache hits don't count.
 - [Happy] **App-wide:** a daily budget tracked from FS-18 token counts. At 80% an alert is sent. At 100%, a circuit breaker routes all new requests to the facts-only fallback until midnight UTC.
-- [Happy] **Account level:** provider spending limits and cloud budget alerts (e.g., AWS Budgets at 50%, 80% and 100% of the monthly budget, plus Cost Anomaly Detection). Separate keys or roles for production, dev and evaluation (FS-20), each with its own limit.
+- [Happy] **Account level:** Bedrock has no per-key spending cap. AWS Budgets alerts at 50%, 80% and 100% of the monthly budget, Cost Anomaly Detection, and an AWS Budgets action that attaches a deny policy to the Bedrock IAM roles at 100%. Separate IAM roles for production, dev and evaluation (FS-22).
 - [Happy] The static part of the prompt (system prompt + schema) uses provider prompt caching, where supported.
 - [Alt] Per-user and daily limits are config values, changeable without a deploy.
 - [Fail] If the token counter or budget store is unavailable, LLM calls are blocked (fail closed) and the fallback is shown.
@@ -390,9 +407,99 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 - [Alt] **Model comparison:** running with a non-production `model_id` produces the same report, so candidate models can be compared side by side (FS-10).
 - [Alt] **Automatic, free:** on every pull request, CI runs replay tests, which feed saved LLM responses through validation (FS-10 to FS-12) without calling the LLM. If a pull request changes prompt templates, `model_id`, the output schema or the facts payload schema, a required check blocks the merge until a passing `full` run exists for those exact versions.
 - [Fail] Before calling the LLM, the run prints its estimated cost. If the estimate is above the per-run cap (default $5), the run aborts unless `confirm_over_cap` is set. The run also stops mid-way if its actual cost passes the cap.
-- [Fail] Live runs use a separate IAM role from production, with its own spending limit (FS-21).
+- [Fail] Live runs use a separate IAM role from production, covered by its own AWS Budgets action (FS-21).
 - [Fail] **Owner-only runs:** live runs need approval from the repo owner (Van) through a protected GitHub environment (e.g., `llm-eval`, required reviewer = owner). The Bedrock role can be assumed only through OIDC from that environment. No Bedrock credentials exist in other CI jobs, local dev setups, or AI coding agents, so nothing else can start a paid run.
 **Refs:** FS-10, FS-20, FS-21
+
+---
+
+### FS-23: Transaction inclusion and data quality flags  `Priority: MVP`
+**Requirement:** Define which transactions count toward metrics, and flag data gaps. Requires a `last_synced_at` column on automatically synced accounts.
+**Acceptance Criteria:**
+- [Happy] Transfers between the user's own accounts and adjustment transactions are excluded from income and expenses. Adjustments are counted in `data_quality.adjustment_count`.
+- [Alt] Pending transactions are excluded and counted in `data_quality.pending_count`.
+- [Alt] Only the user's primary currency is included. Other currencies are excluded and flagged `excluded_currency:<code>`.
+- [Fail] An automatically synced account with `last_synced_at` older than 72 hours → flag `stale_account:<account_ref>`.
+- [Fail] For complete periods, an account whose latest transaction is more than 7 days before the period end → flag `incomplete_period:<account_ref>`.
+- [Happy] `account_ref` is an opaque account ID. Account nicknames never enter the payload (FS-16).
+**Refs:** FS-03, FS-13, FS-16, Appendix A; split from FS-03
+
+---
+
+### FS-24: Insight candidate framework  `Priority: MVP`
+
+**Problem:** Headline metrics alone let the LLM only restate numbers. Detected patterns give it something to connect and act on.
+**Requirement:** Code detectors find patterns in the user's transactions and emit scored insight candidates with computed impact. The LLM selects, connects and explains them.
+**Acceptance Criteria:**
+- [Happy] Each detector is a deterministic function in the FS-09 registry. It emits zero or more candidates: `id`, `detector_id`, `type`, `score` (0–1), `data`, `impact` (monthly amount or `null`), `evidence`.
+- [Happy] `impact` is computed by code as the monthly saving if the pattern stops. Recommendations reference it through `impact_ref`.
+- [Happy] Candidates are ranked by `score`; the top 8 go into `insight_candidates`.
+- [Happy] The prompt instructs the LLM to prioritize candidates, connect related ones, and not restate highlight metrics.
+- [Alt] Thresholds are config values. A detector missing required data emits nothing and is listed in `data_quality.skipped_detectors`.
+- [Fail] A detector error is logged (FS-18) and the detector is skipped; generation continues.
+- [Happy] Each detector has unit tests with a positive and a negative transaction fixture. FS-20 includes at least one fixture per candidate type, and that type must appear as an insight.
+**Refs:** FS-09, FS-10, FS-11, FS-18, FS-20, FS-25 … FS-30, Appendix A
+
+---
+
+### FS-25: Fee detector  `Priority: MVP`
+**Requirement:** Detect bank fees paid in the period.
+**Acceptance Criteria:**
+- [Happy] Fee types: overdraft/NSF, ATM, foreign transaction, late payment, account maintenance, interest charge. Matched by category or a configurable keyword list on the raw description; raw text stays out of the payload (FS-16).
+- [Happy] Candidate `type: fee` with total and count per fee type. `impact` = average monthly fees over the last 3 months.
+- [Alt] Fees refunded in the period are excluded.
+**Refs:** FS-24
+
+---
+
+### FS-26: Free-trial conversion detector  `Priority: MVP`
+**Requirement:** Detect free trials that converted to paid charges.
+**Acceptance Criteria:**
+- [Happy] A paid charge in the period is flagged when the merchant's only earlier charge was $0–$1.00, 5–35 days before.
+- [Happy] Candidate `type: free_trial` with `merchant`, `trial_date`, `paid_amount`. `impact` = `paid_amount`.
+**Refs:** FS-24
+
+---
+
+### FS-27: Duplicate charge detector  `Priority: MVP`
+**Requirement:** Detect likely duplicate charges.
+**Acceptance Criteria:**
+- [Happy] Two charges with the same merchant and amount within 48 hours, with no matching refund, are flagged.
+- [Alt] Excluded when the merchant had 3 or more same-amount charges in the prior 60 days.
+- [Happy] Candidate `type: duplicate_charge` with `merchant`, `amount`, `dates`. `impact` = `null`.
+**Refs:** FS-24
+
+---
+
+### FS-28: Small-purchase leakage detector  `Priority: MVP`
+**Requirement:** Detect frequent small purchases that add up.
+**Acceptance Criteria:**
+- [Happy] Transactions under $20 are grouped by merchant. A group with 10 or more transactions and a monthly total of $100 or more is flagged.
+- [Happy] Candidate `type: leakage` with `merchant`, `count`, `monthly_total`. `impact` = 50% of `monthly_total`.
+- [Alt] At most 2 groups, highest `monthly_total` first.
+**Refs:** FS-24
+
+---
+
+### FS-29: Cash timing detector  `Priority: Later`
+**Requirement:** Forecast the lowest checking balance before the next payday.
+**Acceptance Criteria:**
+- [Happy] Payday is detected from income deposits with a consistent cadence (2 or more in the last 60 days).
+- [Happy] Projected low = current checking balance − known bills due before payday (FS-07 or user-entered) − average daily spend × days to payday.
+- [Happy] Candidate `type: cash_timing` when the projected low is below $200 (config), with `projected_low`, `date`, `bills`.
+- [Alt] No balance data or no detectable payday → skipped (FS-24).
+**Refs:** FS-07, FS-24
+
+---
+
+### FS-30: Spending velocity detector  `Priority: MVP`
+**Requirement:** For *This month*, project month-end spend per category.
+**Acceptance Criteria:**
+- [Happy] Projected spend = actual ÷ `pct_of_period_elapsed`. Baseline = category budget, or the 3-month category median when no budget exists.
+- [Happy] Candidate `type: spending_velocity` when projected spend exceeds the baseline by 10% and $25 or more, with `projected`, `baseline`, `projected_over`. `impact` = `projected_over`.
+- [Alt] Skipped when fewer than 7 days of the month have passed.
+**Refs:** FS-08, FS-24
+
 ---
 
 ## Appendix A: Facts Payload Schema (code-generated)
@@ -405,8 +512,10 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
   "generated_at": "ISO-8601",
   "currency": "USD",
   "data_quality": {
-    "flags": ["no_comparison_data | stale_account:<name> | insufficient_history | no_income | no_budgets | no_emergency_fund_account | ..."],
+    "flags": ["no_comparison_data | stale_account:<account_ref> | incomplete_period:<account_ref> | excluded_currency:<code> | insufficient_history | no_income | no_budgets | no_emergency_fund_account | ..."],
     "pending_count": 0,
+    "adjustment_count": 0,
+    "skipped_detectors": ["detector_id"],
     "transaction_count": 0
   },
   "cash_flow": {
@@ -434,11 +543,18 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
     "unbudgeted_total": 0
   },
   "emergency_fund": { "liquid_savings": 0, "avg_monthly_expenses": 0, "months_of_coverage": 0, "status": "on_track | watch | needs_attention" },
+  "insight_candidates": [{ "id": "cand_1", "detector_id": "fees", "type": "fee | free_trial | duplicate_charge | leakage | cash_timing | spending_velocity", "score": 0, "data": {}, "impact": 0, "evidence": ["facts path"] }],
   "overall_status": "on_track | watch | needs_attention"
 }
 ```
 
-> **Note:** `overall_status` moved here from the LLM output. It is computed by rules in code (e.g., negative net cash flow or emergency fund `needs_attention` → `needs_attention`), so the badge is predictable. The LLM explains it in the `headline`. Until FS-19 ships, the rules leave emergency fund out.
+**`overall_status` rules** (computed by code, first match wins; the LLM explains it in the `headline`):
+
+| Status | Rule |
+|---|---|
+| `needs_attention` | `net_cash_flow` < 0, or any budget `pct_used` > 120%, or `emergency_fund.status` = `needs_attention` (after FS-19 ships) |
+| `watch` | `savings_rate` < 10%, or any budget `pct_used` > 100% |
+| `on_track` | Otherwise |
 
 > **Note:** Sections for requirements that haven't shipped (`recurring`, `upcoming_bills` from FS-07; `emergency_fund` from FS-19) are `null` until implemented.
 
@@ -450,26 +566,27 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 {
   "headline": "string, max 120 chars, may use {{metric_id}} tokens",
   "highlights": [
-    { "metric_id": "income | total_expenses | net_cash_flow | savings_rate | recurring_monthly_total | emergency_fund_months",
+    { "metric_id": "income | total_expenses | net_cash_flow | savings_rate",
       "commentary": "string, max 160 chars" }
   ],
   "insights": [
     { "id": "ins_1",
-      "type": "spending_change | anomaly | subscription | income_change | emergency_fund | budget",
+      "type": "spending_change | anomaly | subscription | income_change | emergency_fund | budget | fee | free_trial | duplicate_charge | leakage | cash_timing | spending_velocity",
       "severity": "info | positive | warning",
       "title": "string, max 60 chars",
       "detail": "string, max 240 chars",
-      "evidence": ["categories.increases[0]", "budgets.items[0]"] }
+      "evidence": ["categories.increases[0]", "insight_candidates[0]"] }
   ],
   "recommendations": [
     { "action": "string, imperative, max 120 chars",
       "rationale": "string, max 200 chars",
       "impact_ref": "facts path whose value is the estimated monthly impact, or null",
       "related_insight_id": "ins_1" }
-  ],
-  "data_caveats": ["string, restates data_quality.flags in plain language"]
+  ]
 }
 ```
+
+> **Note:** `recurring_monthly_total` and `emergency_fund_months` are added to `metric_id` when FS-07 and FS-19 ship.
 
 ### Changes from v0 and why
 
@@ -480,7 +597,19 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 | `related_insight_index` → `related_insight_id` | Indexes break when the validator drops insights (FS-11). |
 | Added an `id` to each insight | Required for stable linking and for feedback. |
 | `{{metric_id}}` tokens in text | Lets the text refer to figures without the LLM writing numbers. |
-| `data_caveats` sourced from `data_quality.flags` | Caveats come from facts, so the LLM can't invent them. |
+| `data_caveats` removed from LLM output; rendered by code from `data_quality.flags` (FS-13) | The LLM can't invent caveats, and it saves tokens. |
+
+---
+
+## Appendix C: Technical Decisions
+
+| Topic | Decision |
+|---|---|
+| Storage | One Analytics DynamoDB table: summary cache (FS-14), audit records and payload snapshots (FS-18), usage counters (FS-21). Item TTLs: snapshots 30 days, audit records 12 months. Encrypted with a customer-managed KMS key. |
+| Infrastructure | Terraform for Analytics, same layout as the Data Pipeline. |
+| Evaluation results | S3 bucket, versioned, 90-day lifecycle (FS-20, FS-22). |
+| Placement | Reports page, replacing the mocked narrative (FS-01, FS-13). |
+| Authentication | Shared Lambda authorizer for all FinTracker services; maps Cognito `sub` → internal `user_id` via User Profile `resolve_sub`. Specified outside this spec. |
 
 ---
 
@@ -500,3 +629,12 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 | 2026-10-08 | FS-20 changed to on-demand live runs, with free automatic replay tests and a required check for a matching passing run; added model comparison, pre-run cost estimate and per-run cap. Added FS-21 LLM cost controls. FS-10 adds pinned model version and model-selection Open Question. Workflow, index and FS-18 `outcome` updated. | Avoid LLM cost on every commit and prevent surprise bills. |
 | 2026-10-08 | Split FS-20: fixtures, pass criteria and report stay in FS-20; run modes, triggers and cost guard moved to new FS-22. Added tiered runs (dry → smoke → core → extended → full) and a dry run that estimates cost without calling the LLM. | Check cost at small scale before larger runs; FS-20 had grown past 7 acceptance criteria. |
 | 2026-10-08 | FS-10: model decision (cheapest passing Bedrock model, tried in price order starting with Nova Micro). FS-20: fixtures are facts payload JSON files (no test database); injection fixture explained. FS-21: per-user cap lowered to 10/day. FS-22: `full` tier uses 2 runs per fixture; live runs need owner approval through a protected environment. | Owner decisions on model, cost and run control. |
+| 2026-10-08 | FS-09 renamed to Facts delivery to the LLM: MVP passes the full facts payload inline (no tool calling); sections come from plain functions in one registry, convertible to Bedrock or MCP tools by an adapter. FS-02 and the workflow updated to match. | Ship faster; resolves the FS-09 Open Question (payload is small). |
+| 2026-10-08 | Added detectors: FS-24 framework, FS-25 fees, FS-26 free trial, FS-27 duplicates, FS-28 leakage, FS-29 cash timing (Later), FS-30 spending velocity; `insight_candidates` in Appendix A; new insight types in Appendix B. | Insights beyond restating metrics. |
+| 2026-10-08 | Split FS-03: inclusion rules and data quality flags moved to new FS-23, adding adjustments, primary currency only, `stale_account:<account_ref>` for synced accounts, and `incomplete_period`. FS-03: complete calendar months for Last 3/12 months; user timezone. | Review decisions Q7, Q8, smaller questions; nicknames out of the payload. |
+| 2026-10-08 | FS-08 `pace_status` thresholds; `pct_of_period_elapsed` block-level. Appendix A `overall_status` rule table. | Review decisions Q10/Q11. |
+| 2026-10-08 | FS-10: 25 s deadline; one retry shared with FS-11. FS-14 cache key adds prompt version and model ID. FS-21/FS-22: AWS Budgets actions replace per-key limits. | Review spec fixes and Q5. |
+| 2026-10-08 | FS-02: user ID from authorizer header for all Analytics routes; client header stripped. FS-13: Reports page placement, code-rendered caveats, old insights endpoint removed. FS-18: opaque user ID. Appendix B: `data_caveats` and Later metric IDs removed. Appendix C added (storage, Terraform, eval results in S3, placement). | Review decisions Q1–Q4 and smaller questions. |
+| 2026-10-08 | FS-02: `userId` from the JWT `sub` claim in the authorizer request context, not a header; client-supplied user IDs ignored; JWT verified in-app for entry points outside the authorizer. | Request context can't be set by the client; headers can. |
+| 2026-10-08 | FS-02: `userId` is the internal user ID from a verified `user_id` token claim (mapped from `sub` at token issuance); service-to-service calls use IAM authentication. | Same identity across the 4 microservices without a per-request lookup. |
+| 2026-10-08 | FS-02: `user_id` comes from the shared Lambda authorizer (specified outside this spec), which maps `sub` → `user_id` via User Profile `resolve_sub`. Replaces the token-claim approach. Appendix C: Authentication row. | Owner decision: Lambda authorizer. |
