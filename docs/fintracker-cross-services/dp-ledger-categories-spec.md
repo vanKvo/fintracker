@@ -73,7 +73,6 @@ Ledger must receive only the categories the user approved, so budgets never shif
 2. The user sees each transaction with its mapped category and the bank's original label. Uncategorized transactions are highlighted.
 3. The user may choose a different category from their active USER categories and the active SYSTEM categories. Ledger replaces that transaction's `category_id` in the pending transaction.
 4. The user approves. Ledger changes the transaction status to "POSTED".
-5. When a row's category is not found, inactive or not allowed, the Ledger stores the row anyway under uncategorized. It reports that per row (ACCEPTED with reason, e.g. CATEGORY_INACTIVE). The row lands highlighted in the Pending tab and the user picks a category there.
 
 ## DP-LEDGER-CATEGORIES-05: Validate categories and report results on ingest
 

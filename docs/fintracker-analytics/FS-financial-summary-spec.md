@@ -38,7 +38,7 @@ Turning a user's own figures into clear, personalized takeaways adds value. The 
         │ miss
 [Facts engine computes facts payload] ──► FS-03 … FS-08, FS-19, FS-23
         │
-[Detectors emit insight candidates] ──► FS-24 … FS-30
+[Detectors emit insight candidates] ──► FS-24 … FS-29
         │
 [Cost guard: per-user cap, daily budget, input size] ──► FS-21 ── over ──► fallback
         │
@@ -94,7 +94,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 | FS-27 | Duplicate charge detector | Detectors | MVP |
 | FS-28 | Small-purchase leakage detector | Detectors | MVP |
 | FS-29 | Cash timing detector | Detectors | Later |
-| FS-30 | Spending velocity detector | Detectors | MVP |
+| FS-30 | Spending velocity detector | Detectors | Removed |
 
 ---
 
@@ -103,11 +103,10 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 ### FS-01: Summary period selection  `Priority: MVP`
 
 **Problem:** Users think about money over different time windows and need to choose which one is summarized.
-**Requirement:** The Financial Summary panel on the Reports page has a period dropdown: *This month, Last month, Last 3 months, Year to date, Last 12 months*.
+**Requirement:** The Financial Summary panel on the Reports page has a period dropdown: *Last month, Last 3 months, Year to date, Last 12 months*. The current month belongs to the Dashboard, not Reports (app doc D21).
 **Acceptance Criteria:**
 - [Happy] Default selection is *Last month* (a complete period). Changing the selection loads that period's summary.
 - [Happy] The selected period and its comparison period are shown as labels (e.g., "Sep 2026 vs. Aug 2026").
-- [Alt] *This month* shows a "Month to date" badge, and is compared with the same number of days in the previous month (see FS-03).
 - [Alt] Periods with no transactions are disabled in the dropdown, with the tooltip "No data for this period".
 - [Fail] If loading fails, the previous summary stays visible with an inline error and a Retry button.
 **Open Questions:** Should the last selected period be remembered per user? No, just use default period.
@@ -118,10 +117,12 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 ### FS-02: User scoping from auth session  `Priority: MVP`
 
 **Problem:** If the LLM could pass a `userId`, a prompt injection or hallucination could read another user's data.
-**Requirement:** `userId` is the internal user ID returned by the shared FinTracker Lambda authorizer (outside this spec) and read from the API Gateway authorizer request context (`requestContext.authorizer.user_id`), and is passed to facts functions through a server-side context (FS-09). No facts function or tool accepts `userId` as a parameter.
+**Requirement:** `userId` is the internal user ID returned by the shared FinTracker Lambda authorizer (outside this spec). Analytics sits behind an API Gateway HTTP API, like the Data Pipeline, so the ID is read from the authorizer request context (`requestContext.authorizer.lambda.internal_user_id`), and is passed to facts functions through a server-side context (FS-09). No facts function or tool accepts `userId` as a parameter.
 **Acceptance Criteria:**
 - [Happy] All facts queries are scoped to the session's `userId`.
-- [Happy] All Analytics routes and tools use this same mechanism.
+- [Happy] All Analytics routes and tools use this same mechanism. MCP tools read the user ID from the same server-side context, set by the code that serves them.
+- [Alt] Local development (no authorizer): the user ID comes from the `LOCAL_DEV_USER_ID` environment variable, never from a header. It only works when `APP_ENV=local`; the service refuses to start if it is set in any other environment.
+- [Happy] The user's timezone and primary currency arrive in the verified user context: the identity authorizer attaches them for public routes, and the AI assistant forwards them in the signed user context for internal routes (app doc D23). A missing or invalid value fails the request; there is no default.
 - [Fail] User IDs in headers, query strings or request bodies are ignored. A request with a forged user ID header returns only the caller's data.
 - [Alt] Calls from Analytics to other FinTracker services use IAM authentication. A user ID passed between services is trusted only on IAM-authenticated calls.
 - [Alt] A tool call that includes a `userId`/`user_id` argument is rejected by schema validation and logged as a security event (FS-18).
@@ -138,7 +139,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 
 | Period | Compared with |
 |---|---|
-| This month (MTD) | Same day range in the previous month |
+| This month to date (Dashboard spending pace only, not a Reports period) | Same day range in the previous month |
 | Last month | The month before |
 | Last 3 months (3 complete calendar months) | The preceding 3 complete months |
 | Year to date | Same date range last year |
@@ -178,7 +179,8 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 **Acceptance Criteria:**
 - [Happy] Each anomaly includes `transaction_id`, `merchant`, `amount`, `baseline_amount`, `ratio`, `basis` (`merchant` | `category`).
 - [Alt] At most 5 anomalies are returned, sorted by `amount − baseline_amount`.
-- [Alt] Users with less than 60 days of history get no anomalies, and the flag `insufficient_history`.
+- [Alt] Users with less than 60 days of history get no anomalies and no new merchants, and the flag `insufficient_history`.
+- [Happy] "Prior" means the 12 months before the period starts. A new merchant has no posted transaction in that window. At most 5 new merchants are listed, highest amount first.
 **Refs:** Appendix A `anomalies`, `new_merchants`
 
 ---
@@ -200,9 +202,8 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 **Requirement:** For each budgeted category, compute budget, actual spend and pace for the selected period. The code decides the status, and the LLM only explains it.
 **Acceptance Criteria:**
 - [Happy] Each entry includes `category`, `budget`, `actual`, `remaining`, `pct_used`, `pace_status` (`under | on_track | over`). Entries are sorted by `pct_used`, highest first.
-- [Happy] For multi-month periods, `budget` is the sum of the monthly budgets in effect for each month in the range.
-- [Happy] Complete periods: `over` above 100%, `on_track` 90–100%, `under` below 90% of budget.
-- [Alt] *This month* (MTD): `budgets.pct_of_period_elapsed` is set at block level. `over` when `pct_used` exceeds it by more than 10 points, `under` when it is more than 10 points below, otherwise `on_track`.
+- [Happy] For multi-month periods, `budget` is the sum of the monthly budgets in effect for each month in the range, and `actual` counts only the months in which that category had a budget, so one budgeted month is never measured against several months of spending.
+- [Happy] Complete periods and *Year to date*: `over` above 100%, `on_track` 90–100%, `under` below 90% of budget.
 - [Alt] Spend in categories with no budget is reported as `unbudgeted_total`.
 - [Alt] No budgets in the period → `budgets` is `null` and `data_quality.flags` includes `no_budgets`. FS-11 drops any `budget` insight.
 **Refs:** Appendix A `budgets`, FS-11; split: emergency fund moved to FS-19
@@ -217,7 +218,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 - [Happy] Each section (e.g., `cash_flow`, `categories`, `anomalies`, `budgets`) is produced by a read-only function `(ctx, period) → section`. It is registered with a name, description, input schema and output schema, and reads only from the facts engine (FS-03), never via free-form queries.
 - [Happy] `ctx` carries `user_id` from the auth session (FS-02). No registered function takes `user_id` as input.
 - [Happy] The prompt builder calls every registered function and embeds the combined payload as one JSON block, validated against Appendix A.
-- [Alt] Unavailable sections (e.g., no budgets) return `{ "available": false, "reason": "..." }`.
+- [Alt] Unavailable sections (e.g., no budgets) return `{ "available": false, "reason": "..." }` from the function. In the facts payload, an unavailable section is `null` and its reason appears as a `data_quality` flag (e.g., `budgets: null` with `no_budgets`, FS-08).
 - [Alt] If the payload grows beyond about 20 KB of JSON, switch to tool calling: an adapter exposes the same registry as Bedrock tool definitions or an MCP server, with no changes to the functions.
 - [Fail] When tool calling is enabled, more than 10 tool calls in one generation → the run is aborted and falls back (FS-15).
 **Refs:** FS-02, FS-03, FS-16, FS-21
@@ -296,7 +297,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 **Acceptance Criteria:**
 - [Fail] LLM timeout, error, schema failure or grounding failure → facts-only view with the note "AI insights unavailable right now" and a Retry button.
 - [Fail] Facts engine failure → error state with Retry. The LLM is not called.
-- [Alt] Insufficient data (fewer than 10 transactions in the period) → skip the LLM and show "Not enough activity to summarize yet."
+- [Alt] Insufficient data (fewer than 10 transactions in the period, counted after the FS-23 inclusion rules, i.e. `data_quality.transaction_count`) → skip the LLM and show "Not enough activity to summarize yet."
 - [Happy] Every fallback records its reason code in the audit record (FS-18).
 **Refs:** FS-10, FS-11, FS-18
 
@@ -417,10 +418,12 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 **Requirement:** Define which transactions count toward metrics, and flag data gaps. Requires a `last_synced_at` column on automatically synced accounts.
 **Acceptance Criteria:**
 - [Happy] Transfers between the user's own accounts and adjustment transactions are excluded from income and expenses. Adjustments are counted in `data_quality.adjustment_count`.
+- [Happy] Transactions the user marked as excluded are left out of every metric.
+- [Happy] `data_quality.transaction_count` counts the included income, expense and refund transactions in the period.
 - [Alt] Pending transactions are excluded and counted in `data_quality.pending_count`.
 - [Alt] Only the user's primary currency is included. Other currencies are excluded and flagged `excluded_currency:<code>`.
-- [Fail] An automatically synced account with `last_synced_at` older than 72 hours → flag `stale_account:<account_ref>`.
-- [Fail] For complete periods, an account whose latest transaction is more than 7 days before the period end → flag `incomplete_period:<account_ref>`.
+- [Fail] An automatically synced account with `last_synced_at` older than 72 hours → flag `stale_account:<account_ref>`. Accounts never synced (no `last_synced_at`) and statement-upload accounts are not flagged.
+- [Fail] For complete periods, an account whose latest transaction is more than 7 days before the period end → flag `incomplete_period:<account_ref>`. Only accounts opened before the period start that have at least one transaction on or before the period end are checked.
 - [Happy] `account_ref` is an opaque account ID. Account nicknames never enter the payload (FS-16).
 **Refs:** FS-03, FS-13, FS-16, Appendix A; split from FS-03
 
@@ -433,7 +436,8 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 **Acceptance Criteria:**
 - [Happy] Each detector is a deterministic function in the FS-09 registry. It emits zero or more candidates: `id`, `detector_id`, `type`, `score` (0–1), `data`, `impact` (monthly amount or `null`), `evidence`.
 - [Happy] `impact` is computed by code as the monthly saving if the pattern stops. Recommendations reference it through `impact_ref`.
-- [Happy] Candidates are ranked by `score`; the top 8 go into `insight_candidates`.
+- [Happy] `score` = min(1, dollars ÷ $100), where dollars is the candidate's `impact`, or the charge amount for a duplicate charge (whose `impact` is `null`). The $100 cap is a config value.
+- [Happy] Candidates are ranked by `score`; ties go to the type order duplicate charge, fee, free trial, leakage, then by name. The top 8 go into `insight_candidates`, numbered `cand_1` … `cand_8` in that order.
 - [Happy] The prompt instructs the LLM to prioritize candidates, connect related ones, and not restate highlight metrics.
 - [Alt] Thresholds are config values. A detector missing required data emits nothing and is listed in `data_quality.skipped_detectors`.
 - [Fail] A detector error is logged (FS-18) and the detector is skipped; generation continues.
@@ -445,9 +449,9 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 ### FS-25: Fee detector  `Priority: MVP`
 **Requirement:** Detect bank fees paid in the period.
 **Acceptance Criteria:**
-- [Happy] Fee types: overdraft/NSF, ATM, foreign transaction, late payment, account maintenance, interest charge. Matched by category or a configurable keyword list on the raw description; raw text stays out of the payload (FS-16).
+- [Happy] Fee types: overdraft/NSF, ATM, foreign transaction, late payment, account maintenance, interest charge. A transaction is a fee when its category is Fees or its raw description (or merchant, when there is no description) matches the configurable keyword list. The keyword list also decides the fee type; a Fees-category transaction with no keyword match is `other`. Raw text stays out of the payload (FS-16).
 - [Happy] Candidate `type: fee` with total and count per fee type. `impact` = average monthly fees over the last 3 months.
-- [Alt] Fees refunded in the period are excluded.
+- [Alt] Fees refunded in the period are excluded. A refund matches a fee when it is linked to it, or, failing that, has the same merchant and amount within 30 days after the fee.
 **Refs:** FS-24
 
 ---
@@ -465,7 +469,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 **Requirement:** Detect likely duplicate charges.
 **Acceptance Criteria:**
 - [Happy] Two charges with the same merchant and amount within 48 hours, with no matching refund, are flagged.
-- [Alt] Excluded when the merchant had 3 or more same-amount charges in the prior 60 days.
+- [Alt] Excluded when the merchant had 3 or more same-amount charges in the prior 60 days, or 3 or more in the period itself (a habit that starts inside the period, like a daily coffee, is not a double charge).
 - [Happy] Candidate `type: duplicate_charge` with `merchant`, `amount`, `dates`. `impact` = `null`.
 **Refs:** FS-24
 
@@ -474,7 +478,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 ### FS-28: Small-purchase leakage detector  `Priority: MVP`
 **Requirement:** Detect frequent small purchases that add up.
 **Acceptance Criteria:**
-- [Happy] Transactions under $20 are grouped by merchant. A group with 10 or more transactions and a monthly total of $100 or more is flagged.
+- [Happy] Transactions under $20 are grouped by merchant. Any merchant group that averages more than 10 transactions and more than $100 in total spending is flagged. For multi-month periods, the period totals are divided by the period's length in months (days ÷ 30.44 = the number of months, at least 1). For example, $90 / 30.44 = 2.9566 months, merchant A has 33 transactions (txns) with total spend of $330, which means 33/2.9566 = 11.16 > 10 number of txns and $330/2.9566 = $111.62 > $100, so flag this merchant.
 - [Happy] Candidate `type: leakage` with `merchant`, `count`, `monthly_total`. `impact` = 50% of `monthly_total`.
 - [Alt] At most 2 groups, highest `monthly_total` first.
 **Refs:** FS-24
@@ -492,10 +496,11 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 
 ---
 
-### FS-30: Spending velocity detector  `Priority: MVP`
+### FS-30: Spending velocity detector  `Priority: Removed`
+**Status:** Removed on 2026-10-20. It ran only for *This month*, which is no longer a Reports period; the Dashboard's spending pace covers month-to-date pace. Kept for history; do not implement.
 **Requirement:** For *This month*, project month-end spend per category.
 **Acceptance Criteria:**
-- [Happy] Projected spend = actual ÷ `pct_of_period_elapsed`. Baseline = category budget, or the 3-month category median when no budget exists.
+- [Happy] Projected spend = actual ÷ `pct_of_period_elapsed`. Baseline = category budget, or the median of the category's totals in the 3 complete months before this month (a month with no spending counts as 0) when no budget exists. A baseline of 0 is skipped.
 - [Happy] Candidate `type: spending_velocity` when projected spend exceeds the baseline by 10% and $25 or more, with `projected`, `baseline`, `projected_over`. `impact` = `projected_over`.
 - [Alt] Skipped when fewer than 7 days of the month have passed.
 **Refs:** FS-08, FS-24
@@ -539,7 +544,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
   "upcoming_bills": [{ "name": "", "amount": 0, "due_date": "date", "source": "recurring | user" }],
   "budgets": {
     "items": [{ "category": "", "budget": 0, "actual": 0, "remaining": 0, "pct_used": 0, "pace_status": "under | on_track | over" }],
-    "pct_of_period_elapsed": "number, This month only; otherwise null",
+    "pct_of_period_elapsed": "null (reserved; This month is no longer a Reports period)",
     "unbudgeted_total": 0
   },
   "emergency_fund": { "liquid_savings": 0, "avg_monthly_expenses": 0, "months_of_coverage": 0, "status": "on_track | watch | needs_attention" },
@@ -571,7 +576,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
   ],
   "insights": [
     { "id": "ins_1",
-      "type": "spending_change | anomaly | subscription | income_change | emergency_fund | budget | fee | free_trial | duplicate_charge | leakage | cash_timing | spending_velocity",
+      "type": "spending_change | anomaly | income_change | budget | fee | free_trial | duplicate_charge | leakage | spending_velocity",
       "severity": "info | positive | warning",
       "title": "string, max 60 chars",
       "detail": "string, max 240 chars",
@@ -586,7 +591,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 }
 ```
 
-> **Note:** `recurring_monthly_total` and `emergency_fund_months` are added to `metric_id` when FS-07 and FS-19 ship.
+> **Note:** `recurring_monthly_total` and `emergency_fund_months` are added to `metric_id` when FS-07 and FS-19 ship. The insight types `subscription` (FS-07), `emergency_fund` (FS-19) and `cash_timing` (FS-29) are added to `type` when those requirements ship.
 
 ### Changes from v0 and why
 
@@ -609,7 +614,11 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 | Infrastructure | Terraform for Analytics, same layout as the Data Pipeline. |
 | Evaluation results | S3 bucket, versioned, 90-day lifecycle (FS-20, FS-22). |
 | Placement | Reports page, replacing the mocked narrative (FS-01, FS-13). |
-| Authentication | Shared Lambda authorizer for all FinTracker services; maps Cognito `sub` → internal `user_id` via User Profile `resolve_sub`. Specified outside this spec. |
+| Authentication | Shared Lambda authorizer for all FinTracker services; maps Cognito `sub` → internal user ID via User Profile `resolve_sub` and returns it as `internal_user_id`. API Gateway HTTP API, so Analytics reads `requestContext.authorizer.lambda.internal_user_id`. Specified outside this spec. |
+| Local identity | `LOCAL_DEV_USER_ID`, honoured only when `APP_ENV=local` (FS-02). |
+| Profile settings | Timezone and primary currency from the verified user context (identity authorizer, or the AI assistant's signed context). No call to User Profile (app doc D23). |
+| Token counting | Input tokens are estimated locally before the call (UTF-8 characters ÷ 3, rounded up), which over-counts for English JSON. Actual tokens from the model response are what cost tracking and audit records use. |
+| Infrastructure timing | Terraform is deferred; the code reads table, queue and topic names from environment variables. |
 
 ---
 
@@ -638,3 +647,6 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 | 2026-10-08 | FS-02: `userId` from the JWT `sub` claim in the authorizer request context, not a header; client-supplied user IDs ignored; JWT verified in-app for entry points outside the authorizer. | Request context can't be set by the client; headers can. |
 | 2026-10-08 | FS-02: `userId` is the internal user ID from a verified `user_id` token claim (mapped from `sub` at token issuance); service-to-service calls use IAM authentication. | Same identity across the 4 microservices without a per-request lookup. |
 | 2026-10-08 | FS-02: `user_id` comes from the shared Lambda authorizer (specified outside this spec), which maps `sub` → `user_id` via User Profile `resolve_sub`. Replaces the token-claim approach. Appendix C: Authentication row. | Owner decision: Lambda authorizer. |
+| 2026-10-08 | FS-02: context key `internal_user_id` under `authorizer.lambda` (HTTP API); local-dev identity; profile settings via IAM route; MCP tools use the same context. FS-06: 12-month lookback, new merchants capped at 5. FS-08: Year to date uses the complete-period thresholds. FS-09: unavailable sections are `null` in the payload. FS-15: count after FS-23. FS-23: excluded transactions, `transaction_count`, stale and incomplete-period account rules. FS-24: score formula and tie-break. FS-25: fee matching and refund matching. FS-28: per-month averages. FS-30: baseline median definition. Appendix B: Later insight types removed. Appendix C: identity, profile settings, token counting, Terraform deferred. | Owner decisions on review questions Q1–Q11 and spec gaps. |
+| 2026-10-09 | FS-08: multi-month `actual` counts only budgeted months. FS-27: 3+ same-amount charges within the period also mark a habit. | Found while building the FS-20 fixtures: a September-only budget was compared with three months of spending, and a habit starting inside the period was flagged as duplicate charges. |
+| 2026-10-20 | FS-01: *This month* removed from Reports periods. FS-03: the month-to-date rule serves only the Dashboard's spending pace. FS-08: month-to-date pace rule removed. FS-30: removed. Appendix A: `pct_of_period_elapsed` always null. FS-02 and Appendix C: settings from the verified user context. | Owner decision: the Dashboard owns the current month (app doc D21); settings travel with the request (D23). |

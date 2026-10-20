@@ -9,3 +9,578 @@
 #   <one changed path per line, relative to that repo; list both sides of a rename>
 #
 # Remove blocks after they are committed.
+
+# ============================================================================================
+# FS Financial Summary MVP (2026-10-09). Spec: docs/fintracker-analytics/FS-financial-summary-updated.md
+# Read "FS: files with earlier uncommitted work" in pending_commits.md before running.
+# ============================================================================================
+
+# --- fintracker-ledger: FS-23 last_synced_at -------------------------------------------------
+
+[commit]
+repo: services/fintracker-ledger
+message: FS-23: Added failing tests for a nullable last_synced_at column on accounts, needed to flag automatically synced accounts that have gone stale.
+src/test/java/com/fintracker/ledger/account/AccountLastSyncedAtMigrationIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: FS-23: Added a nullable last_synced_at column to accounts so the Financial Summary can flag automatically synced accounts not synced in 72 hours.
+src/main/resources/db/migration/V24__Add_Account_Last_Synced_At.sql
+
+# --- fintracker-user-profile: internal settings route ----------------------------------------
+
+[commit]
+repo: services/fintracker-user-profile
+message: FS-02: Added failing tests for an IAM-authenticated internal route that returns a user's timezone and currency to allowlisted services only.
+tests/unit/identity/test_internal_settings.py
+
+[commit]
+repo: services/fintracker-user-profile
+message: FS-02: Added an IAM-authenticated internal settings route so Analytics can read a user's timezone and primary currency for summary periods.
+app/identity/service.py
+app/identity/internal_handlers.py
+
+# --- fintracker-analytics: FS-02 identity from the authorizer --------------------------------
+# 2026-10-18 AI refactor (D4): the MCP tools, legacy Bedrock insights and every LLM part of the
+# summary moved to services/fintracker-ai-assistant (blocks further down), so they are no longer here.
+
+[commit]
+repo: services/fintracker-analytics
+message: FS-02: Added failing tests requiring every Analytics route to take the user only from the authorizer context and to sign service calls with IAM.
+tests/conftest.py
+tests/http_api_event.py
+tests/core/__init__.py
+tests/core/test_identity.py
+tests/core/test_routes_auth.py
+
+[commit]
+repo: services/fintracker-analytics
+message: FS-02: Analytics routes now take the user from the Lambda authorizer context only, ignore client-sent user IDs and sign service calls with SigV4.
+src/core/identity.py
+src/core/problems.py
+src/core/sigv4.py
+src/main.py <= snapshots/fintracker-analytics/main_fs02.py
+src/dashboard/router.py <= snapshots/fintracker-analytics/dashboard_router_fs02.py
+src/reports/router.py <= snapshots/fintracker-analytics/reports_router_fs02.py
+
+# --- fintracker-analytics: facts engine and detectors (FS-01, FS-03 … FS-09, FS-23 … FS-30) ---
+
+[commit]
+repo: services/fintracker-analytics
+message: FS-03: Added failing tests for the facts payload, periods, cash flow, categories, anomalies, budgets, data quality flags, section registry and insight detectors.
+tests/summary/__init__.py
+tests/summary/builders.py
+tests/summary/test_periods.py
+tests/summary/test_cash_flow_and_categories.py
+tests/summary/test_anomalies_and_budgets.py
+tests/summary/test_data_quality_and_payload.py
+tests/summary/test_profile_client.py
+tests/summary/detectors/__init__.py
+tests/summary/detectors/test_detectors.py
+tests/summary/detectors/test_framework.py
+tests/integration/conftest.py
+tests/integration/test_summary_repository.py
+
+[commit]
+repo: services/fintracker-analytics
+message: FS-03: Added the facts engine and insight detectors, which compute every number in the Financial Summary from the user's own transactions and budgets.
+src/summary/__init__.py
+src/summary/periods.py
+src/summary/models.py
+src/summary/inclusion.py
+src/summary/schema.py
+src/summary/registry.py
+src/summary/payload.py
+src/summary/repository.py
+src/summary/profile_client.py
+src/summary/sections
+src/summary/detectors
+
+# --- fintracker-analytics: evaluation fixtures (FS-20) -----------------------------------------
+# Test data only: the builder and the facts payload fixtures. The AI assistant keeps a copy.
+
+[commit]
+repo: services/fintracker-analytics
+message: FS-20: Added the fixture builder and 24 synthetic-user facts payloads for the evaluation set, with tests that keep them current and schema-valid.
+scripts/__init__.py
+scripts/build_fs_fixtures.py
+tests/fixtures/fs
+tests/summary/test_fixtures.py
+
+# --- fintracker-analytics: facts API and internal routes for the AI assistant (D4, 2026-10-18) --
+
+[commit]
+repo: services/fintracker-analytics
+message: ARCH-D4: Added failing tests for the facts-only summary API and IAM-authenticated internal routes that serve facts and aggregates to the AI assistant only.
+tests/summary/test_service.py
+tests/summary/test_router.py
+tests/core/test_internal_routes.py
+
+[commit]
+repo: services/fintracker-analytics
+message: ARCH-D4: Analytics now serves the summary periods and facts payload plus internal routes for the AI assistant, and no longer calls an LLM or stores summary data.
+src/core/internal_auth.py
+src/summary/service.py
+src/summary/router.py
+src/dashboard/router.py
+src/reports/router.py
+src/insights/router.py
+src/main.py
+.github/workflows/ci.yml
+pyproject.toml
+poetry.lock
+README.md
+
+# --- fintracker-ai-assistant: new service (D4, 2026-10-18) --------------------------------------
+# New local repo (git init, no commits, no remote yet). Holds the LLM code moved from Analytics:
+# FS-10/FS-21/FS-22 land here directly instead of in Analytics.
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: ARCH-D4: Added failing tests for the AI assistant's facts client and MCP tools, which must read Analytics, Ledger and User Profile data only through signed service calls.
+tests/__init__.py
+tests/conftest.py
+tests/http_api_event.py
+tests/summary/__init__.py
+tests/summary/test_facts_client.py
+tests/tools
+tests/insights
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: ARCH-D4: Created the AI assistant service with the MCP tools and legacy insights moved from Analytics, reading all data through signed calls to the owning services.
+.gitignore
+pyproject.toml
+poetry.lock
+README.md
+src/__init__.py
+src/core
+src/tools
+src/insights
+src/summary/__init__.py
+src/summary/contract.py
+src/summary/facts_client.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: FS-10: Added failing tests for prompt building, Bedrock calls, the shared retry and deadline, output schema, grounding, advice guardrails and the facts-only fallback.
+tests/summary/samples.py
+tests/fixtures/samples
+tests/summary/test_validation.py
+tests/summary/test_prompt_and_projection.py
+tests/summary/test_generation.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: FS-10: Added summary generation on Bedrock with schema, grounding and banned-term checks, so only grounded, in-scope text reaches users and anything else falls back.
+src/summary/config.py
+src/summary/projection.py
+src/summary/prompt
+src/summary/llm.py
+src/summary/validation.py
+src/summary/fallback.py
+src/summary/generation.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: FS-21: Added failing tests for the summary cache, refresh limit, cost guard, audit trail, account deletion, log redaction and the summary API.
+tests/summary/test_store_guard_audit.py
+tests/summary/test_log_redaction.py
+tests/summary/test_service.py
+tests/summary/test_router.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: FS-21: Added the summary API with caching, per-user and daily LLM limits that fail closed, audit records and a CI log redaction check.
+src/summary/store.py
+src/summary/cost_guard.py
+src/summary/audit.py
+src/summary/deletion.py
+src/summary/service.py
+src/summary/router.py
+src/main.py
+scripts/__init__.py
+scripts/check_log_redaction.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: FS-20: Added failing tests and the 24-fixture evaluation set for run modes, cost cap, tier order, replay tests and the eval-required check.
+tests/fixtures/fs
+tests/summary/test_eval.py
+tests/summary/test_replay.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: FS-22: Added the evaluation runner, dry run, S3 results and eval-required check, with CI and an owner-approved workflow as the only way to start a paid run.
+src/summary/eval
+.github/workflows/ci.yml
+.github/workflows/llm-eval.yml
+
+# --- fintracker-ui: Financial Summary panel (FS-01, FS-13 … FS-15) -----------------------------
+
+[commit]
+repo: fintracker-ui
+message: FS-13: Added failing tests for the Financial Summary panel, its service and the fact formatting used to render AI text.
+src/app/core/services/financial-summary.service.spec.ts
+src/app/features/reports/financial-summary/financial-summary.spec.ts
+src/app/features/reports/financial-summary/summary-format.spec.ts
+
+[commit]
+repo: fintracker-ui
+message: FS-13: Replaced the mocked AI narrative and insights on the Reports page with the live Financial Summary panel, rendering every number from computed facts.
+src/app/core/services/financial-summary.service.ts
+src/app/features/reports/financial-summary/financial-summary.ts
+src/app/features/reports/financial-summary/financial-summary.html
+src/app/features/reports/financial-summary/financial-summary.scss
+src/app/features/reports/financial-summary/summary-format.ts
+src/app/features/reports/reports.html
+src/app/features/reports/reports.ts
+src/app/features/reports/reports.scss
+src/app/core/services/reports.service.ts
+proxy.conf.json
+
+# --- root: docs ------------------------------------------------------------------------------
+
+[commit]
+repo: .
+message: FS-01: Added the FS test inventory, implementation plan and run instructions.
+docs/fintracker-analytics/FS-tests.md
+docs/instructions/run_financial_summary.md
+docs/implementation_plans/2026-10-08_fs_financial_summary.md
+
+# ============================================================================================
+# Architecture doc review (2026-10-15)
+# ============================================================================================
+
+[commit]
+repo: .
+message: ARCH-DOC: Updated the architecture doc to match the implemented User profile, Data pipeline and Ledger flows and to move all LLM work from Analytics into the AI assistant service.
+docs/fintracker-architecture/fintracker-architectural-doc.md
+
+# ============================================================================================
+# AI refactor (2026-10-18): architecture doc notes
+# CLAUDE.md was also updated, but it is gitignored, so there is nothing to commit for it.
+# ============================================================================================
+
+[commit]
+repo: .
+message: ARCH-D4: Added notes on moving all LLM code from Analytics into the new AI assistant service, with the architecture doc review findings and proposed spec updates.
+docs/fintracker-architecture/2026-10-18_ai-assistant-extraction-notes.md
+
+# ============================================================================================
+# DP-Ledger Categories, Phase 2: Ledger ingest and review (T4–T7), 2026-10-20
+# Commit after the FS-23 blocks above: V24 is theirs, these add V25–V27.
+# ============================================================================================
+
+# --- Bug found while running the suite: RLS policies fail after the user context is reset ---
+
+[commit]
+repo: services/fintracker-ledger
+message: REQ-1.1: Added a failing test showing queries without a user context fail on a pooled connection whose user setting was reset, and made a category test query as a user.
+src/test/java/com/fintracker/ledger/config/RlsResetConnectionIT.java
+src/test/java/com/fintracker/ledger/category/CategoryCodeMigrationIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: REQ-1.1: Made every RLS policy treat a reset user setting as no user, so context-free queries such as the month-end budget job no longer fail on reused connections.
+src/main/resources/db/migration/V25__Rls_Treat_Reset_User_As_No_User.sql
+
+[commit]
+repo: .
+message: REQ-1.1: Documented why RLS policies failed on connections whose user context was reset and how V25 fixes it.
+docs/bugs/2026-10-20_bug_rls_policies_fail_after_user_context_reset.md
+
+# --- T4: source_category and merchant_key on transactions ---
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Added failing tests for storing a transaction's category id, the bank's original label and the merchant key.
+src/test/java/com/fintracker/ledger/testsupport/LedgerFixtures.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-columns/LedgerFixtures.java
+src/test/java/com/fintracker/ledger/transaction/repository/TransactionCategoryColumnsIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Stored each transaction's category id, the bank's original label and the merchant key, so the user can see why a row got its category and merchant rules have a key to match.
+src/main/resources/db/migration/V26__Add_Transaction_Source_Category_And_Merchant_Key.sql
+src/main/java/com/fintracker/ledger/transaction/model/Transaction.java
+src/main/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepository.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-columns/JooqTransactionRepository.java
+
+# --- T5: statement package v2 with per-row results ---
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-05: Added failing tests for the statement package carrying category ids, storing unusable categories as uncategorized with a reason, and per-row results.
+src/test/java/com/fintracker/ledger/transaction/controller/StatementIngestCategoryIT.java
+src/test/java/com/fintracker/ledger/transaction/service/TestCategories.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/TestCategories.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionServiceTest.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/TransactionServiceTest.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionTypeServiceTest.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/TransactionTypeServiceTest.java
+src/test/java/com/fintracker/ledger/transaction/service/BulkCreateAmountValidationTest.java
+src/test/java/com/fintracker/ledger/transaction/controller/InternalTransactionControllerTest.java
+src/test/java/com/fintracker/ledger/InternalApiSecurityIT.java
+src/test/java/com/fintracker/ledger/config/InternalEndpointSecurityIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-05: Validated each imported row's category id against the Ledger's categories, stored unusable ones as uncategorized with a reason, and reported a result per row so retries and stale pipeline categories never fail an import.
+src/main/java/com/fintracker/ledger/transaction/dto/BulkCreateTransactionsRequest.java
+src/main/java/com/fintracker/ledger/transaction/dto/BulkCreateTransactionsResponse.java
+src/main/java/com/fintracker/ledger/transaction/service/IngestCatalog.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionCategoryResolver.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/TransactionCategoryResolver.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionService.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/TransactionService.java
+src/main/java/com/fintracker/ledger/transaction/service/impl/TransactionServiceImpl.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/TransactionServiceImpl.java
+src/main/java/com/fintracker/ledger/transaction/controller/InternalTransactionController.java
+src/main/java/com/fintracker/ledger/transaction/repository/TransactionRepository.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/TransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepository.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/JooqTransactionRepository.java
+
+# --- T6: recategorize by category id (fixes custom categories saved as Uncategorized) ---
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Added failing tests for recategorizing by category id, resolving category names against the database and a picker list that includes custom categories.
+src/test/java/com/fintracker/ledger/transaction/controller/TransactionRecategorizeIT.java
+src/test/java/com/fintracker/ledger/testsupport/LedgerFixtures.java
+src/test/java/com/fintracker/ledger/transaction/service/TestCategories.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionServiceTest.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-recategorize/TransactionServiceTest.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionTypeServiceTest.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Recategorized transactions by category id from the user's active categories, so custom categories are no longer saved as Uncategorized and the id and text always agree.
+src/main/java/com/fintracker/ledger/category/repository/CategoryRepository.java
+src/main/java/com/fintracker/ledger/category/repository/JooqCategoryRepository.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionCategoryResolver.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionService.java
+src/main/java/com/fintracker/ledger/transaction/service/impl/TransactionServiceImpl.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-recategorize/TransactionServiceImpl.java
+src/main/java/com/fintracker/ledger/transaction/dto/UpdateTransactionRequest.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-recategorize/UpdateTransactionRequest.java
+src/main/java/com/fintracker/ledger/transaction/controller/TransactionController.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-recategorize/TransactionController.java
+src/main/java/com/fintracker/ledger/transaction/repository/TransactionRepository.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-recategorize/TransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepository.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-recategorize/JooqTransactionRepository.java
+
+[commit]
+repo: .
+message: DP-LEDGER-CATEGORIES-04: Documented why recategorizing to a custom category saved it as Uncategorized and how resolving categories against the database fixes it.
+docs/bugs/2026-10-20_bug_custom_category_saved_as_uncategorized.md
+
+# --- T7: per-user merchant rules ---
+
+[commit]
+repo: services/fintracker-ledger
+message: REQ-DP-09: Added failing tests for per-user merchant rules saved by "Always use this", filling other pending uncategorized rows, bulk categorize and serving rules to the pipeline.
+src/test/java/com/fintracker/ledger/merchantrule/MerchantRuleIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: REQ-DP-09: Added per-user merchant rules that "Always use this for <merchant>" saves and the pipeline applies first, so one user's choice never changes another user's categories.
+src/main/resources/db/migration/V27__Add_User_Merchant_Rules.sql
+src/main/java/com/fintracker/ledger/merchantrule/model/MerchantRule.java
+src/main/java/com/fintracker/ledger/merchantrule/repository/MerchantRuleRepository.java
+src/main/java/com/fintracker/ledger/merchantrule/repository/JooqMerchantRuleRepository.java
+src/main/java/com/fintracker/ledger/merchantrule/service/MerchantRuleService.java
+src/main/java/com/fintracker/ledger/transaction/repository/TransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/dto/UpdateTransactionRequest.java
+src/main/java/com/fintracker/ledger/transaction/dto/BulkActionRequest.java
+src/main/java/com/fintracker/ledger/transaction/controller/TransactionController.java
+src/main/java/com/fintracker/ledger/category/dto/InternalUserCategoriesResponse.java
+src/main/java/com/fintracker/ledger/category/controller/InternalCategoryController.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Added a one-time script that fills in category ids on existing transactions from their category text.
+scripts/one-time/2026-10-20_DP-LEDGER-CATEGORIES-04_backfill_transaction_category_id.sql
+
+# --- Follow-ups after review (2026-10-20): 404 for another user, obsolete code, manual category id ---
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-02: Changed the internal user categories test to expect 404 for another user's categories, as cross-tenant requests must never answer 403.
+src/test/java/com/fintracker/ledger/category/InternalCategoryControllerIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-02: Answered 404 instead of 403 when an internal caller asks for another user's categories, so the endpoint never confirms another tenant exists.
+src/main/java/com/fintracker/ledger/config/GlobalExceptionHandler.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-02-404/GlobalExceptionHandler.java
+src/main/java/com/fintracker/ledger/category/service/CategoryCatalogService.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Removed the TransactionCategory enum and the unused CategoryInUseException now that categories come only from the database and deleting deactivates.
+src/main/java/com/fintracker/ledger/transaction/model/TransactionCategory.java
+src/test/java/com/fintracker/ledger/transaction/model/TransactionCategoryTest.java
+src/main/java/com/fintracker/ledger/category/exception/CategoryInUseException.java
+src/main/java/com/fintracker/ledger/config/GlobalExceptionHandler.java
+src/test/java/com/fintracker/ledger/category/service/CategoryServiceTest.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Added failing tests for storing the category id on manually added transactions and rejecting unknown category names.
+src/test/java/com/fintracker/ledger/transaction/controller/ManualTransactionCategoryIT.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionServiceTest.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Stored the category id on manually added transactions, resolved from the user's active categories, so manual and imported rows are categorized the same way.
+src/main/java/com/fintracker/ledger/transaction/service/impl/TransactionServiceImpl.java
+
+# ============================================================================================
+# DP-Ledger Categories, Phase 3: Data Pipeline (T8–T13), 2026-10-20
+# ============================================================================================
+
+# --- T8: MerchantCategoryMap ---
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-06: Added failing tests for the MerchantCategoryMap seed, pattern matching by priority and the cached DynamoDB lookup.
+tests/test_merchant_category_map.py
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-06: Moved merchant patterns from hard-coded regex into a seeded MerchantCategoryMap DynamoDB table so PDF rows are categorized by reviewed data instead of code.
+infrastructure/seed/merchant_category_map_seed.sql
+infrastructure/seed/merchant_category_map.json
+scripts/__init__.py
+scripts/build_merchant_category_map.py
+src/categorizer/merchant_map.py
+infrastructure/terraform/environments/dev/main.tf <= snapshots/fintracker-data-pipeline/DP-LEDGER-CATEGORIES-06/main.tf
+infrastructure/terraform/environments/dev/variables.tf <= snapshots/fintracker-data-pipeline/DP-LEDGER-CATEGORIES-06/variables.tf
+infrastructure/terraform/environments/dev/terraform.tfvars.example <= snapshots/fintracker-data-pipeline/DP-LEDGER-CATEGORIES-06/terraform.tfvars.example
+
+# --- T9: categories client and cache ---
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-02: Added failing tests for caching the Ledger's SYSTEM categories with ETag refresh, keeping a stale copy on failure and fetching a user's categories per upload.
+tests/test_categories_client.py
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-02: Added a read-only copy of the Ledger's categories, refreshed every 5 minutes with If-None-Match, so the pipeline maps rows to valid Ledger categories without owning any.
+src/categories/__init__.py
+src/categories/models.py
+src/categories/client.py
+src/shared/exceptions.py
+
+# --- T10: resolver ---
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-03: Added failing tests for resolving every row to a Ledger category id through merchant rules, bank labels, the merchant map and uncategorized.
+tests/__init__.py
+tests/category_fixtures.py
+tests/test_category_resolver.py
+tests/test_categorizer.py
+tests/test_normalizer.py
+tests/test_normalizer_handler.py
+tests/test_data_pipeline_spec_acceptance.py <= snapshots/fintracker-data-pipeline/DP-LEDGER-CATEGORIES-03/test_data_pipeline_spec_acceptance.py
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-03: Resolved every row to a Ledger category id (user rule, bank label, merchant map, then uncategorized) and kept the bank's label and a merchant key, so the user reviews exactly what the Ledger stores.
+src/categorizer/bank_categories.py
+src/categorizer/merchant_key.py
+src/categorizer/schemas.py
+src/categorizer/service.py
+src/normalizer/handler.py
+src/normalizer/schemas.py
+src/normalizer/service.py
+
+# --- T11: dispatcher package v2 ---
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-04: Added failing tests for sending one package per statement with category ids, bank labels and merchant keys, and logging rows the Ledger stored as uncategorized.
+tests/test_data_dispatcher_ledger_push.py
+tests/test_data_dispatcher_security.py
+tests/test_data_pipeline_spec_acceptance.py
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-04: Sent the Ledger one package per statement with category ids, bank labels and merchant keys, and logged the rows it stored as uncategorized.
+src/data_dispatcher/service.py
+
+# --- T12: infrastructure ---
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-02: Gave the Normalizer the Ledger URL, alarmed on failed category refreshes and output the role ARNs the Ledger must allow.
+infrastructure/terraform/environments/dev/main.tf <= snapshots/fintracker-data-pipeline/DP-LEDGER-CATEGORIES-02-infra/main.tf
+infrastructure/terraform/environments/dev/variables.tf <= snapshots/fintracker-data-pipeline/DP-LEDGER-CATEGORIES-02-infra/variables.tf
+infrastructure/terraform/environments/dev/outputs.tf
+infrastructure/terraform/modules/lambda_function/outputs.tf
+
+# --- T13: HTTP API identity and job ownership ---
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: REQ-DP-06: Added failing tests requiring the job status and column-mapping routes to act only for the authorizer's internal user and only on that user's own job.
+tests/test_http_api_identity.py
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: REQ-DP-06: Switched the pipeline API to the User Profile identity authorizer and checked job ownership before resuming an upload, so users see their own jobs and cannot resume anyone else's.
+src/shared/identity.py
+src/statement_ingestion/status_handler.py
+src/gatekeeper/csv_col_mapping_confirmation_handler.py
+infrastructure/terraform/modules/http_api/main.tf
+infrastructure/terraform/modules/http_api/variables.tf
+infrastructure/terraform/environments/dev/main.tf
+infrastructure/terraform/environments/dev/variables.tf
+infrastructure/terraform/environments/dev/terraform.tfvars.example
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-06: Documented the MerchantCategoryMap table, its seed regeneration and the User Profile authorizer in the Terraform README.
+infrastructure/terraform/README.md
+
+[commit]
+repo: .
+message: REQ-DP-06: Documented why the pipeline API matched no user's jobs and let anyone resume an upload, and how the identity authorizer and ownership check fix it.
+docs/bugs/2026-10-20_bug_data_pipeline_api_uses_cognito_sub_and_skips_job_ownership.md
+
+# ============================================================================================
+# DP-Ledger Categories, Phase 4: UI (T14–T15), 2026-10-20
+# ============================================================================================
+
+[commit]
+repo: fintracker-ui
+message: DP-LEDGER-CATEGORIES-04: Added failing tests for showing the bank label, highlighting uncategorized rows, recategorizing by id with "Always use this" and bulk categorize.
+src/app/core/services/transaction.service.spec.ts
+src/app/features/transactions/transaction-detail-panel/transaction-detail-panel.spec.ts
+src/app/features/transactions/transactions.spec.ts
+
+[commit]
+repo: fintracker-ui
+message: DP-LEDGER-CATEGORIES-04: Showed the bank's label and highlighted uncategorized rows in the Pending tab, recategorized by category id with "Always use this for <merchant>" on by default, and made bulk Categorize work.
+src/app/core/services/category.service.ts
+src/app/core/services/transaction.service.ts
+src/app/features/transactions/transactions.ts
+src/app/features/transactions/transactions.html
+src/app/features/transactions/transactions.scss
+src/app/features/transactions/transaction-detail-panel/transaction-detail-panel.ts
+src/app/features/transactions/transaction-detail-panel/transaction-detail-panel.html
+src/app/features/transactions/transaction-detail-panel/transaction-detail-panel.scss
+
+[commit]
+repo: fintracker-ui
+message: DP-LEDGER-CATEGORIES-02: Added failing tests for deleting an in-use category without moving its transactions.
+src/app/features/settings/delete-category-dialog/delete-category-dialog.spec.ts
+
+[commit]
+repo: fintracker-ui
+message: DP-LEDGER-CATEGORIES-02: Made moving a deleted category's transactions optional, since deleting now deactivates the category and its transactions keep it.
+src/app/features/settings/delete-category-dialog/delete-category-dialog.ts
+src/app/features/settings/delete-category-dialog/delete-category-dialog.html
+src/app/features/settings/delete-category-dialog/delete-category-dialog.scss
+src/app/features/settings/manage-categories/manage-categories.ts
+
+# ============================================================================================
+# DP-Ledger Categories, Phase 5: deploy readiness and docs (T16), 2026-10-20
+# ============================================================================================
+
+[commit]
+repo: .
+message: DP-LEDGER-CATEGORIES-05: Added the Phase 2–4 test inventory, implementation notes with proposed spec changes, and the deploy runbook, and updated the Phase 1 inventory for the 404 change and the removed enum tests.
+docs/fintracker-cross-services/dp-ledger-categories-tests-02.md
+docs/fintracker-cross-services/dp-ledger-categories-tests.md
+docs/fintracker-cross-services/2026-10-20_dp_ledger_categories_implementation_notes.md
+docs/instructions/deploy_dp_ledger_categories.md

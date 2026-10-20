@@ -13,3 +13,6 @@
 [submodule "services/fintracker-data-pipeline"]
 	path = services/fintracker-data-pipeline
 	url = https://github.com/vanKvo/fintracker-data-pipeline.git
+[submodule "services/fintracker-ai-assisstant"]
+	path = services/fintracker-ai-assisstant
+	url = https://github.com/vanKvo/fintracker-ai-assisstant.git
