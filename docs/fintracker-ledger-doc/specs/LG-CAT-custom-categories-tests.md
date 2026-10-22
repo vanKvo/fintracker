@@ -1,3 +1,6 @@
+> **Obsolete (2026-10-21):** tests for an obsolete spec; the deletion tests no longer apply (XS-DPCAT-02).
+> **Tests for:** [LG-CAT-custom-categories-spec.md](LG-CAT-custom-categories-spec.md) · **Formerly:** `docs/fintracker-ledger-doc/ledger-transaction-tests-01.md` (renamed 2026-10)
+
 =========================
 F2P TESTS (61)
 =========================

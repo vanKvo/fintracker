@@ -1,6 +1,17 @@
-# Transactions (TS) 
+# LG-CAT: Custom Categories (obsolete; see XS-DPCAT)
 
-## REQ-TS-01: Customizing categories
+> **Obsolete (2026-10-21).** Don't implement from this spec. Categories are deactivated, never deleted (XS-DPCAT-02), so item 6 (reassign, then delete) and the `DELETE` route below no longer apply. Category routes take no `userId` from the request (XS-DPCAT-02). Kept for the history of code already built under LG-CAT-01.
+
+> **Formerly:** `docs/fintracker-ledger-doc/ledger-transaction-spec-01.md`, IDs REQ-TS-01 → LG-CAT-01 (renamed 2026-10; see [SPECS.md](../../SPECS.md))
+
+## Status
+
+| ID | Status |
+|---|---|
+| LG-CAT-01 | Implemented |
+
+
+## LG-CAT-01: Customizing categories *(was REQ-TS-01)*
 ### Problem:
 For adding a transaction, the existing category selection only has a limited number of categories. The user cannot create their own custom category as needed, e.g., auto property tax.
 
@@ -35,7 +46,7 @@ If the user deletes a custom category that transactions currently reference, the
 If the user renames an category, the system shall immediately display new name for transactions referencing to it. The system shall reference categoryId, so we need to update the Transaction table to have the category column reference to categoryId instead of category name.
 
 8. Updating Budget feature to use categoryId
-Budget features such as budget_lines/budget_template_lines currently match transaction categories by string. The system should be updated to have Budget features match transaction categories by categoryId.
+Moved to LG-BUD-05 in [LG-BUD-budgets-spec.md](LG-BUD-budgets-spec.md).
 
 9. Constraints
 Each user should have a maximum of 50 custom categories, not including the system-level categories. Category name max length is 100.
@@ -107,7 +118,7 @@ A new migration must:
 
 
 -- Budget feature update --
-`ledger.budget_lines.category` and `ledger.budget_template_lines.category_name` are free-text strings matched case-insensitively against transaction categories today (`JooqBudgetRepository`). The system should be updated to have Budget features match transaction categories by categoryId.
+See LG-BUD-05 in [LG-BUD-budgets-spec.md](LG-BUD-budgets-spec.md).
 
 #### Error Handling:
 a. Category name contains characters outside alphanumeric/space: 400 — message states the allowed character set

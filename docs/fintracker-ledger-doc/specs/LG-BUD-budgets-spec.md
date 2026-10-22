@@ -1,7 +1,20 @@
-# Budget Requirements
+# LG-BUD: Budgets
+
+> **Formerly:** `docs/fintracker-ledger-doc/ledger-budget-spec-01.md`, IDs REQ-5.1 … REQ-5.4 → LG-BUD-01 … LG-BUD-04 (renamed 2026-10; see [SPECS.md](../../SPECS.md)). LG-BUD-05 was item 8 of LG-CAT-01.
+
+## Status
+
+| ID | Status |
+|---|---|
+| LG-BUD-01 | Implemented |
+| LG-BUD-02 | Implemented |
+| LG-BUD-03 | Implemented |
+| LG-BUD-04 | In progress (spent per line computed; pacing ratio against elapsed month not computed) |
+| LG-BUD-05 | Implemented |
+
 
 ## Functional Requirements
-### REQ-5.1: Manage Budgets
+### LG-BUD-01: Manage Budgets *(was REQ-5.1)*
 A. Business Rules:
 A.1. Create/Update Budget
 - Period Selection & Upsert Behavior: The user can create a new budget for past, present, or future periods by specifying a month and year. The user can update an existing budget with 'ACTIVE' status only. If a budget already exists for the normalized target month, submitting a valid payload will update the budget's line items rather than throwing a duplicate error.
@@ -10,6 +23,7 @@ A.1. Create/Update Budget
 - Template Inheritance: If the user choose to create budget based on an existing template or from their most recent active budget, line items shall be automatically populated based on the user's selected template. If no template is selected and the user choose to create a budget from scratch, an empty budget with no line items (lines = []) shall be created with status = 'ACTIVE' 
 - Spend Amount Initialization: For future periods, spentAmount shall initialize to $0.00. For current or past periods, spentAmount shall automatically query and sum all approved transactions matching each line item's category within that period's date range.
 - Automated Period Closure: On the 1st day of every month at 00:00:00 UTC, all active budgets where month < current_month shall be automatically transitioned from status = 'ACTIVE' to status = 'CLOSED'
+  - The job runs at 00:00 UTC, not at midnight in each user's timezone. For US users that is the evening of the month's last day, so from then on the user can't edit that month's budget without reopening it. Accepted for now (2026-10-21); revisit if users hit it. This is a known exception to S6 (current month from the user's timezone).
 - Manual Close: A user or system actor can explicitly close an active budget prior to month-end via the close endpoint/method.
 - Immutability upon Closure: Once status == 'CLOSED', all subsequent write operations (upsertBudget, addLineItem, updateLineItemLimit, removeLineItem) are blocked and throw HistoricalBudgetException (422 Unprocessable Entity).
 - Reopening Exemption: A closed budget can only transition back to ACTIVE through an explicit reopenBudget call
@@ -19,7 +33,7 @@ A.2. Get Budgets
 - Pure Read: Listing a year shall never create a budget. Unlike getBudgetForMonth, which lazily materializes a budget for the requested month, this listing returns only budgets that already exist — a year with no budgets returns an empty list, not twelve newly created ones.
 - Tenant Scoping: Only budgets owned by the requesting user are returned; another user's budget for the same month is never visible.
 - Ordering: Results are returned in descending effectiveMonth order (most recent month first), so the caller can render a reverse-chronological period list without re-sorting.
-- Spend Enrichment: Every returned budget is enriched with spentAmount per line item under the same rules as REQ-5.1 "Spend Amount Initialization" — future periods report $0.00, current and past periods sum approved transactions for that period.
+- Spend Enrichment: Every returned budget is enriched with spentAmount per line item under the same rules as LG-BUD-01 "Spend Amount Initialization" — future periods report $0.00, current and past periods sum approved transactions for that period.
 - Year Boundary: A budget belongs to a year when its normalized effectiveMonth falls in [YYYY-01-01, YYYY-12-01] inclusive. December of the preceding year and January of the following year are excluded.
 
 A.3. Delete Budget
@@ -27,7 +41,7 @@ A.3. Delete Budget
 - Deletion Guard: Deleting a budget whose status == 'CLOSED' shall be rejected with a HistoricalBudgetException (422 Unprocessable Entity), consistent with A.1 "Immutability upon Closure" — a closed period is historical record. The budget must be explicitly reopened first.
 - Ownership: Deleting a budget that does not exist, or that belongs to another user, shall be rejected with a ResourceNotFoundException (404 Not Found). A user must never be able to distinguish "does not exist" from "is not yours".
 - Cascade: Deleting a budget removes its ledger.budget_lines records along with it. No orphaned line items may remain.
-- Orphaned Transaction Handling: Deletion removes budget ceilings only. Underlying ledger.transactions records are never altered or deleted, mirroring REQ-5.2 "Orphaned Transaction Handling".
+- Orphaned Transaction Handling: Deletion removes budget ceilings only. Underlying ledger.transactions records are never altered or deleted, mirroring LG-BUD-02 "Orphaned Transaction Handling".
 - Non-Idempotent: Deleting an already-deleted budget is a 404, not a silent success — the second caller is acting on a stale view.
 
 B. Contraints:
@@ -45,7 +59,7 @@ D. REST API Mapping
 Location: com.fintracker.ledger.budget.controller.BudgetController
 Endpoints: 
 - PUT /api/v1/budgets — Create or update budget. (A.1)
-- GET /api/v1/budgets?month={YYYY-MM-DD} — Get the budget of a single month. (A.1 / REQ-5.4)
+- GET /api/v1/budgets?month={YYYY-MM-DD} — Get the budget of a single month. (A.1 / LG-BUD-04)
 - GET /api/v1/budgets?year={YYYY} — List every existing budget of the user in that calendar year. (A.2)
 - DELETE /api/v1/budgets/{id} — Delete an ACTIVE budget and its line items. (A.3)
 - POST /api/v1/budgets/{id}/close — Transition budget status from ACTIVE to CLOSED.
@@ -67,7 +81,7 @@ Location: com.fintracker.ledger.budget.service.BudgetService
 interface BudgetService {
 
     /**
-     * REQ-5.1 A.2 "Get Budgets": every budget the user already has in the given calendar year,
+     * LG-BUD-01 A.2 "Get Budgets": every budget the user already has in the given calendar year,
      * most recent month first, each enriched with per-line spentAmount.
      *
      * This is a pure read: unlike getBudgetForMonth, it never materializes a budget for a month
@@ -83,7 +97,7 @@ interface BudgetService {
     List<Budget> getBudgetsForYear(UUID userId, int year) throws InvalidBudgetException;
 
     /**
-     * REQ-5.1 A.3 "Delete Budget": permanently removes an ACTIVE budget and, by cascade, its
+     * LG-BUD-01 A.3 "Delete Budget": permanently removes an ACTIVE budget and, by cascade, its
      * line items. Underlying transactions are never touched.
      *
      * @param userId   unique identifier of the requesting user.
@@ -97,7 +111,7 @@ interface BudgetService {
 }
 
 
-### REQ-5.2: Manage Budget Line Items
+### LG-BUD-02: Manage Budget Line Items *(was REQ-5.2)*
 A. Business Rules:
 - Granular Line Operations: Users shall be able to dynamically add a new line item, update an existing line item's limit, or remove a line item from any ACTIVE budget.
 - State Check Guard: Line item modifications are permitted only if the parent budget's status == 'ACTIVE'. If status == 'CLOSED', the service throws a HistoricalBudgetException (422 Unprocessable Entity). 
@@ -134,23 +148,23 @@ E. Interface Details:
 Location: com.fintracker.ledger.budget.service.BudgetLineService
 
 
-### REQ-5.3: Quick Start Templates 
+### LG-BUD-03: Quick Start Templates *(was REQ-5.3)*
 A. Business Rules
 - System & Custom Template Availability: The system provides predefined global templates (is_system = true, e.g., "Basic Living", "Aggressive Savings") and user-owned custom templates (is_system = false). Users can inspect and select these templates to populate new budget instances.
 - Template Isolation & Copy-on-Instantiate: Applying a template acts purely as an initial seed. Copying line item categories and limitAmount values into a target budget creates independent ledger.budget_lines records; actions on instantiated budgets never mutate the source template.
 - Template Line Item Pre-Population: When creating a budget from a template for current or past periods, the spentAmount for each inherited template line item shall automatically query and sum approved transactions matching that category within the target period's date range. For future periods, spentAmount initializes to $0.00.
-- Template Line Item Overrides: Users may pass custom line items or explicit overrides in the budget creation payload alongside a templateId to append or adjust baseline template values prior to persistence. An override whose category matches a template line adjusts that line's limit; an override whose category is new appends a line. Matching is case-insensitive, consistent with REQ-5.2 "Category Uniqueness" — a case-sensitive merge would produce "Rent" and "rent" side by side and build a budget that violates that rule the moment it is written.
-- Previous Month Rollover: If no templateId is supplied, line items are cloned from the user's most recent ACTIVE budget, which is REQ-5.1 "Template Inheritance". If the user has no prior budget, an empty ACTIVE budget is created (lines = []).
+- Template Line Item Overrides: Users may pass custom line items or explicit overrides in the budget creation payload alongside a templateId to append or adjust baseline template values prior to persistence. An override whose category matches a template line adjusts that line's limit; an override whose category is new appends a line. Matching is case-insensitive, consistent with LG-BUD-02 "Category Uniqueness" — a case-sensitive merge would produce "Rent" and "rent" side by side and build a budget that violates that rule the moment it is written.
+- Previous Month Rollover: If no templateId is supplied, line items are cloned from the user's most recent ACTIVE budget, which is LG-BUD-01 "Template Inheritance". If the user has no prior budget, an empty ACTIVE budget is created (lines = []).
 - Custom Template Creation ("Save as Template"): A user can save a set of category allocations as a reusable custom template they own. Only custom templates can be created this way; the predefined system catalog is seeded by database migration and is read-only to every user, including its owner-less rows. Where the request identifies a source budget, the allocations shall be read from that budget server-side rather than taken from the request body, so a template can never be stored with figures the source budget does not contain.
-- Instantiation Delegates to REQ-5.1: Instantiating a budget from a template applies every REQ-5.1 rule unchanged — month normalization, State Initialization, the Modification Guard, Immutability upon Closure, the 50-line ceiling, monetary range and scale, and Spend Amount Initialization. REQ-5.3 adds template resolution and the override merge; it does not restate or vary any REQ-5.1 rule.
+- Instantiation Delegates to LG-BUD-01: Instantiating a budget from a template applies every LG-BUD-01 rule unchanged — month normalization, State Initialization, the Modification Guard, Immutability upon Closure, the 50-line ceiling, monetary range and scale, and Spend Amount Initialization. LG-BUD-03 adds template resolution and the override merge; it does not restate or vary any LG-BUD-01 rule.
 
 B. Constraints
 - Template Limit Ceiling: A template cannot contain more than 50 line items.
 - Target Line Ceiling: Merging template items with explicit user override items must not cause total lines on the created budget to exceed 50.
 - Template Name Uniqueness: Custom template names created by a user must be unique per user account (case-insensitive). System template names are globally unique.
 - Range Constraint for limitAmount: Every line item limitAmount inside a template must comply with standard monetary rules: scale of 2 decimal places, range [0.00, 999,999,999.99]. Inside a template the field is named defaultLimit (a starting suggestion); it becomes limitAmount (a live ceiling) only once copied onto a budget.
-- Template Category Name: Non-null, non-blank, maximum 50 characters, matching REQ-5.2 "Non-Empty Category Name". Categories within one template must be unique case-insensitively.
-- templateId Is Not REQ-5.1's templateId: REQ-5.1's upsertBudget takes a templateId identifying an existing *budget* of the same user to clone. REQ-5.3's templateId identifies a ledger.budget_templates row. These are distinct concepts that share a name; neither endpoint accepts the other's identifier, and a REQ-5.3 templateId submitted to PUT /budgets shall be rejected as an unknown template (400 InvalidBudgetException). Quick-start resolves its own line items and does not forward a templateId to upsertBudget.
+- Template Category Name: Non-null, non-blank, maximum 50 characters, matching LG-BUD-02 "Non-Empty Category Name". Categories within one template must be unique case-insensitively.
+- templateId Is Not LG-BUD-01's templateId: LG-BUD-01's upsertBudget takes a templateId identifying an existing *budget* of the same user to clone. LG-BUD-03's templateId identifies a ledger.budget_templates row. These are distinct concepts that share a name; neither endpoint accepts the other's identifier, and a LG-BUD-03 templateId submitted to PUT /budgets shall be rejected as an unknown template (400 InvalidBudgetException). Quick-start resolves its own line items and does not forward a templateId to upsertBudget.
 
 C. Data Impacts
 - State Changes: Reads from ledger.budget_templates and ledger.budget_template_lines. Inserts new records into ledger.budgets and ledger.budget_lines.
@@ -166,7 +180,7 @@ Endpoints:
 - POST /api/v1/ledger/budget-templates — Save a custom template ("Save as Template").
 - POST /api/v1/ledger/budgets/quick-start — Create a new budget using a template.
 
-Path Prefix: every controller in this service is mounted under /api/v1/ledger/*, so these endpoints are too. The same prefix applies to REQ-5.1 and REQ-5.2.
+Path Prefix: every controller in this service is mounted under /api/v1/ledger/*, so these endpoints are too. The same prefix applies to LG-BUD-01 and LG-BUD-02.
 
 Headers: Content-Type: application/json, Authorization: Bearer <JWT>
 
@@ -224,8 +238,8 @@ interface BudgetTemplateService {
      * ledger.budget_lines rows in both directions: later edits to the budget never reach the
      * template, and later edits to the template never reach budgets already created from it.
      *
-     * Every REQ-5.1 rule applies to the result unchanged (see A. Instantiation Delegates to
-     * REQ-5.1).
+     * Every LG-BUD-01 rule applies to the result unchanged (see A. Instantiation Delegates to
+     * LG-BUD-01).
      *
      * @param userId  Unique identifier of the requesting user.
      * @param request Payload containing target period, templateId (optional), and custom overrides.
@@ -258,7 +272,7 @@ interface BudgetTemplateService {
                                         List<BudgetTemplateLine> lines);
 }
 
-F. Data Contract (REQ-5.3)
+F. Data Contract (LG-BUD-03)
 --- 1. DATABASE SCHEMA CONTRACT: TEMPLATES TABLE ---
 Table Name: ledger.budget_templates
 Description: Stores global system templates and custom user-created templates.
@@ -305,7 +319,7 @@ Constraint: UNIQUE INDEX uq_template_category ON ledger.budget_template_lines(te
 Target Endpoint: POST /api/v1/budgets/quick-start
 Request Format: JSON
 
-Field: effectiveMonth | Type: String (YYYY-MM-DD) | Required: Yes | Constraints: Normalized to the first of the month per REQ-5.1 B "Normalization Rule"; target month must not have a CLOSED budget | Example: "2026-09-01" | Note: the same LocalDate format every other budget endpoint and the ledger.budgets.effective_month DATE column use. A YYYY-MM-only form would give one module two wire formats for the same concept.
+Field: effectiveMonth | Type: String (YYYY-MM-DD) | Required: Yes | Constraints: Normalized to the first of the month per LG-BUD-01 B "Normalization Rule"; target month must not have a CLOSED budget | Example: "2026-09-01" | Note: the same LocalDate format every other budget endpoint and the ledger.budgets.effective_month DATE column use. A YYYY-MM-only form would give one module two wire formats for the same concept.
 Field: templateId | Type: UUID (String) | Required: No | Constraints: Must exist in ledger.budget_templates if provided | Example: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
 Field: totalBudgetCap | Type: Numeric | Required: No | Constraints: Max scale 2, range [0.00, 999999999.99] | Example: 5000.00
 Field: customOverrides | Type: Array[Object] | Required: No | Constraints: Max total lines including template items <= 50 | Example: [{"categoryName": "Subscriptions", "limitAmount": 50.00}]
@@ -331,7 +345,7 @@ not contain. A sourceBudgetId belonging to another user is a 404, never a 403.
 --- 4. PAYLOAD CONTRACT: BUDGET RESPONSE ---
 Response Status: 201 CREATED
 Response Format: JSON
-Shape: identical to the Budget returned by every REQ-5.1 endpoint. Quick-start creates an ordinary
+Shape: identical to the Budget returned by every LG-BUD-01 endpoint. Quick-start creates an ordinary
 budget; a differently-shaped response for the same resource would force clients to branch on how a
 budget happened to be created. totalPlannedLimit and totalSpent are NOT returned — they are
 derivable by summing lines, and no other budget endpoint returns them.
@@ -346,7 +360,7 @@ Field: lines[].category | Type: String | Constraints: Non-null, case-preserved, 
 Field: lines[].limitAmount | Type: Numeric | Constraints: Scale 2 | Example: 1500.00
 Field: lines[].spentAmount | Type: Numeric | Constraints: Scale 2, default 0.00 for future periods | Example: 0.00
 
-## REQ-5.4: Get Budget Progress and Pacing (Depends on REQ-5.1 & Transaction Module)
+## LG-BUD-04: Get Budget Progress and Pacing *(was REQ-5.4)*
 A. Purpose: Active pacing charts calculate and supply metrics comparing current actual spending run rates against monthly thresholds to help users make better financial decisions.  
 B. Method Signature: getBudgetForMonth(userId: UUID, month: LocalDate) → Budget  
 - Inputs: userId: UUID (The owning user ID) month: LocalDate (The target calendar month)
@@ -358,7 +372,7 @@ D. System Behavior & Data Impact:
 - State Change: Read-only calculation.
 - Side Effects: Overwrites the default BigDecimal.ZERO on the returned schema transfer objects with the live, calculated expenses.
 E. Edge Cases & Error Handling:
-- Empty Budget Instance: If no budget exists for the requested month, it returns null or triggers the Auto-Template Copying process (REQ-5.2.1) depending on user interaction.Category Spend without Limit: If a category contains transactions but has a budget limit of 0.00, the pacing progress is flagged as exceeding the limit immediately.
+- Empty Budget Instance: If no budget exists for the requested month, it returns null or triggers the Auto-Template Copying process (Template Inheritance, LG-BUD-01) depending on user interaction.Category Spend without Limit: If a category contains transactions but has a budget limit of 0.00, the pacing progress is flagged as exceeding the limit immediately.
 
 --- 5. PAYLOAD CONTRACT: BUDGET TEMPLATE RESPONSE ---
 Response Status: 200 OK (list and detail), 201 CREATED (save as template)
@@ -377,3 +391,36 @@ Field: lines[].defaultLimit | Type: Numeric | Constraints: Scale 2, range [0.00,
 
 Ordering: system templates first, then by name case-insensitively within each group — the system
 catalog is the onboarding path for a user who has none of their own.
+
+## LG-BUD-05: Budgets Match Categories by Category ID *(was LG-CAT-01 item 8)*
+A. Business Rules
+- Budget lines and template lines refer to a category by its identity, not by its name. This applies to every budget feature: budget lines, quick-start templates and saved custom templates.
+- Spending shown against a budget line is the total of the user's approved transactions filed under that same category. A transaction that merely has a similar or identical name, but is filed under a different category, does not count. A transaction with no category does not count toward any budget line.
+- When the user renames a category, every budget line and template line using it shows the new name immediately and keeps its spending. A name freed up by a rename can be used by a new category on the same budget.
+- A budget can hold only one line per category. Adding a category that is already on the budget, or listing it twice in one request, is rejected.
+- The user can budget any system-level category and any of their own custom categories. Another user's category, or one that does not exist, is reported as not found, the same way for both, so that nothing is revealed about other users' categories. A category the user has deactivated cannot be newly added to a budget, but a budget that already holds one can still be saved.
+- The predefined system templates use system-level categories. A quick-start budget built from a template, or from the previous month's budget, keeps the category of every line.
+
+B. Constraints
+- Every line must name a category. A line without one is rejected.
+- The category name shown on a line is always the category's own current name; whatever name a client sends is ignored.
+- Existing budgets and custom templates created before this change are linked to their categories by a one-time data script. Until it has run, such a line shows no spending and a custom template line without a category cannot be used to start a budget.
+
+C. Interface Details
+- Request lines in `PUT /api/v1/ledger/budgets`, `POST /api/v1/ledger/budgets/{budgetId}/lines`, `POST /api/v1/ledger/budget-templates` and `POST /api/v1/ledger/budgets/quick-start` carry `categoryId` (UUID, required) in place of the former category name (`category` / `categoryName`).
+- Budget line responses carry `categoryId` and `category` (display name). Template line responses carry `categoryId` and `categoryName` (display name).
+- `BudgetLineInput(UUID categoryId, BigDecimal limitAmount)`; `BudgetRepository.existsCategory(budgetId, categoryId, excludeLineId)`.
+- `TransactionService.sumMonthlyExpensesPerCategory(userId, start, end, UUID categoryId)` and `sumExpensesByMonthAndCategory(userId, start, end)` returning month → categoryId → amount.
+
+D. Data Contracts
+- `ledger.budget_lines.category_id` and `ledger.budget_template_lines.category_id`: UUID, nullable, foreign key to `ledger.categories(category_id)` with ON DELETE RESTRICT (migration V28).
+- Unique per (budget_id, category_id) and per (template_id, category_id) where category_id is not null. The earlier uniqueness on the category text is dropped.
+- The text columns `budget_lines.category` and `budget_template_lines.category_name` remain as a display-name snapshot written when the line is saved (Analytics still reads `budget_lines.category`); they are never used for matching. `category_name` is widened to 100 characters.
+- Migration V28 maps the seeded system templates onto system categories. User data is backfilled by `scripts/one-time/2026-10-21_LG-CAT-01_backfill_budget_category_id.sql`.
+
+E. Error Handling
+- `categoryId` missing: 400.
+- `categoryId` unknown or belonging to another user: 404.
+- `categoryId` already on the budget (single add): 409; listed twice in one request: 400.
+- Newly adding a deactivated category: 400.
+- Template line without a category when used for a quick start: 400.
