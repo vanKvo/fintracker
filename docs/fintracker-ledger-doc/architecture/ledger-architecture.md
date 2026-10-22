@@ -70,7 +70,7 @@ This document describes how the Ledger works and the workflows it owns. Rules th
 3. **Summary cards:**
    - total balance across accounts;
    - income, expenses and net for the month, from the reporting views' counted rows in the primary currency.
-4. **Budget alerts:** the month's budget lines that are nearing or over their limit. Spend comes from the same views, so refunds offset spending (TXT-02).
+4. **Budget alerts:** the month's budget lines that are nearing or over their limit. Spend comes from the same views, so refunds offset spending (LG-TXT-02).
 5. **Bills:** the month's active bills, each marked paid or unpaid from bill payments.
 6. **Recent transactions:** the latest transactions, with pending rows marked.
 
@@ -79,7 +79,7 @@ This document describes how the Ledger works and the workflows it owns. Rules th
 **Trigger:** the user uploads a statement · **Result:** a statement record and a presigned upload URL · **On failure:** a clear message for an unowned account, a bad file type or a month that's already taken
 
 1. Check that the account belongs to the user.
-2. Check for duplicates: same file, or a month already covered (REQ-STMT-03, REQ-STMT-06).
+2. Check for duplicates: same file, or a month already covered (LG-STMT-03, LG-STMT-06).
 3. Create the statement record with status `PROCESSING`.
 4. Return a presigned S3 URL. The client uploads directly, and the Data pipeline starts from the storage event.
 
@@ -209,7 +209,7 @@ The Ledger makes no synchronous calls to other services. The Data pipeline, the 
 
 ### 3.7 Observe: how do we know it is healthy?
 
-- Latency and errors per route, with the Dashboard summary as the critical path (target under 200 ms, REQ-6.1).
+- Latency and errors per route, with the Dashboard summary as the critical path (target under 200 ms, LG-CORE-6.1).
 - Import results per statement: accepted, already stored, rejected by reason.
 - Age of the oldest unpublished outbox row, alarmed whenever the relay is enabled.
 - Budget-close job runs and failures.
@@ -227,12 +227,11 @@ Cross-service decisions this service applies are in the app architecture doc: D1
 | S2 | Import idempotency | Unique `(statement_id, row_fingerprint)`, `ON CONFLICT DO NOTHING`, per-row results | Retries are free and one bad row never fails the statement | Bank sync arrives (use the bank's transaction ID for synced rows) | Proposed | [SDR-001](decision_records/SDR-001-import-idempotency.md) |
 | S3 | Statement deletion | Foreign key `ON DELETE CASCADE` from transactions to statements | Atomic, and no future code path can delete a statement but leave its rows | Never | Accepted | — |
 | S4 | Removing transactions | Only manual rows can be deleted; imported rows are excluded instead | The import stays an accurate record of the statement | Never | Accepted | — |
-| S5 | Budget periods | One budget per month; past budgets closed by a scheduled job; reopen is explicit | Past months stay a stable record for comparisons | Users need to edit history often | Accepted | — |
+| S5 | Budget periods | One budget per month; past budgets closed by a scheduled job at 00:00 UTC on the 1st (not the user's midnight); reopen is explicit | Past months stay a stable record for comparisons; the UTC gap is accepted for now | Users need to edit history often, or the UTC close bothers users | Accepted | — |
 | S6 | Current month | Resolved from the user's timezone in the verified context; the client doesn't pass it | One rule for every caller, and nothing extra to validate (D23) | Never | Proposed | — |
 
 **Open questions**
-- **Account numbers.** REQ-3.1 stores the full account number. Storing only the last four digits would remove the most sensitive field from the database, logs and backups (GLBA Safeguards). Confirm whether anything needs the full number.
-- **Budget closing time.** The job closes budgets at 00:00 UTC on the 1st, which is still the last evening of the month for US users. Either run it daily and close a budget once its month has ended in that user's timezone, or accept the gap.
+- **Account numbers.** LG-CORE-3.1 stores the full account number. Recommended: store only the last four digits, plus a keyed hash of the full number if imports need to tell two accounts with the same last four apart. That removes the most sensitive field from the database, logs and backups (GLBA Safeguards). Confirm whether anything needs the full number.
 
 ---
 
@@ -243,14 +242,17 @@ Cross-service decisions this service applies are in the app architecture doc: D1
   - app-level: [ADR-001](../../fintracker-architecture/architectural_decision_records/ADR-001-user-id-denormalization.md), [ADR-002](../../fintracker-architecture/architectural_decision_records/ADR-002-rls-and-ownership-scoped-queries.md), [ADR-003](../../fintracker-architecture/architectural_decision_records/ADR-003-database-access-path.md), [ADR-005](../../fintracker-architecture/architectural_decision_records/ADR-005-statement-deletion-starts-in-ledger.md), [ADR-007](../../fintracker-architecture/architectural_decision_records/ADR-007-compute-per-profile.md), [ADR-009](../../fintracker-architecture/architectural_decision_records/ADR-009-ledger-event-publishing-outbox.md), [ADR-013](../../fintracker-architecture/architectural_decision_records/ADR-013-dashboard-reports-ownership.md), [ADR-014](../../fintracker-architecture/architectural_decision_records/ADR-014-ledger-reporting-views.md), [ADR-015](../../fintracker-architecture/architectural_decision_records/ADR-015-settings-in-verified-context.md);
   - service-level: [SDR-001](decision_records/SDR-001-import-idempotency.md).
 - **Specs:**
-  - [ledger-spec.md](../ledger-spec.md) (modules 1–6; parts superseded, see below);
-  - [TXT-transaction-types-spec.md](../TXT-transaction-types-spec.md) (types, counting rules, current transaction schema);
-  - [ledger-transaction-spec-01.md](../ledger-transaction-spec-01.md) (custom categories);
-  - [ledger-budget-spec-01.md](../ledger-budget-spec-01.md) (budgets, templates, pacing);
-  - [ledger-statement-spec-01.md](../ledger-statement-spec-01.md), [-02](../ledger-statement-spec-02.md), [-03](../ledger-statement-spec-03.md) (upload, import, duplicates);
-  - [dp-ledger-categories-spec.md](../../fintracker-cross-services/dp-ledger-categories-spec.md) (categories with the Data pipeline).
+  - [LG-CORE-ledger-core-spec.md](../specs/LG-CORE-ledger-core-spec.md) (modules 1–6; parts superseded, see below);
+  - [LG-TXT-transaction-types-spec.md](../specs/LG-TXT-transaction-types-spec.md) (types, counting rules, current transaction schema);
+  - [LG-BUD-budgets-spec.md](../specs/LG-BUD-budgets-spec.md) (budgets, templates, pacing);
+  - [LG-STMT-statement-upload-spec.md](../specs/LG-STMT-statement-upload-spec.md) (upload, import, duplicates);
+  - [XS-DPCAT-dp-ledger-categories-spec.md](../../fintracker-cross-services/specs/XS-DPCAT-dp-ledger-categories-spec.md) (categories with the Data pipeline);
+  - [XS-RPTV-ledger-reporting-views-spec.md](../../fintracker-cross-services/specs/XS-RPTV-ledger-reporting-views-spec.md) (reporting views, grants, index, Dashboard totals from the views);
+  - [XS-CTX-verified-user-context-spec.md](../../fintracker-cross-services/specs/XS-CTX-verified-user-context-spec.md) (timezone and currency headers);
+  - [AI-CHAT-open-chat-spec.md](../../fintracker-ai-assistant/specs/AI-CHAT-open-chat-spec.md) (contract for the read tools `get_budget_status` and `search_transactions`, Appendix B).
 - **Superseded in part:**
-  - `ledger-schema.md` (old type and status values, no categories or `user_id`); TXT Appendix A and the Flyway migrations are current.
-  - `ledger-spec.md` REQ-6.1 (Dashboard metrics) and REQ-4.3 (downloads); see D21 and the Document service.
+  - `ledger-schema.md` (old type and status values, no categories or `user_id`); LG-TXT Appendix A and the Flyway migrations are current.
+  - `LG-CORE-ledger-core-spec.md` LG-CORE-6.1 (Dashboard metrics) and LG-CORE-4.3 (downloads, replaced by DS-DL-01); see D21 and the Document service.
+  - `LG-CAT-custom-categories-spec.md` (obsolete; categories are deactivated, never deleted, per XS-DPCAT-02).
   - `ledger-api-ui-mapping` (Dashboard charts now belong to Reports).
 - **Diagram:** `images/ledger-components.svg`.
