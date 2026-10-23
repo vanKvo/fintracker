@@ -1,4 +1,6 @@
-TXT: Transaction Types
+# LG-TXT: Transaction Types
+
+> **Formerly:** `docs/fintracker-ledger-doc/TXT-transaction-types-spec.md`, IDs TXT-NN → LG-TXT-NN (renamed 2026-10; see [SPECS.md](../../SPECS.md))
 
 Last updated: 2026-10-06
 
@@ -20,28 +22,31 @@ Users viewing imported banking data struggle with ambiguous transaction categori
 ---
 
 ## 2. Workflow
-[Ingest / Input Transaction Data] ──► TXT-01
+[Ingest / Input Transaction Data] ──► LG-TXT-01
 │
-[Type Classification & Schema Validation] ──► TXT-01, TXT-02
+[Type Classification & Schema Validation] ──► LG-TXT-01, LG-TXT-02
 │
-[Budget & Analytics Aggregation Engine] ──► TXT-02
+[Budget & Analytics Aggregation Engine] ──► LG-TXT-02
 │
-[Failure handling] ──► TXT-01
+[Store amount as positive + direction] ──► LG-TXT-03
+│
+[Failure handling] ──► LG-TXT-01
 
 ---
 
 ## 3. Requirements Index
 
-| ID | Title | Area | Priority |
-|---|---|---|---|
-| TXT-01 | Transaction Type Definition and Ingestion | Data | MVP |
-| TXT-02 | Type-Based Budgeting and Analytics Offset | Data | MVP |
+| ID | Title | Area | Priority | Status |
+|---|---|---|---|---|
+| LG-TXT-01 | Transaction Type Definition and Ingestion | Data | MVP | Implemented |
+| LG-TXT-02 | Type-Based Budgeting and Analytics Offset | Data | MVP | Implemented |
+| LG-TXT-03 | One amount sign convention | Data | MVP | Implemented |
 
 ---
 
 ## 4. Requirements
 
-### TXT-01: Transaction Type Definition and Ingestion  `Priority: MVP`
+### LG-TXT-01: Transaction Type Definition and Ingestion  `Priority: MVP` *(was TXT-01)*
 
 **Problem:** Inconsistent or ambiguous bank labels fail to clearly express whether a transaction is a purchase, refund, salary, or transfer.
 **Requirement:** 
@@ -59,7 +64,7 @@ Users viewing imported banking data struggle with ambiguous transaction categori
 
 ---
 
-### TXT-02: Type-Based Budgeting and Analytics Offset  `Priority: MVP`
+### LG-TXT-02: Type-Based Budgeting and Analytics Offset  `Priority: MVP` *(was TXT-02)*
 
 **Problem:** Users returning purchases expect their category budgets to be credited back, rather than having the refund counted as earned income.
 **Requirement:** The analytics engine must compute monthly budget totals by subtracting `refund` amounts from `expense` amounts per category, while excluding `transfer`, `income`, and `adjustment` types from spending totals.
@@ -68,7 +73,21 @@ Users viewing imported banking data struggle with ambiguous transaction categori
 - [Happy] The refund offset the month it lands in to reflect real cash flow. 
 - [Alt] If `refund` amounts exceed `expense` amounts in a category for a period, the net spend is reported as negative spend and is excluded from total earned income. 
 - [Alt] Transactions with `type: "transfer"` alter individual account balances but contribute $0 to spending or income totals.
-**Refs:** TXT-01, Appendix A
+**Refs:** LG-TXT-01, Appendix A
+
+---
+
+### LG-TXT-03: One amount sign convention  `Priority: MVP`
+
+**Problem:** Statement rows are stored unsigned and manual rows signed (negative = money out), while `direction` already says which way money moved. Two fields that can disagree, and every sum must know which source a row came from.
+**Requirement:** Every transaction stores `amount` as a positive number; `direction` alone says whether money went out (`DEBIT`) or came in (`CREDIT`). Manual entry converts a signed input to this form once, at the API boundary. A migration converts existing manual rows (negative amount → its absolute value, direction unchanged) and adds a database check `amount > 0`.
+**Acceptance Criteria:**
+- [Happy] A manual entry of −40.00 with type `EXPENSE` is stored as `amount 40.00`, `direction DEBIT`.
+- [Happy] A statement row arrives positive and is stored unchanged.
+- [Alt] After the migration, no row has `amount <= 0`, and every existing total (Dashboard, budgets, Analytics) is unchanged on the migration fixture.
+- [Fail] An insert or update with `amount <= 0` is rejected by the database check, whatever the code path.
+- [Fail] A manual entry whose sign contradicts its type (positive `EXPENSE` input with `direction CREDIT`) returns 400 under LG-TXT-01's type/direction rule.
+**Refs:** LG-TXT-01; DP-TXT P-04; XS-RPTV-01
 
 ---
 
@@ -84,7 +103,7 @@ Users viewing imported banking data struggle with ambiguous transaction categori
 | `statement_id` | UUID | NULL | FK → `ledger.statements`, ON DELETE CASCADE | Null for manual / bank-sync rows |
 | `parent_transaction_id` | UUID | NULL | FK → `ledger.transactions`, ON DELETE CASCADE | Set on split children |
 | `external_tx_id` | VARCHAR(255) | NULL | Unique per `account_id` when not null | |
-| `amount` | DECIMAL(15,2) | NOT NULL | `amount != 0` | |
+| `amount` | DECIMAL(15,2) | NOT NULL | `amount > 0` (LG-TXT-03) | Always positive; `direction` gives the sign |
 | `merchant` | VARCHAR(255) | NOT NULL | | |
 | `category` | VARCHAR(100) | NOT NULL | | Category label |
 | `category_id` | UUID | NULL | FK → `ledger.categories`, ON DELETE RESTRICT | |

@@ -2,7 +2,7 @@
 
 | Status | Owner | Last reviewed | Applies to |
 |---|---|---|---|
-| Current | Van Vo | 2026-10-20 | main |
+| Current | Van Vo | 2026-10-23 | main |
 
 This document describes how FinTracker works at a high-level architecture: which services exist, what each service owns, how they talk to each other, how identity and data isolation work, and how the system is deployed to AWS.
 
@@ -67,7 +67,7 @@ It leaves out how a single service does its job: workflow steps, schemas, prompt
 
 ## 4. Concepts of Operation (CONOPS)
 
-The topics follow one request into the system, then the system's life: **Enter → Trust → Flow → Store → Protect → Recover → Observe**. Each topic builds on the one before it.
+The topics follow one request into the system, then the system's life: **Enter → Trust → Flow → Store → Protect → Recover → Observe → Report**. Each topic builds on the one before it.
 
 ### 4.1 Enter: how do users and systems get in?
 
@@ -270,6 +270,46 @@ All logs, metrics, traces and audit events from every service land in CloudWatch
 - **Deletion tracking:** User profile records `UserDataDeleted` from every service. An alarm fires if hard deletion isn't complete within 7 days after the grace period ends *(proposed)*.
 - **Outbox health:** an alarm on the age of the oldest unpublished outbox row, active whenever the relay is enabled.
 
+### 4.8 Report: what does a failure look like to the user and to the developer?
+
+Every service reports errors the same way, in every language. The user gets a message they can act on and a reference to quote. The developer gets the full detail in the logs under that reference. The codes are listed in the [error catalog](error-catalog.md).
+
+- **One response shape:** RFC 9457 `application/problem+json`, from HTTP routes and internal APIs alike:
+
+  ```json
+  { "type": "https://fintracker.app/errors/refresh-limit-reached", "title": "Refresh limit reached",
+    "status": 429, "detail": "You can refresh your summary 5 times a day. Try again tomorrow.",
+    "code": "refresh_limit_reached", "retryable": false, "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736" }
+  ```
+
+  - `detail` is always safe to show the user. `code` is stable, and the UI chooses its text by it.
+  - `trace_id` is the reference the user quotes: the request's trace ID (4.7), so one Logs Insights query finds every service's lines. `request_id` (API Gateway's) is logged, never returned.
+  - Other fields a client needs are added beside these (the Ledger's `duplicate_statement` carries the existing statement's details).
+- **Two kinds of failure:**
+
+  | | Expected (4xx) | Our side (5xx) |
+  |---|---|---|
+  | Examples | Validation, not found, a limit reached, settings missing | A bug, a dependency down, a timeout |
+  | User sees | What to fix | "Something went wrong on our side. The error has been recorded. Please try again later." plus the reference. Retryable ones say so |
+  | Log | WARNING, with the code and the developer message; no traceback | ERROR, with the full traceback and its causes |
+  | Alarm | No | `ServerError` metric by code |
+
+- **Two messages per error:** the user message goes to the client; the developer message and the traceback go to the logs only. Exception text, SQL, stack traces, request bodies and input values never reach a client. Neither message contains financial values, prompts or document text (4.5). Messages of exceptions we don't own (library, driver, SDK) are left out of logged tracebacks, because they can echo input values.
+- **Errors are classes, handled in one place:**
+  - Each service has an error base class carrying the status, code, title and user message. Business errors subclass it, one per case, next to the feature that raises them; only errors shared across features live in the service's core. One generic handler turns any of them into the response above. Routes never build error responses.
+  - Calls to other services and AWS raise internal dependency errors. These are wrapped where they're caught, with the cause kept (`raise ... from exc`, `new X(msg, cause)`), and never reach a client. The service either recovers (the facts-only fallback) or raises its own error.
+  - An error code from another service is mapped to our own error. Its `detail` and status are never passed through.
+  - A valid outcome is not an error. The facts-only fallback is a 200 with a reason code.
+  - Where this lives in each language:
+
+  | | Python services | Ledger (Java) |
+  |---|---|---|
+  | Base class and shared errors | `core/exceptions.py` (`AppError`, `DependencyError`) | A base exception in the exception package |
+  | Feature errors | `<feature>/exceptions.py` | The feature's exception package |
+  | Handler | `core/error_handlers.py`: one handler for the base class, plus framework validation and routing errors, and a middleware that catches anything unexpected and binds `trace_id` and `request_id` to every log line | `@RestControllerAdvice` with one `ProblemDetail` method for the base exception |
+
+- **Async work** (statement imports, events) records the same codes on the job or event, and the status API returns them.
+
 ---
 
 ## 5. Cross-service flows
@@ -403,6 +443,7 @@ Demo can hold real statements from invited testers, so it keeps the full securit
 | Trace sampling | every request (stays inside X-Ray's free 100,000 traces a month) | sampled, about 5% plus at least one request a second |
 | Monitoring and log archive | the dev account's own CloudWatch and CloudTrail bucket | monitoring account linked to dev and prod; audit events and CloudTrail copied to an S3 archive with Object Lock |
 | Cost guards | Budgets at $10/$25, AI Lambda reserved concurrency, per-user daily token cap, API throttle ~10 rps, chat API throttle ~2 rps | Budgets, per-user and app-wide LLM limits, production throttles |
+| Bedrock budget (AN-FS-21) | AWS Budgets: $10 a month; alerts at 50%, 80% and 100%; at 100% a deny policy is attached to the Bedrock roles; Cost Anomaly Detection | same mechanism; amount set at launch from measured cost |
 | Cognito sign-up | invite-only (admin-created users) | self sign-up |
 
 **How the setting is applied:** each Terraform environment folder sets `profile = "dev"` or `"prod"`, and modules read one settings map:
@@ -560,6 +601,7 @@ These hold for every service, in every profile. A spec or design that conflicts 
 10. **Only the AI assistant calls an LLM.** Knowledge calls an embedding model only. *Enforced by: IAM; only the AI assistant's role may invoke generation models, and only Knowledge's role may invoke the embedding model.*
 11. **Deletion cascades.** Every service that stores user data handles `UserAccountDeleted`, plus `StatementDeleted` or `DocumentDeleted` for data it derived. It deletes only its own share, and reports completion.
 12. **Profiles differ only in capacity, availability, perimeter, cost guards and defense-in-depth layers (WAF, key management)**, as listed in [6.1](#61-environments-and-what-differs-between-them). Identity, IAM, Row-Level Security, encryption and audit logging never differ.
+13. **Clients never see exception text, and every error carries a `code` and a `trace_id`** (4.8). *Enforced by: each service's generic error handler and its contract tests.*
 
 ---
 
@@ -605,18 +647,19 @@ Legal applicability must be confirmed with counsel before launch; until then, re
 
 | Service | Architecture doc | Interim source until then |
 |---|---|---|
-| User profile | *to be created* | [user-profile-spec-01.md](../fintracker-user-profile-doc/user-profile-spec-01.md) |
+| User profile | *to be created* | [UP-AUTH-authentication-spec.md](../fintracker-user-profile-doc/specs/UP-AUTH-authentication-spec.md) |
 | Ledger | [ledger-architecture.md](../fintracker-ledger-doc/architecture/ledger-architecture.md) | — |
-| Data pipeline | *to be created* | [data-pipeline-spec-02.md](../fintracker-data-pipelines/data-pipeline-spec-02.md) |
+| Data pipeline | [data-pipeline-architecture.md](../fintracker-data-pipelines/architecture/data-pipeline-architecture.md) | [DP-CAT-categorization-spec.md](../fintracker-data-pipelines/specs/DP-CAT-categorization-spec.md) |
 | Analytics | [analytics-architecture.md](../fintracker-analytics/architecture/analytics-architecture.md) | — |
 | Document service *(user documents later)* | *to be created* | `moved-to-specs.md` (Upload intake section) |
 | Knowledge | [knowledge-architecture.md](../fintracker-knowledge/architecture/knowledge-architecture.md) | — |
 | AI assistant | [ai-assistant-architecture.md](../fintracker-ai-assistant/architecture/ai-assistant-architecture.md) | — |
-| Frontend | [fintracker-ui-architectural-doc.md](../fintracker-ui-doc/fintracker-ui-architectural-doc.md) | — |
+| Frontend | [ui-architecture.md](../fintracker-ui-doc/architecture/ui-architecture.md) | — |
 
 **Other documents**
 
 - **Architecture decision records:** [architectural_decision_records/](architectural_decision_records/)
+- **Error catalog** (every error code, by service; rules in 4.8): [error-catalog.md](error-catalog.md)
 - **Roadmap:** [roadmap.md](roadmap.md)
 - **Content moved out of this document, pending its service docs:** [moved-to-specs.md](moved-to-specs.md)
 - **Diagrams:** `images/` (SVG)
