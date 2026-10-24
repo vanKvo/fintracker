@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | Proposed (Refactor phase: moving out of Analytics) | Van Vo | 2026-10-18 | main | [FinTracker architecture](../../fintracker-architecture/fintracker-architectural-doc.md) |
 
-This document describes how the AI assistant works: its components and the workflows it owns. Rules that apply to every service are in the app architecture doc and are not repeated here. These include identity, events and invariants. Field-level schemas, prompts, thresholds and acceptance criteria live in the specs, such as [FS: Financial Summary](../../fintracker-analytics/FS-financial-summary-spec.md).
+This document describes how the AI assistant works: its components and the workflows it owns. Rules that apply to every service are in the app architecture doc and are not repeated here. These include identity, events and invariants. Field-level schemas, prompts, thresholds and acceptance criteria live in the specs, such as [AN-FS: Financial Summary](../../fintracker-analytics/specs/AN-FS-financial-summary-spec.md).
 
 ---
 
@@ -36,7 +36,7 @@ This document describes how the AI assistant works: its components and the workf
 
 ## 2. Architecture and workflows
 
-![AI assistant components](images/ai-assistant-components.png)
+![AI assistant components](images/ai-assistant-components.svg)
 
 **How to read the diagram**
 - The two **orchestrators** are the only entry points, one per use case. Both run every LLM call through the same **shared AI pipeline**, in order: cost guard → prompt builder → model call → output validator (one retry back to the prompt builder) → audit writer.
@@ -49,7 +49,7 @@ This document describes how the AI assistant works: its components and the workf
 
 **Trigger:** `GET /summary?period` from the Reports tab, or Refresh (max 5 per user per day) · **Result:** a validated narrative, cached and audited · **On failure:** facts-only summary with a reason code; never a blank panel
 
-![Financial Summary workflow](images/ai-assistant-financial-summary.png)
+![Financial Summary workflow](images/ai-assistant-financial-summary.svg)
 
 1. Take the user from the identity authorizer, never from the request body.
 2. Request the facts payload and `facts_hash` from Analytics. If Analytics fails, show an error state and don't call the LLM.
@@ -64,7 +64,7 @@ This document describes how the AI assistant works: its components and the workf
 
 **Trigger:** a message on the chat streaming API · **Result:** a streamed answer with sources · **On failure:** safe fallback, or "I don't know" plus a logged unanswered question
 
-![Chat workflow](images/ai-assistant-chat.png)
+![Chat workflow](images/ai-assistant-chat.svg)
 
 1. The chat streaming API runs the identity authorizer; the AI assistant reads the `userId` from the authorizer context ([ADR-012](../../fintracker-architecture/architectural_decision_records/ADR-012-chat-streaming-entry-rest-api.md)).
 2. Check the subscription tier, the rate limit and the cost guard, then load the conversation history.
@@ -154,7 +154,7 @@ The AI assistant exposes no internal API. Other services don't call it.
 | Analytics | Signed internal request | Facts payload (summary); section tools (chat) | Summary: error state, no LLM call. Chat: tool error returned to the model as a generic message |
 | Knowledge | Signed internal request | `retrieve(scope=system)` for help-doc answers | Chat answers without docs and says so |
 | Ledger | Signed internal request | Read-only data tools (chat) | Generic tool error; the model may answer partially |
-| User profile | Signed internal request, cached 5 min | Timezone, primary currency | Use the cached value; behavior on a cache miss is still to be specified |
+| User profile | None at request time: timezone and primary currency arrive in the verified user context (XS-CTX, D23) | Periods and counting rules | The identity authorizer denies the request; nothing to cache |
 | Amazon Bedrock | AWS SDK (IAM) | LLM and chat model | Facts-only fallback (summary); safe fallback (chat) |
 | EventBridge / SQS | Events | Account deletion | Retries from its own queue |
 
@@ -196,6 +196,9 @@ The tool transport is signed REST for now, the same in both profiles. An MCP lay
 - **Partial validation:** an insight with an unresolvable reference is dropped; if at least half the items are dropped, the whole summary falls back.
 - **Audit write failure:** the summary is still returned. The write is retried asynchronously through SQS and counted in a metric.
 - **Idempotent consumers:** deleting data that is already gone succeeds.
+- **Prompt versions** are folders (`summary/prompt/versions/fs-vN/system.md`); the active one is the `prompt_version` setting, so rolling back a prompt is a config change. A version is frozen after its first passing `full` evaluation, and later edits go into a new folder (AN-FS-22).
+- **Facts from Analytics** are validated against the Appendix A schema before anything uses them; a response outside the contract is a 503 `summary_unavailable`, and no unlisted field reaches the LLM (AN-FS-16).
+- **Errors** follow app doc 4.8: `core/exceptions.py` (shared), `summary/exceptions.py` and `tools/exceptions.py` (per feature), one handler in `core/error_handlers.py`; types in each feature's `schemas.py`, stored records in `models.py` (app doc 9.1). Codes: [error catalog](../../fintracker-architecture/error-catalog.md#ai-assistant).
 
 ### 3.7 Observe: how do we know it is healthy?
 
@@ -207,7 +210,7 @@ The tool transport is signed REST for now, the same in both profiles. An MCP lay
   - tool error rate (chat).
 - **Security events** (a rejected user-ID argument, the tool-call limit exceeded, guardrail hits) are logged with `severity: security` and searchable by user.
 - **Budget alerts:** app-wide spend at 80% sends an alert, and at 100% trips the circuit breaker. AWS Budgets alerts at 50%, 80% and 100%, plus Cost Anomaly Detection.
-- **Later:** one trace schema across summary, chat and external use (OpenTelemetry GenAI conventions), online evaluations on sampled traces, and dashboards per use case (FS-17).
+- **Later:** one trace schema across summary, chat and external use (OpenTelemetry GenAI conventions), online evaluations on sampled traces, and dashboards per use case (AN-FS-17).
 
 ---
 
@@ -229,10 +232,13 @@ The tool transport is signed REST for now, the same in both profiles. An MCP lay
 
 - **App architecture:** [FinTracker architecture](../../fintracker-architecture/fintracker-architectural-doc.md). See D4 (only the AI assistant calls an LLM), D11 (compute per profile) and the open decision on tool transport.
 - **Specs:**
-  - [FS: Financial Summary](../../fintracker-analytics/FS-financial-summary-spec.md). This service owns FS-09 (prompt side), FS-10–FS-12, FS-14–FS-18, FS-20–FS-22 and FS-02 for its own routes. Analytics owns the facts engine and detectors.
-  - Chat and RAG specs: [ai-open-chat-spec.md](../../fintracker-analytics/ai-open-chat-spec.md), [ai-rag-pipelines-spec.md](../../fintracker-analytics/ai-rag-pipelines-spec.md) (its user-data retrieval items are deferred with user documents).
-  - Guardrails and evaluation: [ai-data-access-rules.md](../../fintracker-analytics/ai-data-access-rules.md), [ai-evaluation-auditing-spec.md](../../fintracker-analytics/ai-evaluation-auditing-spec.md).
-  - External assistant *(later)*: [ai-chat-support.md](../../fintracker-analytics/ai-chat-support.md).
+  - [AN-FS: Financial Summary](../../fintracker-analytics/specs/AN-FS-financial-summary-spec.md). This service owns AN-FS-09 (prompt side), AN-FS-10–AN-FS-12, AN-FS-14–AN-FS-18, AN-FS-20–AN-FS-22 and AN-FS-02 for its own routes. Analytics owns the facts engine and detectors.
+  - [AI-CHAT: In-app open chat](../specs/AI-CHAT-open-chat-spec.md): chat API, tool registry and allowlist, help-doc answers, guardrails, conversations.
+  - [AI-EVAL: Evaluations and auditing](../specs/AI-EVAL-evaluation-auditing-spec.md): chat golden set, merge gate, shared trace schema.
+  - [AI-GUARD: AI data access rules](../specs/AI-GUARD-data-access-rules-spec.md): background notes; AI-CHAT's design principles apply to chat.
+  - [KN-RET: Retrieval](../../fintracker-knowledge/specs/KN-RET-retrieval-spec.md): the `retrieve` contract chat calls. [KN-RAG](../../fintracker-knowledge/specs/KN-RAG-rag-use-cases-spec.md) holds the deferred user-data retrieval ideas.
+  - [XS-CTX: Settings in the verified user context](../../fintracker-cross-services/specs/XS-CTX-verified-user-context-spec.md): the context this service forwards on tool calls.
+  - External assistant *(later)*: [AI-EXT](../specs/AI-EXT-external-assistant-spec.md).
 - **Knowledge** (retrieval half of RAG): [knowledge-architecture.md](../../fintracker-knowledge/architecture/knowledge-architecture.md).
-- **Superseded:** [ai-integration-architecture.md](../../fintracker-analytics/architecture/ai-integration-architecture.md) and [ai-governance-monitoring.md](../../fintracker-analytics/architecture/ai-governance-monitoring.md). They were written when AI lived in Analytics, and their content is folded into this document.
-- **Diagram sources:** `images/` (an editable SVG for every PNG).
+- **Superseded:** [ai-integration-architecture.md](../ai-integration-architecture.md) and [ai-governance-monitoring.md](../ai-governance-monitoring.md). They were written when AI lived in Analytics, and their content is folded into this document.
+- **Diagram sources:** `images/` (SVG).

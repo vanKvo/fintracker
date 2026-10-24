@@ -136,7 +136,7 @@ The AI assistant needs relevant help-doc passages, with sources, to answer how-t
 **Acceptance Criteria:**
 - [Happy] A slow embedding call over the budget returns 504 `timeout` within 3.2 s.
 - [Alt] The AI assistant's contract test treats every code in Appendix C as "no docs available" and answers without docs, saying so.
-- [Fail] An unexpected exception returns 500 `internal_error`; the detail goes to logs with the request ID only.
+- [Fail] An unexpected exception returns 500 `internal_error`; the detail goes to logs with the trace ID and request ID only.
 **Refs:** Appendix C; AI assistant architecture "If unavailable"
 
 ### KN-RET-08: Retrieval metrics and log hygiene  `Priority: MVP`
@@ -197,7 +197,8 @@ Produced by: Knowledge (code).
 
 ## Appendix C: Errors
 
-Body: `{ "error": { "code": "<code>", "message": "<generic text>", "request_id": "<id>" } }`
+Body: RFC 9457 `application/problem+json`, as every service (app doc 4.8; [error catalog](../../fintracker-architecture/error-catalog.md)):
+`{ "type", "title", "status", "detail", "code", "retryable", "trace_id" }`. `detail` is generic; `request_id` is logged, never returned.
 
 | HTTP | Code | When |
 |---|---|---|

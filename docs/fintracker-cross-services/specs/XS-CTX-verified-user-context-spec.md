@@ -171,7 +171,8 @@ Produced by: the User profile identity authorizer (code).
 
 ## Appendix C: Errors
 
-Body: `{ "error": { "code": "<code>", "message": "<generic text>", "request_id": "<id>" } }`
+Body: RFC 9457 `application/problem+json`, as every service (app doc 4.8; [error catalog](../../fintracker-architecture/error-catalog.md)):
+`{ "type", "title", "status", "detail", "code", "retryable", "trace_id" }`. `detail` is generic; `request_id` is logged, never returned.
 
 | HTTP | Code | When |
 |---|---|---|

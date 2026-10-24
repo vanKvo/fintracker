@@ -300,7 +300,7 @@ Every service reports errors the same way, in every language. The user gets a me
   - Calls to other services and AWS raise internal dependency errors. These are wrapped where they're caught, with the cause kept (`raise ... from exc`, `new X(msg, cause)`), and never reach a client. The service either recovers (the facts-only fallback) or raises its own error.
   - An error code from another service is mapped to our own error. Its `detail` and status are never passed through.
   - A valid outcome is not an error. The facts-only fallback is a 200 with a reason code.
-  - Where this lives in each language:
+  - Where this lives in each language (Python layout: [9.1](#91-python-service-layout)):
 
   | | Python services | Ledger (Java) |
   |---|---|---|
@@ -621,6 +621,27 @@ These hold for every service, in every profile. A spec or design that conflicts 
 | Identity | Cognito + User profile identity authorizer | Managed sign-in and MFA; provider-independent internal ID |
 | Observability | CloudWatch Logs and metrics; X-Ray traces through OpenTelemetry (ADOT); Powertools (Python); Logback JSON and the OpenTelemetry Spring Boot starter (Ledger) | One place for every service's logs, metrics, traces and audit events; data stays in AWS; nearly free at dev volume (D20) |
 | IaC and CI/CD | Terraform, GitHub Actions | One `profile` setting per environment |
+
+### 9.1 Python service layout
+
+Every Python service is organized by feature (one folder per feature, vertical slices), and every feature uses the same file names, so a feature's errors, types and stored records are always in the same place. `core/` is plumbing shared by all features: identity, error handling, observability, signing, and the few types more than one feature uses. Principles: the Data pipeline's `rules/python-feature-layout-rules.md`.
+
+| File | Holds | Not here |
+|---|---|---|
+| `router.py` | Routes and their dependencies; every route declares a `response_model` | Business logic |
+| `service.py` | The feature's workflow | HTTP or storage details |
+| `exceptions.py` | The feature's errors, subclassing `core/exceptions.py` (4.8) | Error responses (`core/error_handlers.py` builds them) |
+| `schemas.py` | Type objects: Pydantic request and response models | Stored records|
+| `interfaces.py` | Protocols for injected dependencies. Each module is typed with only the methods it calls, so a test fake implements only those | Protocols |
+| `models.py` | Stored records: ORM models (SQLAlchemy) or item shapes (`TypedDict` for DynamoDB) | API shapes |
+| Other modules (`store.py`, `*_client.py`, …) | Behavior only; they import their types from `schemas.py` and `models.py` and their Protocols from `interfaces.py` | New types |
+
+- **Data that crosses a boundary has a schema:** a request, a response, another service's reply, a stored item, LLM output. It is validated where it enters, so the code behind the boundary works with typed objects.
+- **Contracts with other services** use `extra="forbid"` when the spec says unknown fields are rejected (the facts payload, AN-FS-16), and `extra="ignore"` when only listed fields are copied on (tool results, so nothing extra reaches the model).
+- **`Any` is only for untyped libraries** (boto3), with a comment. Untrusted input (a Lambda event, headers) is typed `object` and checked before use.
+- **A feature never imports another feature's `models.py`.** A type two features need moves to `core/schemas.py`.
+- **A service without a web framework** (Knowledge's plain Lambda handlers) has no `response_model`: its handler returns the `schemas.py` type's dict and catches every exception in one place, `core/error_handlers.handle_error`.
+- Java services keep the same three roles (errors, transfer types, stored records) in per-feature packages.
 
 ---
 
