@@ -1,7 +1,7 @@
 > **Tests for:** [AN-FS-financial-summary-spec.md](AN-FS-financial-summary-spec.md) · **Formerly:** `docs/fintracker-analytics/FS-tests.md` (renamed 2026-10)
 
 =========================
-F2P TESTS (289)
+F2P TESTS (294)
 =========================
 
 --- test_clients.TestIamSignedCalls (3) ---
@@ -368,6 +368,13 @@ F2P TESTS (289)
 287. bedrock calls are limited to the listed models: AN-FS-21 separate roles.
 288. a wildcard model is refused: AN-FS-21 separate roles.
 289. the cost guard receives every role that can call bedrock: AN-FS-21 Account level.
+
+--- 2026-10-24 review fixes (fintracker-ai-assistant) (5) ---
+290. counter increment returns the new count and none at the cap: AN-FS-14 refresh limit.
+291. counter and spend ttls are anchored to utc midnight on any host: AN-FS-21 per user and app-wide.
+292. refresh reports remaining refreshes without a second counter read: AN-FS-14 refresh limit.
+293. one http client is reused across facts requests: AN-FS-03 facts from Analytics.
+294. bedrock failure logs the error type not the message: AN-FS-18 logging.
 
 =========================
 P2P TESTS (22)
