@@ -46,21 +46,21 @@ Returned on internal APIs only. The calling service maps them to its own error a
 
 ### AI assistant
 
-Source: `src/core/exceptions.py`, `src/summary/exceptions.py`.
+Source: `src/core/exceptions.py`, `src/summary/exceptions.py`, `src/chat/schemas.py` (`ChatErrorCode`), `src/chat/fallback.py` (`ERROR_MESSAGES`).
 
 | Code | HTTP | Retryable | Meaning | What the user sees or does |
 |---|---|---|---|---|
 | `summary_unavailable` | 503 | Yes | The facts or the refresh counter couldn't be read, so there is no summary (FS-13) | "We couldn't load your summary right now. Please try again in a moment." |
 | `refresh_limit_reached` | 429 | No | The daily refresh allowance is used up (FS-14) | "You can refresh your summary {limit} times a day. Try again tomorrow." (limit is 5 today) |
 
-**Chat stream** (AI-CHAT Appendix A, *proposed*). These codes arrive in the stream's `error` event, not as an HTTP error, and use the same meanings:
+**Chat stream** (AI-CHAT Appendix A). Once the stream has started, these codes arrive in its `error` event, not as an HTTP error, and use the same meanings. A bad request body is a 400 `invalid_argument` and an unknown or another user's conversation a 404 `not_found`, both before the stream starts:
 
 | Code | Retryable | Meaning |
 |---|---|---|
-| `daily_limit_reached` | No | The tier's daily token allowance is used up; the event carries the reset time |
-| `limits_unavailable` | Yes | The usage counter couldn't be read, so the turn ends (limits never fail open) |
-| `service_busy` | Yes | Too many turns in flight |
-| `timeout`, `invalid_argument`, `internal_error` | — | As in Shared codes |
+| `daily_limit_reached` | No | The tier's daily token allowance is used up; the event carries `reset_at`, the next midnight in the user's timezone |
+| `limits_unavailable` | Yes | The usage counter or the spend budget couldn't be read or updated, or no allowance is configured for the tier, so the turn ends (limits never fail open) |
+| `service_busy` | Yes | Too many turns in flight, the model is throttled or unavailable, or the app-wide daily budget is used up (shared with the Financial Summary) |
+| `timeout`, `invalid_argument`, `internal_error` | — | As in Shared codes (`timeout`: the 45 s turn deadline or the model call timed out) |
 
 ### Analytics
 
