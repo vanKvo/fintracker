@@ -1,7 +1,7 @@
 > **Tests for:** [AN-FS-financial-summary-spec.md](AN-FS-financial-summary-spec.md) · **Formerly:** `docs/fintracker-analytics/FS-tests.md` (renamed 2026-10)
 
 =========================
-F2P TESTS (294)
+F2P TESTS (384)
 =========================
 
 --- test_clients.TestIamSignedCalls (3) ---
@@ -142,7 +142,7 @@ F2P TESTS (294)
 111. schema failure twice falls back: AN-FS-10.
 112. numbers in text share the single retry: AN-FS-10.
 113. no retry with less than ten seconds left: AN-FS-10 deadline.
-114. call timeout is capped by the remaining time: AN-FS-10 deadline.
+~~114. call timeout is capped by the remaining time: AN-FS-10 deadline.~~ *Replaced 2026-10-25: see the 2026-10-25 groups below.*
 115. LLM failures fall back: AN-FS-15.
 116. grounding discard falls back: AN-FS-15.
 117. guardrail hits are reported: AN-FS-12.
@@ -150,8 +150,8 @@ F2P TESTS (294)
 119. fallback leaves out null metrics: AN-FS-15.
 120. estimate tokens is conservative: AN-FS-21 input token count (Appendix C).
 121. bedrock client calls converse with pinned model and caps: AN-FS-10 pinned model / AN-FS-21 caps.
-122. bedrock errors become generic errors: AN-FS-10 pinned model / AN-FS-21 caps.
-123. bedrock call slower than the timeout is a timeout: AN-FS-10 pinned model / AN-FS-21 caps.
+~~122. bedrock errors become generic errors: AN-FS-10 pinned model / AN-FS-21 caps.~~ *Replaced 2026-10-25: see the 2026-10-25 groups below.*
+~~123. bedrock call slower than the timeout is a timeout: AN-FS-10 pinned model / AN-FS-21 caps.~~ *Replaced 2026-10-25: see the 2026-10-25 groups below.*
 
 --- test_log_redaction (2) ---
 124. summary code has no redaction violations: AN-FS-18 CI redaction check.
@@ -195,7 +195,7 @@ F2P TESTS (294)
 152. generates an ai summary with facts audit snapshot and spend: AN-FS-18 audit and snapshot / AN-FS-21 spend.
 153. same data is served from cache without an LLM call: AN-FS-14.
 154. new transactions change the hash and regenerate: AN-FS-14.
-155. refresh skips the cache and is limited to five a day: AN-FS-14.
+~~155. refresh skips the cache and is limited to five a day: AN-FS-14.~~ *Replaced 2026-10-25: see the 2026-10-25 groups below.*
 156. fewer than ten transactions skips the LLM: AN-FS-15.
 157. blocked call falls back and is audited: AN-FS-21 / AN-FS-18 blocked outcome.
 158. LLM timeout falls back with reason: AN-FS-15.
@@ -209,13 +209,13 @@ F2P TESTS (294)
 --- test_store_guard_audit (15) ---
 165. cached summary round trip with 30 day ttl: AN-FS-14.
 166. counter increment stops at the cap: AN-FS-14 / AN-FS-21 counters.
-167. input over 8000 tokens is blocked: AN-FS-21.
-168. ten generations per user per day: AN-FS-21.
-169. daily budget reached blocks everyone until midnight utc: AN-FS-21.
-170. unset daily budget fails closed: AN-FS-21.
-171. unpriced model fails closed: AN-FS-21.
-172. budget store down fails closed: AN-FS-21.
-173. spend is recorded and alerts once at 80 percent: AN-FS-21.
+~~167. input over 8000 tokens is blocked: AN-FS-21.~~ *Replaced 2026-10-25: see the 2026-10-25 groups below.*
+~~168. ten generations per user per day: AN-FS-21.~~ *Replaced 2026-10-25: see the 2026-10-25 groups below.*
+~~169. daily budget reached blocks everyone until midnight utc: AN-FS-21.~~ *Replaced 2026-10-25: see the 2026-10-25 groups below.*
+~~170. unset daily budget fails closed: AN-FS-21.~~ *Replaced 2026-10-25: see the 2026-10-25 groups below.*
+~~171. unpriced model fails closed: AN-FS-21.~~ *Replaced 2026-10-25: see the 2026-10-25 groups below.*
+~~172. budget store down fails closed: AN-FS-21.~~ *Replaced 2026-10-25: see the 2026-10-25 groups below.*
+~~173. spend is recorded and alerts once at 80 percent: AN-FS-21.~~ *Replaced 2026-10-25: see the 2026-10-25 groups below.*
 174. audit record has exactly the spec fields and 12 month ttl: AN-FS-18.
 175. snapshot kept 30 days keyed by payload and summary: AN-FS-18.
 176. security event is searchable by user: AN-FS-18.
@@ -376,8 +376,126 @@ F2P TESTS (294)
 293. one http client is reused across facts requests: AN-FS-03 facts from Analytics.
 294. bedrock failure logs the error type not the message: AN-FS-18 logging.
 
+--- test_llm (fintracker-ai-assistant, 2026-10-25) (6) ---
+295. read timeout is the call timeout at the socket with sdk retries off: AN-FS-10 socket timeout.
+296. a call slower than its timeout is not abandoned by an app timer: AN-FS-10 socket timeout (SDR-001).
+297. clients are reused per rounded timeout: AN-FS-10 socket timeout.
+298. errors are classified with generic messages: AN-FS-10 retried errors / AN-FS-15 breaker.
+299. error classes say how to retry count and settle: AN-FS-10 / AN-FS-15 / AN-FS-21 reserve then settle.
+300. a malformed reply is a bad response not a raw key error: AN-FS-15.
+
+--- test_generation (fintracker-ai-assistant, 2026-10-25) (2) ---
+301. call timeout is the remaining time minus two seconds: AN-FS-10 call timeout.
+302. call timeout cap applies only once set: AN-FS-10 call timeout.
+
+--- test_generation_retries (fintracker-ai-assistant, 2026-10-25) (15) ---
+303. errors before processing are retried twice with capped exponential backoff: AN-FS-10 errors before processing.
+304. backoff uses full jitter: AN-FS-10 errors before processing.
+305. backoff is capped at two seconds: AN-FS-10 errors before processing.
+306. throttling still failing after the retries is llm throttled: AN-FS-15 throttling.
+307. provider errors still failing after the retries are llm error: AN-FS-10 errors before processing.
+308. read timeouts and other errors are never retried: AN-FS-10 errors after the request was sent.
+309. no provider retry when the remaining time no longer fits a call: AN-FS-10 errors before processing.
+310. each retry gets the remaining time minus two seconds: AN-FS-10 call timeout.
+311. provider retries reuse one reservation: AN-FS-21 Alt.
+312. the validation retry reserves again with its larger input: AN-FS-21 reserve then settle.
+313. a blocked first call never reaches the llm: AN-FS-21 reserve then settle.
+314. a blocked validation retry ends as if no retry were left: AN-FS-21 / AN-FS-10 shared retry.
+315. the guard sees the final error after the retries: AN-FS-21 / AN-FS-15 breaker.
+316. no call and no reservation when the deadline has passed: AN-FS-10 deadline.
+317. every call logs its latency: AN-FS-20 latency.
+
+--- test_breaker (fintracker-ai-assistant, 2026-10-25) (8) ---
+318. five failures in a row open the breaker for sixty seconds: AN-FS-15 failure breaker.
+319. a success resets the count: AN-FS-15 failure breaker.
+320. after sixty seconds only one trial call goes out: AN-FS-15 failure breaker.
+321. a successful trial closes the breaker: AN-FS-15 failure breaker.
+322. a failed trial reopens the breaker for another sixty seconds: AN-FS-15 failure breaker.
+323. a trial that made no provider call frees the trial slot: AN-FS-15 failure breaker.
+324. threshold and open time are config: AN-FS-15 failure breaker.
+325. settings are read on every check: AN-FS-15 failure breaker.
+
+--- test_spend_reservation (fintracker-ai-assistant, 2026-10-25) (24) ---
+326. input over 8000 tokens is blocked: AN-FS-21 per request.
+327. ten generations per user per day: AN-FS-21 per user.
+328. a user cap block releases its reservation: AN-FS-21 reserve then settle (SDR-002).
+329. daily budget reached blocks everyone until midnight utc: AN-FS-21 app-wide.
+330. unset daily budget fails closed: AN-FS-21 app-wide.
+331. unpriced model fails closed: AN-FS-21 app-wide.
+332. budget store down fails closed: AN-FS-21 store unavailable.
+333. a failed generation counter after reserving releases and fails closed: AN-FS-21 store unavailable.
+334. the reservation is the worst case cost of the call: AN-FS-21 reserve then settle.
+335. concurrent requests cannot reserve past the budget: AN-FS-21 reserve then settle.
+336. settling adds actual minus reserved: AN-FS-21 reserve then settle.
+337. release settles to zero: AN-FS-21 Alt.
+338. a reservation settles on its own day after midnight: AN-FS-21 reserve then settle.
+339. the retry reserves spend only: AN-FS-21 reserve then settle.
+340. a failed settle is counted and never raised: AN-FS-21 reserve then settle.
+341. alerts once at the alert threshold and once at 100 percent: AN-FS-21 budget alerts.
+342. a threshold crossed again the same day does not alert twice: AN-FS-21 budget alerts.
+343. only the request that sets the flag sends the alert: AN-FS-21 budget alerts.
+344. a settle that crosses a threshold alerts: AN-FS-21 budget alerts.
+345. a failed alert never fails the call: AN-FS-21 budget alerts.
+346. budget alert pct outside 1 to 99 is rejected: AN-FS-21 budget alerts.
+347. budget alert pct inside 1 to 99 is accepted: AN-FS-21 budget alerts.
+348. invalid deployed settings fail closed: AN-FS-21 budget alerts / never fail open.
+349. the daily budget is unset by default: AN-FS-21 app-wide.
+
+--- test_store_guard_audit (fintracker-ai-assistant, 2026-10-25) (4) ---
+350. cache and counters come back in one batch read: AN-FS-14 refreshes remaining.
+351. a released counter goes down by one and never below zero: AN-FS-14 refresh give-back.
+352. reserve spend adds only while the total stays within the budget: AN-FS-21 reserve then settle.
+353. an alert flag is claimed once per day and threshold: AN-FS-21 budget alerts.
+
+--- test_service (fintracker-ai-assistant, 2026-10-25) (1) ---
+354. a refresh that must generate is limited to five a day: AN-FS-14 refresh limit.
+
+--- test_service_resilience (fintracker-ai-assistant, 2026-10-25) (17) ---
+355. a refresh with a cached summary returns it and uses no refresh: AN-FS-14 refresh checks the cache.
+356. a refresh that generates an ai summary uses one refresh: AN-FS-14 refresh slot.
+357. a refresh without an ai summary gives its slot back: AN-FS-14 refresh slot.
+358. the refresh slot is taken before generating: AN-FS-14 refresh slot.
+359. a failed give back is logged and counted and the slot is lost: AN-FS-14 refresh slot.
+360. an unreadable refresh counter is an error on a cache miss: AN-FS-14 refresh slot.
+361. a normal view reads cache and counter in one batch: AN-FS-14 refreshes remaining.
+362. a normal view miss also takes the counter from the batch read: AN-FS-14 refreshes remaining.
+363. an unreadable batch is a cache miss with unknown refreshes: AN-FS-14 refreshes remaining.
+364. an open breaker skips the llm with llm unavailable: AN-FS-15 failure breaker.
+365. persistent throttling is llm throttled with a metric and no breaker failure: AN-FS-15 throttling.
+366. validation failures do not count toward the breaker: AN-FS-15 throttling.
+367. provider errors still failing after retries count toward the breaker: AN-FS-15 failure breaker.
+368. a success settles to the actual cost: AN-FS-21 reserve then settle.
+369. a timeout keeps its full reservation: AN-FS-21 Fail.
+370. an error before processing settles to zero: AN-FS-21 Alt.
+371. a validation retry reserves and settles its own call: AN-FS-21 reserve then settle.
+
+--- test_eval (fintracker-ai-assistant, 2026-10-25) (2) ---
+372. the report shows single call latency percentiles per model: AN-FS-20 latency.
+373. latency percentiles use the nearest rank: AN-FS-20 latency.
+
+--- test_clients.TestGetSavingsGoalProgress (fintracker-ai-assistant, 2026-10-25) (1) ---
+374. sends the user in the forwarded context on a signed call without an api key: User Profile architecture S3, invariants 2 and 3.
+
+--- test_eval (fintracker-ai-assistant, eval cost cap and latency, 2026-10-25) (5) ---
+375. a timed out call counts at its worst case cost: AN-FS-22 Fail cost cap.
+376. the cap is checked before every call not only between runs: AN-FS-22 Fail cost cap.
+377. the estimate abort counts the validation retry: AN-FS-22 Fail cost cap.
+378. live runs can use a longer deadline to measure the slow tail: AN-FS-10 call timeout / AN-FS-20 latency.
+379. dry run shows the worst case with the validation retry: AN-FS-22 dry run.
+
+--- test_eval (fintracker-ai-assistant, call records, 2026-10-25) (2) ---
+380. latency percentiles count successful calls only and failures are counted apart: AN-FS-20 latency.
+381. each row keeps the summary and a failed run keeps the raw replies: AN-FS-20 evaluation report.
+
+--- test_generation_retries (fintracker-ai-assistant, call records, 2026-10-25) (1) ---
+382. every attempt is recorded with its outcome tokens and bedrock latency: AN-FS-20 latency.
+
+--- test_llm (fintracker-ai-assistant, call records, 2026-10-25) (2) ---
+383. the reply carries bedrocks own latency and the stop reason: AN-FS-20 latency.
+384. a reply without metrics has no bedrock latency: AN-FS-20 latency.
+
 =========================
-P2P TESTS (22)
+P2P TESTS (23)
 =========================
 
 --- test_tools (1) ---
@@ -394,7 +512,7 @@ P2P TESTS (22)
 
 --- test_clients.TestGetSavingsGoalProgress (3) ---
 7. computes progress percentage: existing behavior unchanged by the AN-FS work.
-8. sends internal api key not a user header: existing behavior unchanged by the AN-FS work.
+~~8. sends internal api key not a user header: existing behavior unchanged by the AN-FS work.~~ *Replaced 2026-10-25: see the 2026-10-25 groups below.*
 9. zero target amount does not divide by zero: existing behavior unchanged by the AN-FS work.
 
 --- test_service (2) ---
@@ -415,3 +533,6 @@ P2P TESTS (22)
 20. spending report nets refunds per category and counts only income: existing behavior unchanged by the AN-FS work.
 21. monthly trend uses income and net spend: existing behavior unchanged by the AN-FS work.
 22. insights summary nets refunds and skips non spending: existing behavior unchanged by the AN-FS work.
+
+--- test_eval (fintracker-ai-assistant, 2026-10-25) (1) ---
+23. an error before processing costs nothing: AN-FS-22 Fail cost cap.

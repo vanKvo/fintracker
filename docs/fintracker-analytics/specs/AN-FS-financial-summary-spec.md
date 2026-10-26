@@ -9,7 +9,7 @@
 | File | AN-FS-financial-summary-spec.md |
 | Owner | Van Vo |
 | Status | Draft |
-| Last updated | 2026-10-08 |
+| Last updated | 2026-10-25 |
 
 ---
 
@@ -42,7 +42,7 @@ Turning a user's own figures into clear, personalized takeaways adds value. The 
         │
 [Detectors emit insight candidates] ──► AN-FS-24 … AN-FS-29
         │
-[Cost guard: per-user cap, daily budget, input size] ──► AN-FS-21 ── over ──► fallback
+[Cost guard: per-user cap, input size, reserve worst-case cost against the daily budget] ──► AN-FS-21 ── over ──► fallback
         │
 [LLM invoked with facts payload as JSON data] ──► AN-FS-09, AN-FS-10
         │
@@ -52,7 +52,7 @@ Turning a user's own figures into clear, personalized takeaways adds value. The 
         │
 [Failure at any step → facts-only fallback] ──► AN-FS-15
         │
-[Audit record and logs] ──► AN-FS-18
+[Settle spend reservation; audit record and logs] ──► AN-FS-21, AN-FS-18
         │
 [Metrics, alerts, feedback] ──► AN-FS-17
 
@@ -76,7 +76,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 | AN-FS-07 | Recurring charges and upcoming bills | Facts engine | Later | In progress |
 | AN-FS-08 | Budget vs. actual | Facts engine | MVP | Implemented |
 | AN-FS-09 | Facts delivery to the LLM | AI integration | MVP | Implemented |
-| AN-FS-10 | Structured summary generation | AI integration | MVP | Implemented |
+| AN-FS-10 | Structured summary generation | AI integration | MVP | In progress (2026-10-25 changes) |
 | AN-FS-11 | Grounding validation | AI integration | MVP | Implemented |
 | AN-FS-12 | Advice scope guardrails | AI safety | MVP | Implemented |
 | AN-FS-13 | Summary rendering | UI | MVP | Unverified (UI code not reviewed; commit log shows it built) |
@@ -234,7 +234,12 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 - [Happy] The free-text fields contain no currency amounts or percentages. To mention a figure, the text uses a `{{metric_id}}` token, and the UI replaces it with the formatted fact.
 - [Alt] At most 3 highlights, 5 insights and 3 recommendations.
 - [Fail] Schema validation fails → retry with the validation errors included, if the retry is unused; otherwise fallback (AN-FS-15). AN-FS-10 and AN-FS-11 share one retry per generation.
-- [Fail] Each request has a 25 s overall deadline. Each LLM call times out at min(15 s, remaining time − 2 s). With less than 10 s remaining, there is no retry; fallback (AN-FS-15).
+- [Fail] Each request has a 25 s overall deadline. The API Gateway HTTP API cuts every request at 30 s; the 5 s left cover what runs outside the deadline: Lambda start-up, the identity authorizer and the response's trip back. The Lambda timeout is 29 s, so the service always answers with a fallback before the gateway or Lambda cuts it off.
+- [Fail] Each LLM call times out at remaining time − 2 s (2 s are kept for the audit and cache writes), capped by `call_timeout_cap_s` once AN-FS-20 has measured latency: about 1.5 × the p99 single-call latency for the pinned model. Until then the cap is unset. A longer read timeout (for example 60 s) is not possible on this path, because the gateway would end the request at 30 s with a 503 instead of the fallback while Bedrock still bills the call; it is allowed in live evaluation runs (AN-FS-22), which have no gateway, to measure the slow tail.
+- [Fail] The call timeout is enforced at the socket by the Bedrock client: `connect_timeout` 2 s, `read_timeout` = the call timeout, SDK retries off (the SDK's retry modes would also retry read timeouts). No shorter application-level timer wraps the call, so the service never gives up on a call that is still running ([SDR-001](../../fintracker-ai-assistant/architecture/decision_records/SDR-001-bedrock-call-timeouts.md)).
+- [Fail] **Errors before Bedrock processes the request** are retried in code: up to 2 retries with exponential backoff and full jitter (base 0.25 s, capped at 2 s), and only while the remaining time still fits a call. Retried: connection errors and connect timeouts, `ThrottlingException` (429), `ServiceUnavailableException`, `InternalServerException` and `ModelNotReadyException`. Not retried: read timeouts, `ValidationException`, `AccessDeniedException` and any other error. These retries don't use the one validation retry.
+- [Fail] **Errors after the request was sent** (read timeout): no retry. Log `llm_timeout` with the elapsed time, keep the spend reservation (AN-FS-21), count a failure in the Bedrock failure breaker (AN-FS-15) and return the facts-only fallback.
+- [Fail] With less than 10 s remaining, there is no validation retry; fallback (AN-FS-15).
 - [Happy] The model is referenced by a pinned version ID in config, never by a "latest" alias.
 **Decision (model):** Use the cheapest Amazon Bedrock model that passes AN-FS-20. Candidates are tried in price order, and the next one is tried only if the previous one fails `core`: Amazon Nova Micro → Amazon Nova Lite → Amazon Nova 2 Lite → Claude Haiku 4.5. The chosen model is pinned by its Bedrock model ID (e.g., `amazon.nova-lite-v1:0`). Re-check prices on the AWS Bedrock pricing page before choosing.
 **Refs:** Appendix B, AN-FS-20, AN-FS-21, AN-FS-24
@@ -286,6 +291,9 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 - [Happy] Opening the same period again with unchanged data returns the cached summary, with no LLM call.
 - [Alt] New transactions change `facts_hash`, so the next view regenerates the summary.
 - [Alt] A manual "Refresh" is limited to 5 per user per day. After that, the button is disabled with a tooltip.
+- [Alt] A refresh first looks up the cache with the current key. A hit returns the cached summary and uses no refresh: with the same facts, prompt version and model at temperature 0, a new generation would give the same text at extra cost. So Refresh only generates when nothing is cached for the current key, for example after a fallback (fallbacks are never cached) or after the cache entry expired.
+- [Alt] A refresh that generates uses one of the 5 only when it returns an AI summary. The slot is reserved atomically when the refresh starts, so concurrent refreshes can't exceed 5, and given back when the request ends without an AI summary: fewer than 10 transactions, any AN-FS-21 block (`user_cap`, `daily_budget`, `input_too_large`, `budget_store_down`), LLM timeout or error, or a validation fallback. If the give-back fails, it is logged and counted, and the user loses that slot (fails safe).
+- [Happy] Every response carries `refreshes_remaining` without a separate counter read: on a refresh it comes from the slot write; on a normal view the counter is fetched in the same batch read as the cache lookup.
 - [Happy] The UI shows the "Generated <relative time>" timestamp.
 **Open Questions:** Should completed past periods (e.g., Last month) be pre-generated on a schedule? Default to No (On-Demand) to save money.
 **Refs:** AN-FS-03
@@ -301,6 +309,9 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 - [Fail] Facts engine failure → error state with Retry. The LLM is not called.
 - [Alt] Insufficient data (fewer than 10 transactions in the period, counted after the AN-FS-23 inclusion rules, i.e. `data_quality.transaction_count`) → skip the LLM and show "Not enough activity to summarize yet."
 - [Happy] Every fallback records its reason code in the audit record (AN-FS-18).
+- [Fail] **Bedrock failure breaker:** counts provider failures: read timeouts, and connection errors or 5xx errors that are still failing after the AN-FS-10 retries. After 5 in a row in one container, new requests skip the LLM for 60 s and show the fallback with reason `llm_unavailable`; then one trial call decides whether the breaker closes. A success resets the count. Both values are config. The breaker tracks Bedrock's health only; spend is tracked separately (AN-FS-21 reserve and settle), and a timeout updates both (SDR-001).
+- [Fail] **Throttling is not a provider failure:** a `ThrottlingException` that is still failing after the AN-FS-10 retries returns the fallback with reason `llm_throttled` and a throttle metric, and doesn't count toward the breaker. Validation and grounding failures don't count either.
+- [Happy] Fallback reason codes: `insufficient_data`, `llm_timeout`, `llm_error`, `llm_throttled`, `llm_unavailable`, `schema_failed`, `grounding_failed`, `guardrail`, plus the AN-FS-21 block reasons.
 **Refs:** AN-FS-10, AN-FS-11, AN-FS-18
 
 ---
@@ -374,6 +385,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 - [Happy] Each fixture lists the insight types it must produce. At least 90% of these must appear across the fixtures in the run.
 - [Happy] A run passes only with 100% schema-valid output, 0 grounding failures (AN-FS-11), 0 guardrail hits (AN-FS-12), and 0 followed injection instructions. Generation runs at temperature 0, and a failure in any run of a fixture counts as a failure.
 - [Happy] The report shows, per fixture and per run: `input_tokens`, `output_tokens`, retries and cost. It also shows the average and maximum, the total cost of the run, the projected cost of the next tier, and the change from the last passing run of the same tier.
+- [Happy] The report shows single-call LLM latency p50, p95 and p99 per model, from a `llm_latency_ms` field logged for every call (live runs and production). These set the AN-FS-10 call timeout cap; at least 200 calls are needed before the p99 is used.
 - [Fail] The run fails if the average tokens per summary exceeds the token budget, or if any single summary exceeds 2× the budget (retries included).
 - [Fail] Results are saved to S3 (Appendix C) with `tier`, `prompt_template_version`, `model_id` and output schema version, pass or fail.
 **Open Questions:** What is the token budget per summary? Proposed: set it after the first passing `core` run, at about 20% above the measured average.
@@ -388,7 +400,11 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 **Acceptance Criteria:**
 - [Happy] **Per request:** output is capped with `max_tokens` (default 1,200). The input is token-counted before the call, and payloads above 8,000 input tokens are rejected and logged. At most 1 retry (AN-FS-10).
 - [Happy] **Per user:** at most 10 LLM generations per user per day, including manual refreshes (AN-FS-14). Cache hits don't count.
-- [Happy] **App-wide:** a daily budget tracked from AN-FS-18 token counts. At 80% an alert is sent. At 100%, a circuit breaker routes all new requests to the facts-only fallback until midnight UTC.
+- [Happy] **App-wide:** a daily budget tracked from AN-FS-18 token counts. At `budget_alert_pct` (default 80%) an alert is sent. At 100%, a circuit breaker routes all new requests to the facts-only fallback until midnight UTC.
+- [Happy] **Reserve, then settle:** before each LLM call, the retry included, the cost guard reserves the call's worst-case cost (estimated input tokens plus `max_tokens` of output) with one conditional atomic add on the day's spend item. The add succeeds only if the new total stays at or under the daily budget; otherwise the call is blocked with `daily_budget`. After the call, the reservation is settled to the actual-token cost (add actual − reserved). Concurrent requests therefore can't push spend over the budget ([SDR-002](../../fintracker-ai-assistant/architecture/decision_records/SDR-002-atomic-spend-reservation.md)).
+- [Fail] A call that times out after it was sent keeps its full reservation, because Bedrock may still bill it. A reservation that is never settled (for example, the container dies) also stays counted. Both over-count, which fails safe.
+- [Alt] A call that fails before Bedrock processes it (the retried errors in AN-FS-10, after the retries run out) is settled to 0. The AN-FS-10 retries reuse the same reservation.
+- [Fail] **Budget alerts:** `budget_alert_pct` must be between 1 and 99; any other value is rejected when settings load, so the 100% line can't alert twice. Each threshold alerts at most once per UTC day: the alert is sent only by the request whose conditional write sets that threshold's flag on the day's spend item.
 - [Happy] **Account level:** Bedrock has no per-key spending cap. AWS Budgets alerts at 50%, 80% and 100% of the monthly budget, Cost Anomaly Detection, and an AWS Budgets action that attaches a deny policy to the Bedrock IAM roles at 100%. Separate IAM roles for production, dev and evaluation (AN-FS-22).
 - [Happy] The static part of the prompt (system prompt + schema) uses provider prompt caching, where supported.
 - [Alt] Per-user and daily limits are config values, changeable without a deploy.
@@ -620,7 +636,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 | Authentication | Shared Lambda authorizer for all FinTracker services; maps Cognito `sub` → internal user ID via User Profile `resolve_sub` and returns it as `internal_user_id`. API Gateway HTTP API, so Analytics reads `requestContext.authorizer.lambda.internal_user_id`. Specified outside this spec. |
 | Local identity | `LOCAL_DEV_USER_ID`, honoured only when `APP_ENV=local` (AN-FS-02). |
 | Profile settings | Timezone and primary currency from the verified user context (identity authorizer, or the AI assistant's signed context). No call to User Profile (app doc D23). |
-| Token counting | Input tokens are estimated locally before the call (UTF-8 characters ÷ 3, rounded up), which over-counts for English JSON. Actual tokens from the model response are what cost tracking and audit records use. |
+| Token counting | Input tokens are estimated locally before the call (UTF-8 characters ÷ 3, rounded up), which over-counts for English JSON. The pre-call spend reservation uses this estimate plus `max_tokens`; actual tokens from the model response settle it and are what audit records use (AN-FS-21). |
 | Infrastructure timing | Terraform is deferred; the code reads table, queue and topic names from environment variables. |
 
 ---
@@ -653,3 +669,5 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 | 2026-10-08 | AN-FS-02: context key `internal_user_id` under `authorizer.lambda` (HTTP API); local-dev identity; profile settings via IAM route; MCP tools use the same context. AN-FS-06: 12-month lookback, new merchants capped at 5. AN-FS-08: Year to date uses the complete-period thresholds. AN-FS-09: unavailable sections are `null` in the payload. AN-FS-15: count after AN-FS-23. AN-FS-23: excluded transactions, `transaction_count`, stale and incomplete-period account rules. AN-FS-24: score formula and tie-break. AN-FS-25: fee matching and refund matching. AN-FS-28: per-month averages. AN-FS-30: baseline median definition. Appendix B: Later insight types removed. Appendix C: identity, profile settings, token counting, Terraform deferred. | Owner decisions on review questions Q1–Q11 and spec gaps. |
 | 2026-10-09 | AN-FS-08: multi-month `actual` counts only budgeted months. AN-FS-27: 3+ same-amount charges within the period also mark a habit. | Found while building the AN-FS-20 fixtures: a September-only budget was compared with three months of spending, and a habit starting inside the period was flagged as duplicate charges. |
 | 2026-10-20 | AN-FS-01: *This month* removed from Reports periods. AN-FS-03: the month-to-date rule serves only the Dashboard's spending pace. AN-FS-08: month-to-date pace rule removed. AN-FS-30: removed. Appendix A: `pct_of_period_elapsed` always null. AN-FS-02 and Appendix C: settings from the verified user context. | Owner decision: the Dashboard owns the current month (app doc D21); settings travel with the request (D23). |
+| 2026-10-25 | AN-FS-10: call timeout cap set from measured p99, enforced at the socket only. AN-FS-14: a refresh counts only when it returns an AI summary (reserve, give back); `refreshes_remaining` without an extra read. AN-FS-15: Bedrock failure breaker (`llm_unavailable`). AN-FS-20: latency percentiles in the report. AN-FS-21: reserve-then-settle spend, so the daily breaker is a real hard stop; timed-out calls stay counted; alert threshold validation and once-per-day alerts. Workflow and Appendix C updated. | Code review of the AI assistant: timed-out calls were billed but not counted, concurrent requests could overshoot the budget, refresh slots were used by failures, and a 100% alert could fire twice. |
+| 2026-10-25 | AN-FS-10: why 25 s (30 s gateway limit, Lambda timeout 29 s); call timeout = remaining − 2 s until latency is measured, no 60 s read timeout on the request path; up to 2 retries with backoff and jitter for errors before processing, none for read timeouts. AN-FS-14: Refresh checks the cache first, a hit uses no refresh. AN-FS-15: the breaker counts provider failures only; throttling falls back as `llm_throttled`; reason code list. AN-FS-21: failures before processing settle to 0. Repaired the AN-FS-21 Refs line. | Owner review of the timeout and retry design; separate throttling from provider failures (app doc D25). |
