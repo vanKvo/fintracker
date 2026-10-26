@@ -11,11 +11,11 @@
 | LG-STMT-01 | Implemented |
 | LG-STMT-02 | Implemented |
 | LG-STMT-03 | Implemented |
-| LG-STMT-04 | In progress (Ledger fingerprint check built; pipeline pause not built) |
+| LG-STMT-04 | Implemented (fingerprint is count, total and date range; the 30-minute pause expiry is DP-ING-09's) |
 | LG-STMT-05 | Implemented |
 | LG-STMT-06 | Implemented |
 | LG-STMT-07 | Implemented |
-| LG-STMT-08 | Proposed |
+| LG-STMT-08 | In progress (server-side recheck built; correcting a wrong client hash with `PATCH …/content-hash` not built) |
 | LG-STMT-09 | Unverified (UI code not reviewed) |
 
 
@@ -160,14 +160,16 @@ Job status, polled by the UI (`GET /jobs/{jobId}`, Data Pipeline-owned, shape ex
 ```jsonc
 {
   "jobId": "…",
-  "status": "PROCESSING",              // see status list below
-  "errorCode": "SERVER_DUPLICATE_DETECTED",  // present only when status = FAILED
+  "status": "FAILED",                  // see status list below
+  "reason": "SERVER_DUPLICATE_DETECTED",  // a catalog reason code (XS-IMP Appendix A); only on FAILED
+  "failedCount": null,                 // JSON numbers or null (DP-ING-10)
+  "totalCount": null,
   "duplicate": {                        // present only for PENDING_DUPLICATE_RESOLUTION
                                         // and for FAILED/SERVER_DUPLICATE_DETECTED
     "matchType": "CONTENT_FINGERPRINT",
     "existingStatementId": "…",
     "existingUploadDate": "2026-08-27T10:15:00Z",
-    "existingTransactionCount": 34
+    "existingTransactionCount": 34      // a JSON number, never a string
   }
 }
 ```
@@ -178,11 +180,13 @@ Statuses, extending the set the UI already knows (`statement.service.ts`):
 | Status | Meaning | Terminal? |
 |---|---|---|
 | `PROCESSING` | Normal in-flight work | No |
-| `PENDING_MAPPING_CONFIRMATION` | Existing pause — unfamiliar CSV layout | No, waits on user |
+| `PENDING_CSV_COL_MAPPING_CONFIRMATION` | Existing pause — the user confirms the CSV columns (DP-ING-09) | No, waits on user |
 | `PENDING_DUPLICATE_RESOLUTION` | **New** — LG-STMT-04 match found mid-processing, waiting on overwrite/cancel | No, waits on user |
 | `COMPLETED` / `PARTIALLY_COMPLETED` / `FAILED` | Final outcome | Yes |
 
-`errorCode` values relevant to this document: `SERVER_DUPLICATE_DETECTED` (LG-STMT-08).
+`reason` values relevant to this document: `SERVER_DUPLICATE_DETECTED` (LG-STMT-08) and `DUPLICATE_RESOLUTION_TIMEOUT` (the likely-duplicate question expires after 30 minutes, LG-STMT-04). The field is `reason`, as DP-ING-10 defines it; an earlier draft of this contract called it `errorCode`.
+
+The status API must return this payload for every job that carries it. A job record read back from storage must serialize correctly, so numbers stored as DynamoDB numbers are returned as JSON numbers (a test reads a real stored record, not a hand-built one).
 
 **Delivery is transport-agnostic.** Polling `GET /jobs/{jobId}` is what ships today (see the Resolved item at the end of this document) and is sufficient for every requirement here. A WebSocket or webhook push carrying the identical payload is a latency/cost optimization that can be added later without changing any of the shapes above — no requirement in this document depends on which transport delivers the status.
 
@@ -567,10 +571,12 @@ confirm it's a different statement.
 
 Since this fingerprint can only be known after the file has already been fully read — later in the process than LG-STMT-03's check — a match here is discovered mid-way through processing, not at the very start of the upload. See LG-STMT-05 for how the user is prompted at that later point.
 
+The import waits for the user's answer for at most 30 minutes, the same limit as the column check (DP-ING-09). An unanswered question ends the import as `FAILED` with reason `DUPLICATE_RESOLUTION_TIMEOUT` through the same failure path, and the Ledger's statement becomes `FAILED`, so a later re-upload starts clean (XS-IMP-03).
+
 ### Constraints
 
 - **Resolved — PDF/photo scope:** spreadsheet files only for now, confirmed. A PDF/photo reading is OCR-derived and noisier; extending this check to those formats is deferred as future work, not because it's hard, but because the failure mode of skipping it there is mild (at worst, an occasional missed duplicate that LG-STMT-06's month check or LG-STMT-03's exact-file check still has a chance to catch) and the formats aren't build-blocking today.
-- **Resolved — storage shape:** a single aggregate hash, not individually-stored per-transaction hashes. Combine each row's fingerprint (the same one LG-STMT-02 reuses for idempotency) into one value — sort them, concatenate, hash once more — so comparison stays a single indexed column lookup, the same shape as LG-STMT-03's `content_hash`. Storing every individual transaction hash would only pay off for a future "explain why these look similar" screen or partial-overlap detection, and LG-STMT-05 already puts reconciling individual transactions out of scope — no reason to pay for that storage/complexity now for a capability nothing else in this document uses yet. Revisit if that future screen becomes a real ask.
+- **Resolved — storage shape:** a single aggregate hash, not individually-stored per-transaction hashes: SHA-256 of `count|total|earliest date|latest date` over the whole statement, with the total to 2 decimal places and the dates as ISO dates. It is not built from the per-row fingerprints of LG-STMT-02, because those include the statement id and the row position, so they never match across two uploads. Comparison stays a single indexed column lookup, the same shape as LG-STMT-03's `content_hash`. Storing every individual transaction hash would only pay off for a future "explain why these look similar" screen or partial-overlap detection, and LG-STMT-05 already puts reconciling individual transactions out of scope — no reason to pay for that storage/complexity now for a capability nothing else in this document uses yet. Revisit if that future screen becomes a real ask.
 - **Ledger scope is narrow here.** Computing the fingerprint from the fully-read transaction set is entirely a Data Pipeline responsibility (it's the only side that has read the file by this point) — the Ledger's only job for this requirement is to (a) store the value once computed and (b) answer whether it matches an existing statement, using the same internal endpoint LG-STMT-03 already defines.
 
 **Cross-Service Note (informational, Data Pipeline team's own scope):** how and when the Normalizer/Data Dispatcher stage computes this aggregate fingerprint from the extracted rows, and calls the two Ledger endpoints below, is specified in `DP-ING-statement-ingestion-spec.md`, not here.
@@ -869,26 +875,19 @@ CREATE UNIQUE INDEX idx_unique_account_statement_month
 
 ### Problem
 
-LG-STMT-03 has the Ledger do a fast check against the client-computed fingerprint at
-`initiate-upload` time — before the file itself has gone anywhere — and separately requires an
-authoritative recompute once the file actually lands, "trusting that computed value as the final
-answer if the two ever disagree." What isn't defined anywhere is what happens *when* they disagree:
-the Ledger's optimistic pre-check already said "proceed" and handed back a presigned upload URL,
-the file is already in S3, and the Data Pipeline's Gatekeeper stage is the one that discovers,
-mid-pipeline, that this is actually a duplicate. There's no pipeline status for this today, and the
-Gatekeeper's exceptions currently only map to a generic `FAILED`.
+LG-STMT-03 has the Ledger do a fast check against the client-computed fingerprint at `initiate-upload` time — before the file itself has gone anywhere — and separately requires an authoritative recompute once the file actually lands, "trusting that computed value as the final answer if the two ever disagree." What isn't defined anywhere is what happens *when* they disagree: the Ledger's optimistic pre-check already said "proceed" and handed back a presigned upload URL, the file is already in S3, and the Data Pipeline's Gatekeeper stage is the one that discovers, mid-pipeline, that this is actually a duplicate. There's no pipeline status for this today, and the Gatekeeper's exceptions currently only map to a generic `FAILED`.
 
 ### Requested Change
 
-Resolve this through the ordinary job lifecycle described in the Shared Contract section, rather
-than any new mechanism. Because starting an upload only ever *accepts* the work rather than
-completing it, the system already has a channel for reporting something discovered afterwards. The
-background check runs on the file that actually arrived, and if it finds the upload to be a
-duplicate that the fast up-front check missed, the import ends there with a specific, named reason
-(`SERVER_DUPLICATE_DETECTED`) instead of a generic failure. The user's screen — which is already
-following the upload's progress — picks that up on its next check-in and shows a clear explanation,
-naming the statement that already exists and when it was uploaded, rather than an unexplained
+Resolve this through the ordinary job lifecycle described in the Shared Contract section, rather than any new mechanism. Because starting an upload only ever *accepts* the work rather than completing it, the system already has a channel for reporting something discovered afterwards. The background check runs on the file that actually arrived, and if it finds the upload to be a
+duplicate that the fast up-front check missed, the import ends there with a specific, named reason (`SERVER_DUPLICATE_DETECTED`) instead of a generic failure. The user's screen — which is already
+following the upload's progress — picks that up on its next check-in and shows a clear explanation, naming the statement that already exists and when it was uploaded, rather than an unexplained
 "upload failed."
+
+**Correcting a wrong client hash.** When the recomputed hash matches no statement, the statement's own record still holds the hash the browser sent, which is wrong. Left alone, a later upload of the same file is not recognized by LG-STMT-03. So the Gatekeeper replaces it: `PATCH /api/v1/ledger/statements/internal/{id}/content-hash` with the recomputed hash (Technical Reference). Only the Gatekeeper writes this value after upload; the browser's hash is only ever a first guess.
+- The import continues after a 204, and the mismatch is logged as `CLIENT_CONTENT_HASH_MISMATCH` (statement id only).
+- A 409 means another statement of the account took that hash in the meantime: the import ends as `SERVER_DUPLICATE_DETECTED`, like any other match.
+- If the correction can't be saved after 3 attempts, the import ends as `PIPELINE_ERROR` rather than continue with a hash that would let a later duplicate through. The user uploads again; XS-IMP-03 clears the failed record.
 
 **MUST — the one behavior that cannot bend:** the system must never treat this as a success and
 create a duplicate statement just because the earlier optimistic check passed. Failing the import is
@@ -914,15 +913,42 @@ flow later if this path turns out to trigger more often than expected in practic
 
 **Cross-Service Note (informational, Data Pipeline team's own scope):** how the Gatekeeper maps a
 `duplicateFound=true` response from the endpoint below into `status: "FAILED"` /
-`errorCode: "SERVER_DUPLICATE_DETECTED"` with the `duplicate` payload attached, is specified in
-`DP-ING-statement-ingestion-spec.md`, not here. The status/errorCode/payload *shape* is fixed by the Shared
+`reason: "SERVER_DUPLICATE_DETECTED"` with the `duplicate` payload attached, is specified in
+`DP-ING-statement-ingestion-spec.md`, not here. The status/reason/payload *shape* is fixed by the Shared
 Contract section of this document, since the UI renders it.
 
 ### Technical Reference
 
 Reuses LG-STMT-03's `GET /api/v1/ledger/statements/internal/duplicate-check` endpoint
-(`InternalStatementController.checkDuplicate`) exactly as-is — no new Ledger endpoint, method, or
-DTO for this requirement. The Gatekeeper's authoritative recompute calls that same endpoint twice, at
+(`InternalStatementController.checkDuplicate`) for the recheck, and adds one internal route to
+correct a wrong client hash:
+
+```
+PATCH /api/v1/ledger/statements/internal/{id}/content-hash
+{ "contentHash": "<sha256 hex>" }
+204 No Content    the statement now holds this hash (also when it already did: idempotent)
+404 Not Found     no such statement for the X-Internal-User-Id caller
+409 Conflict      another statement of the same account already has this hash (unique index, V15)
+400 Bad Request   not 64 lowercase hex characters
+```
+```java
+// InternalStatementController
+@PatchMapping("/{id}/content-hash")
+public ResponseEntity<Void> correctContentHash(
+        @PathVariable UUID id,
+        @Valid @RequestBody CorrectContentHashRequest request,
+        @RequestAttribute("userId") UUID userId) {
+    statementService.correctContentHash(id, userId, request.contentHash());
+    return ResponseEntity.noContent().build();
+}
+
+// statement/dto/CorrectContentHashRequest.java (new)
+public record CorrectContentHashRequest(@NotNull @Pattern(regexp = "[a-f0-9]{64}") String contentHash) {}
+```
+The UPDATE is scoped by `statement_id` and `user_id` in one statement (no check-then-write), the
+same as `recordContentFingerprint`. Same caller pattern as every internal route
+(SigV4 + `InternalCallerFilter` + `X-Internal-User-Id`); the Data pipeline's Gatekeeper role is the
+only caller allowed. The Gatekeeper's authoritative recompute calls that same endpoint twice, at
 two different moments, each with exactly one of the two query parameters set: once right after
 upload with its recomputed `contentHash` (dispatching to `checkForDuplicateByContentHash`), and once
 after LG-STMT-04's mid-processing stage has run, with `contentFingerprint` (dispatching to
@@ -931,10 +957,10 @@ requirement's disagreement signal. This is the same kind of trusted internal cal
 for pushing transactions — it reuses that same internal-caller identity and auth pattern
 (SigV4 + `InternalCallerFilter` + `X-Internal-User-Id`) rather than inventing a second one.
 
-**Data Contracts:** none new.
+**Data Contracts:** none new (`content_hash` and its unique index already exist, V13/V15).
 
-**Error Handling:** none new on the Ledger side — this requirement's failure handling
-(`status: "FAILED"`, `errorCode: "SERVER_DUPLICATE_DETECTED"`) is a Data Pipeline job-status concern,
+**Error Handling:** on the Ledger side, only the `PATCH …/content-hash` answers above — this requirement's failure handling
+(`status: "FAILED"`, `reason: "SERVER_DUPLICATE_DETECTED"`) is a Data Pipeline job-status concern,
 not a Ledger exception or HTTP response shape. The Ledger's only obligation is that `GET .../duplicate-check`
 never returns `duplicateFound=false` for a fingerprint that in fact matches an existing statement —
 covered by the same repository queries LG-STMT-03/04 already define.
@@ -944,6 +970,8 @@ covered by the same repository queries LG-STMT-03/04 already define.
 | Stage | File |
 |---|---|
 | Endpoint reused for the recheck | `statement/controller/InternalStatementController.checkDuplicate` (LG-STMT-03) |
+| Hash correction route | `statement/controller/InternalStatementController.correctContentHash` (new) → `StatementServiceImpl.correctContentHash` → `JooqStatementRepository.updateContentHash` |
+| Gatekeeper call | `services/fintracker-data-pipeline/src/statement_ingestion/ledger_client.py` (new `correct_content_hash`), called from `gatekeeper/service.py::verify_content_hash` |
 
 ---
 
@@ -975,3 +1003,13 @@ Step-by-Step Approach:
 3. Pre-fill Range Signals: Parse all dates in that column, find the minimum (earliest) and maximum (latest) values, and auto-populate the openingDate and closingDate UI fields.
 
 4. Keep Controls Editable: Leave the inputs editable so users can correct edge cases (e.g., unusual date formats or reversed column order). Existing validation (dateRangeInvalid) will still catch bad date inputs if the user or parser gets it wrong.
+
+---
+
+## Change Log
+
+| Change | Reason |
+|---|---|
+| 2026-10-26: Shared Contract: the job status field is `reason` (was `errorCode`), the CSV pause is `PENDING_CSV_COL_MAPPING_CONFIRMATION`, `failedCount`/`totalCount` added, `DUPLICATE_RESOLUTION_TIMEOUT` listed, and the payload must serialize from a stored record. LG-STMT-08's notes use `reason`. | DP-ING-10 and the code use `reason`; the status API returned 500 for every job carrying a `duplicate` because stored numbers came back as DynamoDB Decimals. |
+| 2026-10-26: LG-STMT-08: a wrong client hash is corrected by the Gatekeeper through the new internal `PATCH …/content-hash` route; failure to correct fails the import. Back to In progress. | Owner decision (separate route). The stored client hash otherwise stays wrong, and a later upload of the same PDF is not caught. |
+| 2026-10-26: LG-STMT-04: the fingerprint is defined once (count, total, date range), and the duplicate question expires after 30 minutes with `DUPLICATE_RESOLUTION_TIMEOUT`. | The spec described the fingerprint two ways, and the row-fingerprint version can never match across uploads. The pause limit was only written for the column check. |

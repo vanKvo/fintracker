@@ -1,7 +1,7 @@
 > **Tests for:** [LG-STMT-statement-upload-spec.md](LG-STMT-statement-upload-spec.md) · **Formerly:** `ledger-statement-tests-02-v1.md`, `ledger-statement-tests-02-v2.md` (merged 2026-10)
 
 =========================
-F2P TESTS (102)
+F2P TESTS (138)
 =========================
 
 --- StatementServiceTest (14) ---
@@ -126,7 +126,7 @@ F2P TESTS (102)
 87. computeContentHash matches the known SHA-256 of empty input: LG-STMT-03.
 88. polling stops on PENDING_DUPLICATE_RESOLUTION and hands the payload on: LG-STMT-04.
 89. polling still stops on PENDING_MAPPING_CONFIRMATION: LG-STMT-04.
-90. a FAILED status carries errorCode and duplicate through to the caller: LG-STMT-08.
+90. a FAILED status carries the reason code and duplicate through to the caller: LG-STMT-08.
 
 --- upload-statement-modal.spec.ts (12) ---
 91. CSV now requires the date range too: LG-STMT-07.
@@ -141,6 +141,52 @@ F2P TESTS (102)
 100. a non-duplicate failure still reaches the error panel: LG-STMT-05.
 101. a mid-processing duplicate prompts with midProcessing true and discards the abandoned tracking record: LG-STMT-04.
 102. a SERVER_DUPLICATE_DETECTED failure names the existing statement: LG-STMT-08.
+
+--- TestLedgerDuplicateCheckClient (7) ---
+103. a content hash check is a signed get for the owner's account: LG-STMT-08.
+104. a fingerprint check sends only the fingerprint: LG-STMT-04.
+105. exactly one of hash or fingerprint is required: LG-STMT-03/04.
+106. an unreachable Ledger is retried, then fails closed: LG-STMT-08 MUST.
+107. an unset Ledger URL fails closed rather than skipping the check: LG-STMT-08 MUST.
+108. recording a fingerprint is a signed patch with the value in the body: LG-STMT-04.
+109. recording a fingerprint the Ledger cannot take raises: LG-STMT-04.
+
+--- TestServerSideHashRecheck (14) ---
+110. the recomputed hash is what is sent for the check: LG-STMT-08.
+111. the statement's own record matching its own hash is not a duplicate: LG-STMT-08.
+112. another statement with the same hash ends the import as SERVER_DUPLICATE_DETECTED: LG-STMT-08.
+113. a wrong client hash that is not a duplicate is corrected with `PATCH …/content-hash`, then the import continues and the mismatch is logged: LG-STMT-08. *(Not built: today it only logs.)*
+114. an unreachable Ledger never lets the upload through: LG-STMT-08 MUST.
+115. the recheck also covers PDFs and runs before any format work: LG-STMT-08.
+116. an oversized file is rejected before it is hashed or sent anywhere: DP-ING-04.
+117. the handler stores the named reason and the duplicate on the failed job: LG-STMT-08.
+118. a 409 from the correction ends the import as SERVER_DUPLICATE_DETECTED: LG-STMT-08. *(Not built.)*
+119. a correction that fails 3 times ends the import as PIPELINE_ERROR: LG-STMT-08. *(Not built.)*
+120. Ledger: the route stores the hash for the caller's statement and answers 204, also when repeated: LG-STMT-08. *(Not built.)*
+121. Ledger: another user's statement answers 404 and nothing changes: LG-STMT-08 / invariant 5. *(Not built.)*
+122. Ledger: a hash held by another statement of the account answers 409: LG-STMT-08. *(Not built.)*
+123. Ledger: the route rejects a caller that is not allow-listed: LG-STMT-08 / LG-STMT-02. *(Not built.)*
+
+--- TestContentFingerprint (7) ---
+124. it is the hash of count, total and the date range: LG-STMT-04.
+125. row order does not matter: LG-STMT-04.
+126. a different count, total or date range gives a different fingerprint: LG-STMT-04.
+127. two months with the same first and last row do not collide: LG-STMT-04 Problem.
+128. US and ISO dates give the same fingerprint: LG-STMT-04.
+129. a decimal amount is summed exactly: LG-STMT-04.
+130. a statement with no readable date has no fingerprint: LG-STMT-04.
+
+--- TestDuplicateCheckStage (6) ---
+131. no match records the fingerprint and lets the import continue: LG-STMT-04.
+132. the check runs before the fingerprint is recorded, so a statement never matches itself: LG-STMT-04.
+133. a match returns the duplicate and does not record the fingerprint: LG-STMT-04 / 05.
+134. a PDF or image is not checked at all: LG-STMT-04 Constraint.
+135. a statement with no readable date skips the check and is logged: LG-STMT-04.
+136. an unreachable Ledger fails the job with a pipeline error and does not continue: LG-STMT-04.
+
+--- TestDuplicatePause (2) ---
+137. the job waits on the user with the duplicate and the task token: LG-STMT-04 / 05.
+138. the state machine pauses on a duplicate and otherwise pushes: LG-STMT-04 / 05.
 
 =========================
 P2P TESTS (4)
