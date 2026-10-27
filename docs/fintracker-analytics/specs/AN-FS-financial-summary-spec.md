@@ -9,7 +9,7 @@
 | File | AN-FS-financial-summary-spec.md |
 | Owner | Van Vo |
 | Status | Draft |
-| Last updated | 2026-10-25 |
+| Last updated | 2026-10-26 |
 
 ---
 
@@ -56,7 +56,7 @@ Turning a user's own figures into clear, personalized takeaways adds value. The 
         │
 [Metrics, alerts, feedback] ──► AN-FS-17
 
-[On demand: dry → smoke → core → extended → full evaluation | Automatic: replay tests + eval-required check] ──► AN-FS-20, AN-FS-22
+[On demand: smoke → core → extended → full evaluation | Automatic: replay tests + eval-required check] ──► AN-FS-20, AN-FS-22
 ```
 
 ---
@@ -388,6 +388,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 - [Happy] The report shows single-call LLM latency p50, p95 and p99 per model, from a `llm_latency_ms` field logged for every call (live runs and production). These set the AN-FS-10 call timeout cap; at least 200 calls are needed before the p99 is used.
 - [Fail] The run fails if the average tokens per summary exceeds the token budget, or if any single summary exceeds 2× the budget (retries included).
 - [Fail] Results are saved to S3 (Appendix C) with `tier`, `prompt_template_version`, `model_id` and output schema version, pass or fail.
+- [Happy] Every run's report is kept, pass or fail, and does not expire. A passing run also leaves its own pass record. Records are never overwritten, so each run has its own record, and the "last pass" for a prompt version and model is the most recent pass record.
 **Open Questions:** What is the token budget per summary? Proposed: set it after the first passing `core` run, at about 20% above the measured average.
 **Refs:** AN-FS-10, AN-FS-11, AN-FS-12, AN-FS-16, AN-FS-18, AN-FS-22; split from AN-FS-17
 
@@ -421,8 +422,8 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 **Requirement:** Live evaluation runs are manual and start small. Each run is limited by a cost estimate and cap. Free automatic checks still make sure AI-related changes can't merge without a passing `full` run.
 **Acceptance Criteria:**
 - [Happy] Live runs are started manually (e.g., GitHub Actions `workflow_dispatch`), with inputs: `tier` (default `smoke`), `model_id` (default production model), `runs_per_fixture` (default 1; `full` requires 2), and an optional fixture list.
-- [Happy] **Dry run** (`tier=dry`, no generation): counts input tokens for all fixtures, and prints the estimated cost of each tier using `max_tokens` as the worst-case output.
-- [Happy] **Tier order:** a tier can run only after the previous tier has passed for the same `prompt_template_version` and `model_id` (dry → smoke → core → extended → full), unless `skip_tier_check` is set.
+- [Happy] **Dry run** (`tier=dry`, no generation): a free cost preview run from the command line. It counts input tokens for all fixtures, and prints the estimated cost of each tier using `max_tokens` as the worst-case output. It is not a tier that has to pass, and its report is not stored in S3.
+- [Happy] **Tier order:** a tier can run only after the previous tier has passed for the same `prompt_template_version` and `model_id` (smoke → core → extended → full; `smoke` has no earlier tier), unless `skip_tier_check` is set.
 - [Alt] **Model comparison:** running with a non-production `model_id` produces the same report, so candidate models can be compared side by side (AN-FS-10).
 - [Happy] **Prompt versions:** each prompt version is a folder (`prompt/versions/fs-vN/`), and the folder name is the `prompt_template_version` in the cache key, the audit record and the results. A version is frozen when it first passes `full`: its hash is recorded in `prompts.lock`, and a test fails if a frozen version changes, so any later edit is a new folder. The active version is a config value, so a rollback needs no deploy.
 - [Alt] **Automatic, free:** on every pull request, CI runs replay tests, which feed saved LLM responses through validation (AN-FS-10 to AN-FS-12) without calling the LLM. If a pull request changes prompt templates, `model_id`, the output schema or the facts payload schema, a required check blocks the merge until a passing `full` run exists for those exact versions.
@@ -631,7 +632,7 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 |---|---|
 | Storage | One Analytics DynamoDB table: summary cache (AN-FS-14), audit records and payload snapshots (AN-FS-18), usage counters (AN-FS-21). Item TTLs: snapshots 30 days, audit records 12 months. Encrypted with a customer-managed KMS key. |
 | Infrastructure | Terraform for Analytics, same layout as the Data Pipeline. |
-| Evaluation results | S3 bucket, versioned, 90-day lifecycle (AN-FS-20, AN-FS-22). |
+| Evaluation results | S3 bucket, not versioned, no expiry; only abandoned multipart uploads are cleaned up (AN-FS-20, AN-FS-22). Every live run (never a dry run) is stored at `results/<version key>/<tier>/<stamp>.json`; each passing run is also stored at `passes/<prompt version>/<model id>/<tier>/<stamp>.json` (tier order and comparison with the last pass) and at `passes-by-version/<version key>/<tier>/<stamp>.json` (required check). The stamp is the UTC run time as `YYYYMMDDTHHMMSS`. The latest pass is the largest key under its prefix. Records are never overwritten. |
 | Placement | Reports page, replacing the mocked narrative (AN-FS-01, AN-FS-13). |
 | Authentication | Shared Lambda authorizer for all FinTracker services; maps Cognito `sub` → internal user ID via User Profile `resolve_sub` and returns it as `internal_user_id`. API Gateway HTTP API, so Analytics reads `requestContext.authorizer.lambda.internal_user_id`. Specified outside this spec. |
 | Local identity | `LOCAL_DEV_USER_ID`, honoured only when `APP_ENV=local` (AN-FS-02). |
@@ -671,3 +672,6 @@ Listed in ID order. New requirements take the next unused number; the Workflow s
 | 2026-10-20 | AN-FS-01: *This month* removed from Reports periods. AN-FS-03: the month-to-date rule serves only the Dashboard's spending pace. AN-FS-08: month-to-date pace rule removed. AN-FS-30: removed. Appendix A: `pct_of_period_elapsed` always null. AN-FS-02 and Appendix C: settings from the verified user context. | Owner decision: the Dashboard owns the current month (app doc D21); settings travel with the request (D23). |
 | 2026-10-25 | AN-FS-10: call timeout cap set from measured p99, enforced at the socket only. AN-FS-14: a refresh counts only when it returns an AI summary (reserve, give back); `refreshes_remaining` without an extra read. AN-FS-15: Bedrock failure breaker (`llm_unavailable`). AN-FS-20: latency percentiles in the report. AN-FS-21: reserve-then-settle spend, so the daily breaker is a real hard stop; timed-out calls stay counted; alert threshold validation and once-per-day alerts. Workflow and Appendix C updated. | Code review of the AI assistant: timed-out calls were billed but not counted, concurrent requests could overshoot the budget, refresh slots were used by failures, and a 100% alert could fire twice. |
 | 2026-10-25 | AN-FS-10: why 25 s (30 s gateway limit, Lambda timeout 29 s); call timeout = remaining − 2 s until latency is measured, no 60 s read timeout on the request path; up to 2 retries with backoff and jitter for errors before processing, none for read timeouts. AN-FS-14: Refresh checks the cache first, a hit uses no refresh. AN-FS-15: the breaker counts provider failures only; throttling falls back as `llm_throttled`; reason code list. AN-FS-21: failures before processing settle to 0. Repaired the AN-FS-21 Refs line. | Owner review of the timeout and retry design; separate throttling from provider failures (app doc D25). |
+| 2026-10-26 | AN-FS-20 and AN-FS-22: each passing run keeps its own pass record instead of overwriting a "last pass" record, so the latest pass is found by listing. Reports and pass records both expire 90 days after they were written. A pass older than 90 days no longer counts for tier order or the required check. Appendix C: evaluation results bucket is not versioned. | Overwriting needed versioning to keep history; records that are never overwritten give the same answers, a full audit trail and a simpler bucket. |
+| 2026-10-26 | AN-FS-20 and AN-FS-22: evaluation reports and pass records no longer expire after 90 days; a pass stays valid for its exact version until removed by hand. Appendix C updated. | The records are small synthetic-data files and cost almost nothing to keep. Expiry only forced paid reruns of evidence that was still valid for the exact prompt, model and schemas. |
+| 2026-10-27 | AN-FS-22: the dry run is only a cost preview. It is no longer the first tier, so `smoke` runs without it, and its report is not stored in S3. Workflow diagram, Tier order and Appendix C "Evaluation results" updated. | A dry run proves nothing about the prompt, and a live run already prints its own estimate and checks it against the cap; saving it only added records. |
