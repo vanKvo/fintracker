@@ -74,6 +74,14 @@ Source: `src/core/exceptions.py`, `src/summary/exceptions.py`, `src/chat/schemas
 
 Shared codes `invalid_argument`, `database_unavailable`, `timeout` and `internal_error`, plus the internal-only codes in section 2. The AI assistant treats every Knowledge error as "no docs available" (KN-RET-07).
 
+### Document service
+
+Shared codes `unauthorized`, `not_found`, `service_unavailable` and `internal_error`, plus:
+
+| Code | HTTP | Retryable | Meaning | What the user sees or does |
+|---|---|---|---|---|
+| `document_not_ready` | 409 | No | The file is still in quarantine or failed its malware scan; no download link is issued (DS-DL-01) | Wait for the upload to finish, or upload again |
+
 ### Ledger *(to adopt: sends `type` today, no `code`)*
 
 The Ledger's problem types today, from `GlobalExceptionHandler` (snapshot of 2026-10-20; check against the current file when adopting). Each becomes the code shown, by replacing hyphens with underscores. Merges are marked.
@@ -134,5 +142,6 @@ Source: `src/shared/exceptions.py` (`reason`). Stored in upper case on the Job T
 | Analytics | Yes | Yes | Yes, library messages redacted | None |
 | Ledger | Partly: `type`, no `code` or `trace_id`; type base is `https://api.fintracker.com/problems/` | No: one method per exception | Yes | 4xx `detail` is `ex.getMessage()`; database errors log `ex.getMessage()`, which can carry SQL bind values |
 | Knowledge | Yes (KN-RET App. C) | Yes: `core/error_handlers.handle_error`, called by each Lambda handler (no web framework) | Yes, library messages redacted | No `ServerError` metric yet: 5xx is counted by the retrieval request metric's error code (KN-RET-08) |
+| Document service | Yes | Yes: `core/error_handlers.handle_error`, called by each Lambda handler | Yes, library messages redacted | None |
 | XS-CTX | Yes (App. C) | n/a (spec) | n/a | None |
 | Data pipeline | n/a (async) | n/a | — | Return lower-case codes from the status API |
