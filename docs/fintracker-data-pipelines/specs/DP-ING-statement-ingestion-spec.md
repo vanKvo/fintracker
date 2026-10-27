@@ -16,8 +16,8 @@
 | DP-ING-08 | Implemented (parts superseded by DP-ING-10) |
 | DP-ING-09 | Implemented |
 | DP-ING-10 | Implemented |
-| DP-ING-11 | In progress (pages never stored, built; the one-time cleanup leaves old versions and images whose original was deleted) |
-| DP-ING-12 | Proposed |
+| DP-ING-11 | Implemented |
+| DP-ING-12 | Implemented |
 
 
 # Import Channels

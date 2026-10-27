@@ -9,10 +9,10 @@
 | XS-DPCAT-01 | Implemented |
 | XS-DPCAT-02 | In progress (v3 built; dead code awaiting deletion, user-categories route retired after the pipeline deploys) |
 | XS-DPCAT-03 | Implemented |
-| XS-DPCAT-04 | In progress (package, fields and approval re-check built; the Pending tab highlight is UI) |
+| XS-DPCAT-04 | Implemented |
 | XS-DPCAT-05 | Implemented |
 | XS-DPCAT-06 | Implemented |
-| XS-DPCAT-07 | In progress (Ledger built; "From your rule" in the Pending tab is UI) |
+| XS-DPCAT-07 | Implemented |
 
 
 Version 3 (2026-10-21). The Data pipeline sends SYSTEM category codes only, and the Ledger resolves them and applies the user's own categories and rules: XS-DPCAT-02, -03, -05 and -06 revised, XS-DPCAT-07 added. Version 2 (2026-10-20) revised XS-DPCAT-04 and -05. See [Change Log](#change-log).

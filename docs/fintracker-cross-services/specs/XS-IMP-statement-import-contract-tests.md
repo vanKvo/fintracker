@@ -1,7 +1,7 @@
 > **Tests for:** [XS-IMP-statement-import-contract-spec.md](XS-IMP-statement-import-contract-spec.md)
 
 =========================
-F2P TESTS (72)
+F2P TESTS (93)
 =========================
 
 --- TestCatalog (pipeline) (5) ---
@@ -31,7 +31,7 @@ F2P TESTS (72)
 16. a reason stored before the catalog existed is shown as PIPELINE_ERROR: XS-IMP-04.
 17. the failed duplicate keeps its named reason and payload: LG-STMT-08 / XS-IMP-04.
 18. the column mapping proposal is returned in the shape the UI reads: DP-MAP-02 / DP-ING-01 Mapping Transparency.
-19. a duplicate read back from a real (moto) job record, with `existingTransactionCount` stored as a DynamoDB number, returns 200 with that count as a JSON number: LG-STMT Shared Contract / LG-STMT-04 / LG-STMT-08. *(Not built: today the status API raises `TypeError` on the stored Decimal and answers 500; the existing test passes only because it replaces the database read with plain ints.)*
+19. a duplicate read back from a real (moto) job record, with `existingTransactionCount` stored as a DynamoDB number, returns 200 with that count as a JSON number: LG-STMT Shared Contract / LG-STMT-04 / LG-STMT-08.
 
 --- TestRecordFailure (8) ---
 20. a cancel sets the job failed and tells the Ledger: XS-IMP-02 Happy.
@@ -105,3 +105,36 @@ F2P TESTS (72)
 
 --- statement.service.spec.ts (1) ---
 72. a partially completed status carries the counts as fields: XS-IMP-04 Alt / DP-ING-10.
+
+--- reason-messages.spec.ts (9) ---
+73. each user-fixable code has its own message from the catalog: XS-IMP-04 Happy / Appendix A.
+74. SERVER_DUPLICATE_DETECTED names the date of the statement it matched: XS-IMP-04 / LG-STMT-08.
+75. SERVER_DUPLICATE_DETECTED without a date still reads as a sentence: XS-IMP-04.
+76. our-side and unknown codes show the generic message with the reference: XS-IMP-04 Alt.
+77. a code the catalog does not know is never echoed: XS-IMP-04 Fail.
+78. a failed statement with no job id leaves the reference out: XS-IMP-04.
+79. a partial import reports its counts as a sentence built in the UI: XS-IMP-04 Alt / DP-ING-10.
+80. a partial import with no counts falls back to a plain sentence: XS-IMP-04.
+81. LOW_CONFIDENCE_EXTRACTION asks the user to check the date and amount: XS-IMP-01 Appendix A.
+
+--- statements.spec.ts (4) ---
+82. a statement cancelled at the column check shows "Upload cancelled…": XS-IMP-02 Happy.
+83. an unknown failure reason shows the generic message with the statement id: XS-IMP-04 Alt.
+84. a failed statement with no recorded reason is an our-side failure, not blank: XS-IMP-02.
+85. a completed statement has no failure message: XS-IMP-02.
+
+--- upload-statement-modal.spec.ts (3) ---
+86. a failed job shows the catalog message for its reason: XS-IMP-04 Happy.
+87. a reason the catalog does not know is shown as an our-side error with the job reference: XS-IMP-04 Alt / Fail.
+88. a partly imported statement reports the counts: XS-IMP-04 Alt.
+
+--- statement.service.spec.ts — failure reason (1) ---
+89. a listed statement carries the failure reason the Ledger stored: XS-IMP-02.
+
+--- transaction.service.spec.ts — review fields (1) ---
+90. a transaction carries its review reason, category issue and category source: XS-IMP-01.
+
+--- transactions.spec.ts — review hint (3) ---
+91. a pending low-confidence row is highlighted and says what to check: XS-IMP-01 Happy.
+92. an approved row, or one with no review reason, is not highlighted: XS-IMP-01 Alt.
+93. a row that is low-confidence and uncategorized shows both highlights: XS-IMP-01 Alt.

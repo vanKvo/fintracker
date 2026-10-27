@@ -1,7 +1,7 @@
 > **Tests for:** [LG-STMT-statement-upload-spec.md](LG-STMT-statement-upload-spec.md) · **Formerly:** `ledger-statement-tests-02-v1.md`, `ledger-statement-tests-02-v2.md` (merged 2026-10)
 
 =========================
-F2P TESTS (138)
+F2P TESTS (144)
 =========================
 
 --- StatementServiceTest (14) ---
@@ -155,17 +155,17 @@ F2P TESTS (138)
 110. the recomputed hash is what is sent for the check: LG-STMT-08.
 111. the statement's own record matching its own hash is not a duplicate: LG-STMT-08.
 112. another statement with the same hash ends the import as SERVER_DUPLICATE_DETECTED: LG-STMT-08.
-113. a wrong client hash that is not a duplicate is corrected with `PATCH …/content-hash`, then the import continues and the mismatch is logged: LG-STMT-08. *(Not built: today it only logs.)*
+113. a wrong client hash that is not a duplicate is corrected with `PATCH …/content-hash`, then the import continues and the mismatch is logged: LG-STMT-08.
 114. an unreachable Ledger never lets the upload through: LG-STMT-08 MUST.
 115. the recheck also covers PDFs and runs before any format work: LG-STMT-08.
 116. an oversized file is rejected before it is hashed or sent anywhere: DP-ING-04.
 117. the handler stores the named reason and the duplicate on the failed job: LG-STMT-08.
-118. a 409 from the correction ends the import as SERVER_DUPLICATE_DETECTED: LG-STMT-08. *(Not built.)*
-119. a correction that fails 3 times ends the import as PIPELINE_ERROR: LG-STMT-08. *(Not built.)*
-120. Ledger: the route stores the hash for the caller's statement and answers 204, also when repeated: LG-STMT-08. *(Not built.)*
-121. Ledger: another user's statement answers 404 and nothing changes: LG-STMT-08 / invariant 5. *(Not built.)*
-122. Ledger: a hash held by another statement of the account answers 409: LG-STMT-08. *(Not built.)*
-123. Ledger: the route rejects a caller that is not allow-listed: LG-STMT-08 / LG-STMT-02. *(Not built.)*
+118. a 409 from the correction ends the import as SERVER_DUPLICATE_DETECTED: LG-STMT-08.
+119. a correction that fails 3 times ends the import as PIPELINE_ERROR: LG-STMT-08.
+120. Ledger: the route stores the hash for the caller's statement and answers 204, also when repeated: LG-STMT-08.
+121. Ledger: another user's statement answers 404 and nothing changes: LG-STMT-08 / invariant 5.
+122. Ledger: a hash held by another statement of the account answers 409: LG-STMT-08.
+123. Ledger: the route rejects a caller that is not allow-listed: LG-STMT-08 / LG-STMT-02.
 
 --- TestContentFingerprint (7) ---
 124. it is the hash of count, total and the date range: LG-STMT-04.
@@ -187,6 +187,18 @@ F2P TESTS (138)
 --- TestDuplicatePause (2) ---
 137. the job waits on the user with the duplicate and the task token: LG-STMT-04 / 05.
 138. the state machine pauses on a duplicate and otherwise pushes: LG-STMT-04 / 05.
+
+--- TestLedgerDuplicateCheckClient — hash correction (3) ---
+139. correcting a hash is a signed patch with the hash in the body: LG-STMT-08.
+140. a hash another statement holds is a server duplicate with that statement's details: LG-STMT-08.
+141. a correction the Ledger cannot take is retried three times, then raises: LG-STMT-08.
+
+--- TestServerSideHashRecheck — no rewrite (1) ---
+142. a client hash that matches the file is not rewritten: LG-STMT-08.
+
+--- InternalContentHashCorrectionIT (2) ---
+143. the same hash in another account is not a conflict: LG-STMT-08.
+144. a hash that is not 64 lowercase hex characters answers 400: LG-STMT-08.
 
 =========================
 P2P TESTS (4)

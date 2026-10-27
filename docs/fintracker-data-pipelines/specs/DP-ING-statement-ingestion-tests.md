@@ -3,7 +3,7 @@
 DP-ING-10's tests (reason codes and the status API shape) are listed in [XS-IMP-statement-import-contract-tests.md](../../fintracker-cross-services/specs/XS-IMP-statement-import-contract-tests.md). DP-ING-06's identity tests on the HTTP routes are listed in [XS-DPCAT-dp-ledger-categories-tests.md](../../fintracker-cross-services/specs/XS-DPCAT-dp-ledger-categories-tests.md).
 
 =========================
-F2P TESTS (51)
+F2P TESTS (77)
 =========================
 
 --- TestFormatDetection (1, xfail) ---
@@ -82,8 +82,8 @@ F2P TESTS (51)
 
 --- TestRemoveTextractPageImages (6) ---
 43. a dry run lists the page images and deletes nothing: DP-ING-11.
-44. applying removes every version of every page image, so no version remains under any statement prefix: DP-ING-11 Alt. *(Not built: the script deletes without version ids, so the versioned bucket keeps every image.)*
-45. a page image whose original file was already deleted is removed too: DP-ING-11. *(Not built: replaces "a page-looking object with no original beside it is left alone", which kept exactly these images.)*
+44. applying removes every version of every page image, so no version remains under any statement prefix: DP-ING-11 Alt.
+45. a page image whose original file was already deleted is removed too: DP-ING-11.
 46. a user's own upload named `page_1.jpg` directly under a statement prefix is never removed: DP-ING-11.
 47. it is safe to run twice: DP-ING-11.
 48. more than a thousand page images are deleted in batches: DP-ING-11.
@@ -94,6 +94,44 @@ F2P TESTS (51)
 
 --- statement.service.spec.ts (1) ---
 51. cancelCsvColMapping posts to the cancel route with no body: DP-ING-09.
+
+--- TestParseStatementDate (5) ---
+52. ISO dates (with or without a time part) and month-first dates with a 2- or 4-digit year, `/` or `-`, are read: DP-ING-12 Happy / Alt.
+53. an unreadable date, such as 13/45/2026, is None and never raises: DP-ING-12 Fail.
+54. a date with no year takes the year inside the declared period, across New Year too: DP-ING-12 Happy.
+55. a date with no year and no declared period is None: DP-ING-12.
+56. February 29 takes the leap year of the period: DP-ING-12.
+
+--- TestStatementPeriod (3) ---
+57. a date up to seven days outside the period is near: DP-ING-12.
+58. a date more than seven days outside the period is not near: DP-ING-12 Fail.
+59. a missing or unreadable period is None: DP-ING-12.
+
+--- TestNormalizerDates (8) ---
+60. a US bank date reaches the row as an ISO date: DP-ING-12 Happy.
+61. a PDF date without a year takes the year of the declared period: DP-ING-12 Happy.
+62. an unreadable date is skipped and counted, never sent with a guess: DP-ING-12 Fail.
+63. a date more than seven days outside the period is skipped: DP-ING-12.
+64. the log names the job and never the date text: DP-ING-12 Fail / DP-ING-08.
+65. a statement where no row has a readable date has no valid transactions: DP-ING-12.
+66. a statement with no declared period still reads dates that have a year: DP-ING-12.
+67. the row fingerprint does not depend on how the bank wrote the date: DP-ING-12.
+
+--- TestEveryDateReachesTheLedgerAsIso (2) ---
+68. a Chase CSV export is sent in ISO: DP-ING-12 Fail (real export).
+69. a PDF with month-day dates is sent in ISO: DP-ING-12 Fail (real export).
+
+--- TestThePeriodReachesTheNormalizer (5) ---
+70. the owner lookup returns the declared period: DP-ING-12 / DP-ING-05.
+71. the S3 processor starts the state machine with the period: DP-ING-12.
+72. the Extractor carries the period on its output: DP-ING-12.
+73. the Normalizer hands on the count of skipped rows: DP-ING-12 / DP-ING-10.
+74. a statement with no readable date is failed as NO_VALID_TRANSACTIONS: DP-ING-12.
+
+--- TestSkippedRowsAreCountedInTheJob (3) ---
+75. a fully pushed statement with a skipped row is partially completed: DP-ING-12 Fail / DP-ING-10.
+76. a statement with no skipped row is completed: DP-ING-12.
+77. skipped rows are added to the counts of a failed push: DP-ING-12 / DP-ING-10.
 
 Not automated (excluded from both counts):
 - DP-ING-07 "Least-Privilege IAM Policies" — the IAM statements are in Terraform (`infrastructure/terraform/environments/dev/main.tf`), not exercised by the Python suite. Needs a `terraform plan` policy check or manual review. Kept visible as the `pytest.mark.skip` stub `test_iam_policies_are_least_privilege` in `test_data_pipeline_spec_acceptance.py`.

@@ -18,6 +18,11 @@ Nothing is pushed.
 | Phase | Repo(s) | Blocks |
 |---|---|---|
 | ARCH-4.8 error handling and ARCH-9.1 Python layout, plus AN-FS-22 prompt versioning, 2026-10-23 | fintracker-ai-assistant, fintracker-analytics, fintracker-knowledge, root | 4 + 2 + 2 + 2 |
+| AN-FS-10/14/15/20/21 review changes, User Profile goals route (S3) and account deletion, 2026-10-25 | fintracker-ai-assistant, fintracker-user-profile, root | 4 + 4 + 1 |
+| AI-CHAT-01 to AI-CHAT-15 in-app chat, 2026-10-25 | fintracker-ai-assistant, root | 2 + 1 |
+| Import reliability: DP-ING-09/10/11, XS-IMP-01 to -04, XS-DPCAT v3, LG-STMT-04/08, DP-MAP, 2026-10-25 | fintracker-ledger, fintracker-data-pipeline, fintracker-ui, root | 2 + 2 + 2 + 1 |
+| temp_doc.md fixes: DP-ING-12, LG-STMT-08, DP-ING-11 cleanup, LG-READ, UP-AUTH-02 route identity, UI reason catalog, 2026-10-26 | fintracker-ledger, fintracker-data-pipeline, fintracker-ai-assistant, fintracker-user-profile, fintracker-ui, root | 2 + 2 + 2 + 2 + 2 + 1 |
+| DS-DL-01 Document service download slice, 2026-10-26 | services/fintracker-document-service (new local repo), root | 2 + 1 |
 
 ## Snapshots
 A file changed by two requirements can't be committed whole in the first one without breaking the

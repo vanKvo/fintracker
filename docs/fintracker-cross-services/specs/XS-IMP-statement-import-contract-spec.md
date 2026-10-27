@@ -56,10 +56,10 @@ Three gaps sit on the boundary between the Data pipeline and the Ledger:
 
 | ID | Title | Area | Priority | Status |
 |---|---|---|---|---|
-| XS-IMP-01 | Review flag for low-confidence rows | Data | MVP | In progress |
+| XS-IMP-01 | Review flag for low-confidence rows | Data | MVP | Implemented |
 | XS-IMP-02 | Failed imports reach the Ledger | Reliability | MVP | Implemented |
 | XS-IMP-03 | Re-uploading after a failed import starts clean | Reliability | MVP | Implemented |
-| XS-IMP-04 | User-facing errors come from reason codes | Security | MVP | In progress |
+| XS-IMP-04 | User-facing errors come from reason codes | Security | MVP | Implemented |
 
 ---
 

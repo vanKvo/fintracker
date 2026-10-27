@@ -81,7 +81,7 @@ Background notes: [AI-GUARD](AI-GUARD-data-access-rules-spec.md). Where they dif
 | AI-CHAT-02 | Identity and per-tier limits | Security | MVP | Implemented |
 | AI-CHAT-03 | Conversations | Data | MVP | Implemented |
 | AI-CHAT-04 | Tool registry and `execute_tool` | Security | MVP | Implemented |
-| AI-CHAT-05 | Data tools | Integration | MVP | In progress (Analytics tools built; the Ledger tools call public Ledger routes until LG-READ is built) |
+| AI-CHAT-05 | Data tools | Integration | MVP | Implemented |
 | AI-CHAT-06 | Tool loop and deadlines | Reliability | MVP | Implemented |
 | AI-CHAT-07 | Help-doc answers with sources | AI | MVP | Implemented |
 | AI-CHAT-08 | Grounded figures | Validation | MVP | Implemented |

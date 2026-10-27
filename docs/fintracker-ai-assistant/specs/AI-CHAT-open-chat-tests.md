@@ -1,5 +1,5 @@
 =========================
-F2P TESTS (204)
+F2P TESTS (203)
 =========================
 
 --- test_chat_entry (7) ---
@@ -94,7 +94,7 @@ F2P TESTS (204)
 79. the budget month defaults to the users current month: AI-CHAT-04 tool registry and execute_tool.
 80. a budget month must be current or past within 24 months: AI-CHAT-04 tool registry and execute_tool.
 81. a budget 24 months back is allowed: AI-CHAT-04 tool registry and execute_tool.
-82. the budget result has remaining computed in code: AI-CHAT-05 totals computed in code.
+82. the budget result has the ledger's remaining and totals: AI-CHAT-05 / LG-READ-03.
 83. no budget for the month is a result not an error: AI-CHAT-05 Appendix B tools.
 84. search dates must be at most 24 months apart and ordered: AI-CHAT-04 tool registry and execute_tool.
 85. search returns 25 rows plus the total count and amount: AI-CHAT-05 Alt, 25 rows plus totals.
@@ -224,16 +224,15 @@ F2P TESTS (204)
 191. token usage accumulates per user and day: AI-CHAT-02 daily token usage.
 192. the usage item expires with its day: AI-CHAT-02 daily token usage.
 
---- test_chat_clients (12) ---
+--- test_chat_clients (11) ---
 193. category trends come from the internal section route: AI-CHAT-05 data tools.
 194. top merchants take the period: AI-CHAT-05 data tools.
 195. an analytics failure is a generic client error: AI-CHAT-05 data tools.
 196. every internal call carries the context headers and the trace id: AI-CHAT-13 one trace_id across services.
-197. search asks for posted spending and returns the 25 most recent with totals: AI-CHAT-05 data tools.
-198. excluded rows do not count: AI-CHAT-05 data tools.
-199. search pages through the matches to total them: AI-CHAT-05 data tools.
-200. search stops at the page cap and says the totals are partial: AI-CHAT-05 data tools.
-201. a ledger failure is a generic client error: AI-CHAT-05 data tools.
-202. retrieve posts the query with scope system and no user: AI-CHAT-07 Knowledge retrieve contract.
-203. every knowledge error is no docs available: AI-CHAT-07 Fail, every KN-RET error is no docs.
-204. a malformed knowledge response is no docs available: AI-CHAT-07 Fail, every KN-RET error is no docs.
+197. search reads the internal route once and takes the totals from the ledger: AI-CHAT-05 / LG-READ-02.
+198. search sends no parameter it was not given: AI-CHAT-05 / LG-READ-01.
+199. search never returns more than 25 rows even if the ledger sends more: AI-CHAT-05 Alt, 25 rows plus totals.
+200. a ledger failure is a generic client error: AI-CHAT-05 / LG-READ-04 Fail.
+201. retrieve posts the query with scope system and no user: AI-CHAT-07 Knowledge retrieve contract.
+202. every knowledge error is no docs available: AI-CHAT-07 Fail, every KN-RET error is no docs.
+203. a malformed knowledge response is no docs available: AI-CHAT-07 Fail, every KN-RET error is no docs.

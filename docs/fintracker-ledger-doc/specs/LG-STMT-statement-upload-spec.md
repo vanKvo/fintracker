@@ -15,7 +15,7 @@
 | LG-STMT-05 | Implemented |
 | LG-STMT-06 | Implemented |
 | LG-STMT-07 | Implemented |
-| LG-STMT-08 | In progress (server-side recheck built; correcting a wrong client hash with `PATCH …/content-hash` not built) |
+| LG-STMT-08 | Implemented |
 | LG-STMT-09 | Unverified (UI code not reviewed) |
 
 
