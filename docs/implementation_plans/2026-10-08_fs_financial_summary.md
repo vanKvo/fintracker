@@ -95,7 +95,7 @@ One DynamoDB table `fintracker-analytics` (on demand, customer-managed KMS key, 
 | Payload snapshot / LLM response | `PAYLOAD#<payload_id>` / `SUMMARY#<summary_id>` | 30 days |
 | Audit record / security event | `AUDIT#<user_id>` / `<created_at>#<summary_id>`; GSI on `severity` | 365 days |
 
-Config in SSM Parameter Store via Powertools parameters (5-minute cache): model ID, caps, daily budget, per-1K-token prices, banned terms, detector thresholds, fee keywords. Eval results go in a separate versioned S3 bucket with a 90-day lifecycle.
+Config in SSM Parameter Store via Powertools parameters (5-minute cache): model ID, caps, daily budget, per-1K-token prices, banned terms, detector thresholds, fee keywords. Eval results go in a separate S3 bucket that is not versioned and has no expiry.
 
 ---
 

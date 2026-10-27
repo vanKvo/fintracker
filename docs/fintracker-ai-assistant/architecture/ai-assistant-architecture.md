@@ -2,7 +2,7 @@
 
 | Status | Owner | Last reviewed | Applies to | App architecture |
 |---|---|---|---|---|
-| Proposed (Refactor phase: moving out of Analytics) | Van Vo | 2026-10-18 | main | [FinTracker architecture](../../fintracker-architecture/fintracker-architectural-doc.md) |
+| Proposed (Refactor phase: moving out of Analytics) | Van Vo | 2026-10-25 | main | [FinTracker architecture](../../fintracker-architecture/fintracker-architectural-doc.md) |
 
 This document describes how the AI assistant works: its components and the workflows it owns. Rules that apply to every service are in the app architecture doc and are not repeated here. These include identity, events and invariants. Field-level schemas, prompts, thresholds and acceptance criteria live in the specs, such as [AN-FS: Financial Summary](../../fintracker-analytics/specs/AN-FS-financial-summary-spec.md).
 
@@ -47,7 +47,7 @@ This document describes how the AI assistant works: its components and the workf
 
 #### Generate the Financial Summary *(MVP)*
 
-**Trigger:** `GET /summary?period` from the Reports tab, or Refresh (max 5 per user per day) · **Result:** a validated narrative, cached and audited · **On failure:** facts-only summary with a reason code; never a blank panel
+**Trigger:** `GET /summary?period` from the Reports tab, or Refresh (max 5 per user per day; a cache hit or a fallback uses no refresh) · **Result:** a validated narrative, cached and audited · **On failure:** facts-only summary with a reason code; never a blank panel
 
 ![Financial Summary workflow](images/ai-assistant-financial-summary.svg)
 
@@ -55,10 +55,10 @@ This document describes how the AI assistant works: its components and the workf
 2. Request the facts payload and `facts_hash` from Analytics. If Analytics fails, show an error state and don't call the LLM.
 3. Look up the cache by user, period, `facts_hash`, prompt version and model. A hit returns at once.
 4. Fewer than 10 included transactions → skip the LLM and show "Not enough activity to summarize yet."
-5. The cost guard checks per-request, per-user and app-wide limits. It fails closed.
-6. Call the pinned model once, with the facts as a JSON data block, `max_tokens` 1,200 and a 25-second deadline. No tool calling in the MVP.
+5. The cost guard checks per-request and per-user limits and atomically reserves the call's worst-case cost against the daily budget ([SDR-002](decision_records/SDR-002-atomic-spend-reservation.md)). It fails closed.
+6. Call the pinned model once, with the facts as a JSON data block, `max_tokens` 1,200 and a 25-second deadline. The call timeout is enforced at the socket only ([SDR-001](decision_records/SDR-001-bedrock-call-timeouts.md)). No tool calling in the MVP.
 7. Validate in order: JSON schema → grounding (every evidence path and `{{metric_id}}` token must resolve; no numbers in free text) → advice scope (banned terms). One retry is shared across the checks.
-8. Write the cache entry, the audit record and an encrypted snapshot of facts and response (30 days). Return numbers from the facts and text from the model.
+8. Settle the spend reservation to the actual tokens. Write the cache entry, the audit record and an encrypted snapshot of facts and response (30 days). Return numbers from the facts and text from the model.
 
 #### Answer a chat question *(proposed, Launch phase)*
 
@@ -100,7 +100,7 @@ Unanswered questions are logged so the help docs, and later the allowed user-doc
 
 1. Replay tests feed saved LLM responses through the validator without calling the LLM, on every pull request.
 2. A change to prompts, `model_id`, the output schema or the facts payload schema blocks the merge until a passing `full` run exists for those versions.
-3. Live runs go in tiers: dry (cost estimate only) → smoke → core → extended → full. Each tier needs the previous one to pass.
+3. Live runs go in tiers: smoke → core → extended → full. Each tier after `smoke` needs the previous one to pass. A separate dry run prints the cost estimate for every tier without calling a model; it is not a tier and its report is not stored.
 4. Each run has a cost cap (default $5) and its own IAM role. It runs only from a protected GitHub environment approved by the owner.
 
 #### Handle account deletion
@@ -154,8 +154,8 @@ The AI assistant exposes no internal API. Other services don't call it.
 | Analytics | Signed internal request | Facts payload (summary); section tools (chat) | Summary: error state, no LLM call. Chat: tool error returned to the model as a generic message |
 | Knowledge | Signed internal request | `retrieve(scope=system)` for help-doc answers | Chat answers without docs and says so |
 | Ledger | Signed internal request | Read-only data tools (chat) | Generic tool error; the model may answer partially |
-| User profile | None at request time: timezone and primary currency arrive in the verified user context (XS-CTX, D23) | Periods and counting rules | The identity authorizer denies the request; nothing to cache |
-| Amazon Bedrock | AWS SDK (IAM) | LLM and chat model | Facts-only fallback (summary); safe fallback (chat) |
+| User profile | Summary: none at request time; timezone and primary currency arrive in the verified user context (XS-CTX, D23). Chat: signed internal request to `user-profile-internal` for savings goals | Periods and counting rules; goals tool | Summary: the identity authorizer denies the request. Chat: generic tool error |
+| Amazon Bedrock | AWS SDK (IAM) | LLM and chat model | Facts-only fallback (summary); safe fallback (chat). Up to 2 retries for errors before processing; repeated timeouts or 5xx open the failure breaker for 60 s; throttling falls back without tripping it (SDR-001) |
 | EventBridge / SQS | Events | Account deletion | Retries from its own queue |
 
 The tool transport is signed REST for now, the same in both profiles. An MCP layer would be added in front of the tool registry only for external assistants (app doc, open decisions).
@@ -169,7 +169,7 @@ The tool transport is signed REST for now, the same in both profiles. An MCP lay
 | Audit records (IDs, versions, tokens, outcome; no financial values) | DynamoDB | 12 months | User ID replaced by a hash |
 | Facts snapshots + LLM responses | DynamoDB, encrypted | 30 days (TTL) | Deleted within the deletion window |
 | Conversations *(proposed)* | DynamoDB | To be set before chat launches | Deleted |
-| Evaluation results | S3, versioned | 90 days | Not user data (fixtures only) |
+| Evaluation results | S3, not versioned | No expiry | Not user data (fixtures only) |
 
 ### 3.5 Protect: what does this service guard beyond the app-level rules?
 
@@ -186,12 +186,16 @@ The tool transport is signed REST for now, the same in both profiles. An MCP lay
 - **Logging:** audit records and logs hold references and metadata only. A CI check fails the build if a log statement includes facts-payload fields or model text.
 - **Cost controls never fail open:**
   - Limits apply per request, per user (10 generations a day) and app-wide (a daily circuit breaker).
+  - App-wide spend is reserved atomically before each call and settled after it, so concurrent requests can't overshoot the budget, and a timed-out call stays counted (SDR-002).
   - At the account level, an AWS Budgets action denies Bedrock access.
 - **Paid evaluation runs need the owner:** live runs can be started only by the owner, through a protected CI environment. No Bedrock credentials exist anywhere else.
 
 ### 3.6 Recover: how does it fail, and how does it recover?
 
-- **Deadlines:** 25 seconds per summary request, and each LLM call times out at min(15 s, remaining time − 2 s). With less than 10 seconds left there is no retry.
+- **Deadlines:** 25 seconds per summary request, and each LLM call times out at remaining time − 2 s, capped at about 1.5 × the measured p99 once AN-FS-20 has measured it. The Bedrock client's socket timeout enforces it, never a shorter app timer (SDR-001). The 25 s fits inside the gateway's 30 s limit; the Lambda timeout is 29 s. With less than 10 seconds left there is no validation retry.
+- **Bedrock retries** (app doc D25): errors before processing (connection errors, 429, 5xx) get up to 2 retries with exponential backoff and jitter, within the deadline. Read timeouts are never retried.
+- **Failure breaker:** 5 provider failures in a row in a container (timeouts, and connection errors or 5xx after retries) skip the LLM for 60 s (`fallback:llm_unavailable`), then one trial call decides. Throttling after retries is `fallback:llm_throttled` and doesn't trip it (AN-FS-15).
+- **Refresh slots:** reserved atomically when a refresh starts and given back if no AI summary is returned (AN-FS-14).
 - **One shared retry** for schema and grounding failures, then the facts-only fallback. Every fallback records a reason code (`fallback:<reason>`, `blocked:<reason>`).
 - **Partial validation:** an insight with an unresolvable reference is dropped; if at least half the items are dropped, the whole summary falls back.
 - **Audit write failure:** the summary is still returned. The write is retried asynchronously through SQS and counted in a metric.
@@ -209,7 +213,7 @@ The tool transport is signed REST for now, the same in both profiles. An MCP lay
   - latency;
   - tool error rate (chat).
 - **Security events** (a rejected user-ID argument, the tool-call limit exceeded, guardrail hits) are logged with `severity: security` and searchable by user.
-- **Budget alerts:** app-wide spend at 80% sends an alert, and at 100% trips the circuit breaker. AWS Budgets alerts at 50%, 80% and 100%, plus Cost Anomaly Detection.
+- **Budget alerts:** app-wide spend at `budget_alert_pct` (default 80%, must be 1–99) sends an alert, and at 100% trips the circuit breaker. Each threshold alerts once per UTC day. AWS Budgets alerts at 50%, 80% and 100%, plus Cost Anomaly Detection.
 - **Later:** one trace schema across summary, chat and external use (OpenTelemetry GenAI conventions), online evaluations on sampled traces, and dashboards per use case (AN-FS-17).
 
 ---
@@ -225,6 +229,8 @@ The tool transport is signed REST for now, the same in both profiles. An MCP lay
 | S5 | Tool registry | One registry of read-only tools with per-use-case allowlists, re-checked at execution; adapters for Bedrock tools and MCP | One choke point for safety, audit and reuse by chat and external assistants | Never | Accepted |
 | S6 | Live evaluation | Manual, tiered, cost-capped, owner-approved; free replay tests on every pull request | Quality gate without surprise bills | Team grows beyond one owner | Accepted |
 | S7 | Compute | Streaming Lambda in dev; Fargate behind an internal ALB in prod; both behind the chat REST API (ADR-012) | Near-zero idle cost in dev; no cold starts or 15-minute limit in prod (app doc D11) | Dev cold starts block testing | Accepted |
+| S8 | Bedrock call timeouts | Socket timeout from the deadline (capped at 1.5 × measured p99); up to 2 jittered retries only for errors before processing; per-container failure breaker that ignores throttling | An app timer left billed calls running unseen; SDK retries would retry read timeouts and double-bill; the breaker stops piling requests onto a failing provider | Summaries switch to streaming, or prod needs a shared breaker | Accepted ([SDR-001](decision_records/SDR-001-bedrock-call-timeouts.md)) |
+| S9 | Daily budget enforcement | Reserve worst-case cost with a conditional atomic add, settle after the call | Concurrent requests can't overshoot, so the breaker is a real hard stop; timed-out calls are counted | Peak traffic makes one spend item per day a hot key | Accepted ([SDR-002](decision_records/SDR-002-atomic-spend-reservation.md)) |
 
 ---
 
@@ -241,4 +247,5 @@ The tool transport is signed REST for now, the same in both profiles. An MCP lay
   - External assistant *(later)*: [AI-EXT](../specs/AI-EXT-external-assistant-spec.md).
 - **Knowledge** (retrieval half of RAG): [knowledge-architecture.md](../../fintracker-knowledge/architecture/knowledge-architecture.md).
 - **Superseded:** [ai-integration-architecture.md](../ai-integration-architecture.md) and [ai-governance-monitoring.md](../ai-governance-monitoring.md). They were written when AI lived in Analytics, and their content is folded into this document.
+- **Service decision records:** [SDR-001 Bedrock call timeouts](decision_records/SDR-001-bedrock-call-timeouts.md), [SDR-002 Atomic spend reservation](decision_records/SDR-002-atomic-spend-reservation.md).
 - **Diagram sources:** `images/` (SVG).

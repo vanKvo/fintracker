@@ -23,13 +23,13 @@ There are 22 fixtures, in `services/fintracker-ai-assistant/tests/fixtures/fs/`.
 
 The fixtures are built from the Analytics facts engine. After changing the facts engine, regenerate them in Analytics (`poetry run python -m scripts.build_fs_fixtures`) and copy them here.
 
-### Step 1: dry run (free, no AWS)
+### Step 1: dry run (free, no AWS, nothing stored)
 ```bash
 cd services/fintracker-ai-assistant
 poetry install
 APP_ENV=local poetry run python -m src.summary.eval --tier dry
 ```
-This prints the input tokens for each of the 22 fixtures and their total. Then, per tier, it prints the estimated Bedrock cost two ways:
+It is only a cost preview: it is not a tier you have to pass, and it saves nothing to the bucket. It prints the input tokens for each of the 22 fixtures and their total. Then, per tier, it prints the estimated Bedrock cost two ways:
 - **Estimated:** one call per fixture, with `max_tokens` as the output.
 - **With every validation retry:** the worst case, two calls per fixture.
 
@@ -46,13 +46,13 @@ A live run sends real Bedrock calls and costs money. It is limited in four ways:
 
 **What's missing before a live run can work:**
 1. The CLI refuses live tiers without `EVAL_RESULTS_BUCKET`. It needs the bucket for the tier order and to save results.
-2. Deploy the bucket: `terraform apply` in `services/fintracker-ai-assistant/infrastructure/terraform/environments/dev` (module `eval_results`: private, encrypted, TLS-only, versioned, 90-day lifecycle; get/put for the eval role only). Set the output `eval_results_bucket` as `EVAL_RESULTS_BUCKET` in the `llm-eval` GitHub environment.
-3. Tier order: `smoke` runs only after a `dry` pass is saved to the bucket. Run `--tier dry` once with `EVAL_RESULTS_BUCKET` set, or pass `--skip-tier-check`.
+2. Deploy the bucket: `terraform apply` in `services/fintracker-ai-assistant/infrastructure/terraform/environments/dev` (module `eval_results`: private, encrypted, TLS-only, not versioned, no expiry; get/put/list for the eval role, get/list for the pull-request read-only role). Set the output `eval_results_bucket` as `EVAL_RESULTS_BUCKET` in the `llm-eval` GitHub environment.
+3. Tier order: `smoke` is the first tier and runs without any earlier pass. Each later tier needs the previous tier to have passed for the same prompt version and model, or `--skip-tier-check`.
 
 The CLI is the same if you run it yourself instead of through the workflow:
 ```bash
-export EVAL_RESULTS_BUCKET=<bucket>
-poetry run python -m src.summary.eval --tier dry                                 # saves the dry pass
+export EVAL_RESULTS_BUCKET="fintracker-ai-assistant-dev-eval-results-390240928781"
+poetry run python -m src.summary.eval --tier dry                                 # cost preview, stores nothing
 poetry run python -m src.summary.eval --tier smoke --cap-usd 0.05 --out smoke.json
 poetry run python -m src.summary.eval --tier smoke --fixtures heavy-year --skip-tier-check --cap-usd 0.05  # any one fixture
 ```
