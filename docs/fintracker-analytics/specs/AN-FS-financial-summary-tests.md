@@ -1,7 +1,7 @@
 > **Tests for:** [AN-FS-financial-summary-spec.md](AN-FS-financial-summary-spec.md) · **Formerly:** `docs/fintracker-analytics/FS-tests.md` (renamed 2026-10)
 
 =========================
-F2P TESTS (384)
+F2P TESTS (450)
 =========================
 
 --- test_clients.TestIamSignedCalls (3) ---
@@ -129,8 +129,8 @@ F2P TESTS (384)
 100. dry run counts tokens and prices each tier without calling the LLM: AN-FS-22.
 101. non production model produces the same report: AN-FS-22.
 102. version key changes with the model: AN-FS-22.
-103. results are saved pass or fail: AN-FS-22.
-104. tier order requires the previous tier to have passed: AN-FS-22.
+103. results are saved pass or fail: AN-FS-22. *Updated 2026-10-28: the key is now `results/<prompt version>/<model>/<tier>/<stamp>__<model>__<outcome>__r<runs>__<hash8>.json` (rows 417 and 418).*
+104. tier order starts at smoke and each later tier needs the previous tier to have passed: AN-FS-22.
 105. last pass is available for comparison: AN-FS-22.
 106. required check blocks ai changes without a full pass: AN-FS-22.
 107. required check paths cover prompt model and both schemas: AN-FS-22.
@@ -227,7 +227,7 @@ F2P TESTS (384)
 180. valid output passes unchanged: AN-FS-11.
 181. not json is a schema error: AN-FS-10.
 182. json in a code fence is accepted: AN-FS-10.
-183. schema violations are reported: AN-FS-10.
+~~183. schema violations are reported: AN-FS-10.~~ *Replaced 2026-10-28 by 429 (reply level) and 430 (item level).*
 184. resolve path: AN-FS-11.
 185. unresolvable evidence drops insight and its recommendation: AN-FS-11.
 186. token must resolve to a number: AN-FS-11.
@@ -240,8 +240,8 @@ F2P TESTS (384)
 193. small numbers and tokens are allowed: AN-FS-11 digit rule / AN-FS-10 shared retry.
 194. banned terms remove the item and count as guardrail hits: AN-FS-12.
 195. banned term match respects word boundaries: AN-FS-12.
-196. all recommendations removed leaves an empty section: AN-FS-12.
-197. half the items dropped discards the summary: AN-FS-11.
+~~196. all recommendations removed leaves an empty section: AN-FS-12.~~ *Replaced 2026-10-28 by 443: recommendations sit inside insights.*
+~~197. half the items dropped discards the summary: AN-FS-11.~~ *Replaced 2026-10-28 by 444 and 445: the half-dropped rule is removed.*
 198. bad headline discards when no retry is left: AN-FS-11 digit rule / AN-FS-10 shared retry.
 199. banned term in headline discards the summary: AN-FS-12.
 
@@ -493,6 +493,130 @@ F2P TESTS (384)
 --- test_llm (fintracker-ai-assistant, call records, 2026-10-25) (2) ---
 383. the reply carries bedrocks own latency and the stop reason: AN-FS-20 latency.
 384. a reply without metrics has no bedrock latency: AN-FS-20 latency.
+
+--- test_eval (fintracker-ai-assistant, dry run not stored, 2026-10-27) (1) ---
+385. a dry report is not stored in the results bucket: AN-FS-22 dry run.
+
+--- test_generation_retries (fintracker-ai-assistant, retry changes, 2026-10-27) (2) ---
+386. attempt counts every call of the generation including the validation retry: AN-FS-20 latency / AN-FS-10 shared retry.
+387. the validation retry is attempt one when nothing was throttled: AN-FS-20 latency / AN-FS-10 shared retry.
+
+--- test_generation (fintracker-ai-assistant, retry changes, 2026-10-27) (7) ---
+388. the retry prompt lists grounding problems found in the same reply: AN-FS-10 retry prompt / AN-FS-11.
+389. dropped items keep what the model wrote what facts held and which reply: AN-FS-20 report rows.
+390. a grounding problem spends the retry and a fixed reply replaces the first: AN-FS-11 / AN-FS-10 shared retry.
+391. a retry that fails to parse or is worse keeps the first reply: AN-FS-10 retry never makes the result worse.
+392. a retry call that fails keeps the first reply: AN-FS-10 retry never makes the result worse.
+393. a retry that keeps as many items replaces the first reply: AN-FS-10 retry never makes the result worse.
+394. an unusable first reply gives the retry error not a first reply: AN-FS-10 retry never makes the result worse.
+
+--- test_validation (fintracker-ai-assistant, retry changes, 2026-10-27) (4) ---
+395. a dropped insight records the item the reasons and the facts at each path: AN-FS-20 report rows / AN-FS-11.
+396. a dropped highlight shows the metric path and value: AN-FS-20 report rows / AN-FS-11.
+397. a grounding problem asks for the retry and is dropped only when it is used: AN-FS-11 / AN-FS-10 shared retry.
+398. the number in the retry error is named: AN-FS-10 retry prompt.
+
+--- test_eval (fintracker-ai-assistant, retry changes, 2026-10-27) (1) ---
+399. a retried run keeps the raw replies the retry errors and the dropped items: AN-FS-20 report rows. *Updated 2026-10-27: the retry errors are read from the call that caused the retry (`validation_errors`); rows no longer have `retry_errors`.*
+
+--- test_eval (fintracker-ai-assistant, call outcomes and actual cost, 2026-10-27) (5) ---
+400. a run that went ahead reports only what was spent not estimates: AN-FS-20 report / AN-FS-22 cost guard.
+401. every call reports its actual cost and the row is their sum: AN-FS-20 report.
+402. a call without a reply has no cost and validation did not run: AN-FS-20 report rows.
+403. a failed first reply says retry and why and a failed retry says failed: AN-FS-20 report rows.
+404. cache tokens are reported per call: AN-FS-20 report / AN-FS-21.
+
+--- test_generation_retries (fintracker-ai-assistant, validation outcome per call, 2026-10-27) (6) ---
+405. a throttled call has no validation and a clean reply passes: AN-FS-20 report rows.
+406. the call that causes the validation retry says retry and why: AN-FS-20 report rows / AN-FS-10 shared retry.
+407. a reply that is not json is told apart from a schema error: AN-FS-20 report rows.
+408. an ungrounded reply asks for the retry with the path at fault: AN-FS-20 report rows / AN-FS-11.
+409. both replies failing marks the retry failed: AN-FS-20 report rows / AN-FS-10.
+410. a retry that keeps fewer items is failed and the first reply is kept: AN-FS-20 report rows / AN-FS-10 retry never makes the result worse.
+
+--- test_generation (fintracker-ai-assistant, guardrail retry, 2026-10-27) (1) ---
+411. a banned term asks for the retry and a reworded reply is no guardrail hit: AN-FS-12.
+
+--- test_validation (fintracker-ai-assistant, guardrail retry, 2026-10-27) (5) ---
+412. a banned term asks for the retry with the term and no hit while a retry is left: AN-FS-12.
+413. a banned term in the headline asks for the retry while one is left: AN-FS-12.
+414. grounding problems alone give the grounding retry reason: AN-FS-20 report rows / AN-FS-11.
+415. the banned list covers plurals and common investment and debt products: AN-FS-12.
+416. everyday budgeting words are not banned: AN-FS-12.
+
+--- test_eval (fintracker-ai-assistant, result folder names and run record, 2026-10-27) (6) ---
+417. a result key names the prompt model tier outcome runs and version hash: AN-FS-22 results / AN-FS-20 Fail results saved.
+418. a run stopped by its cost cap is named capped: AN-FS-22 results / AN-FS-20.
+419. a live report records what the run used and where it came from: AN-FS-20 report.
+420. a run stopped by its estimate still records when it ran: AN-FS-20 report / AN-FS-22 cost guard.
+421. a run without context has no commit or workflow run: AN-FS-20 report.
+422. run context comes from the github actions environment: AN-FS-20 report.
+
+--- test_llm (fintracker-ai-assistant, why a call failed, 2026-10-27) (3) ---
+423. a failed call keeps the aws code the error type and a masked message for the eval report: AN-FS-20 report rows / FS-18 no exception text in logs.
+424. an error that is not an aws response has a type and no code: AN-FS-20 report rows.
+425. a long error message is cut: AN-FS-20 report rows.
+
+--- test_generation_retries (fintracker-ai-assistant, why a call failed, 2026-10-27) (1) ---
+426. a failed call record keeps why it failed and a good one has no error: AN-FS-20 report rows.
+
+--- test_eval (fintracker-ai-assistant, why a call failed, 2026-10-27) (2) ---
+427. a failed call says why in the report and in the printed summary: AN-FS-20 report rows.
+428. a call without an error code prints its error type: AN-FS-20 report rows.
+
+*Updated 2026-10-27:* 117 (guardrail hits are reported) now sends the banned reply twice, because the first hit asks for the retry. The estimate-abort test reads the estimate from the aborted report, the only report that still has one.
+
+--- test_validation (fintracker-ai-assistant, evaluation tuning EVL-001 to EVL-011, 2026-10-28) (21) ---
+429. reply level schema violations fail the whole reply: AN-FS-10 reply-level schema.
+430. an item that fails the schema asks for the retry then only that item is dropped: AN-FS-10 item-level schema.
+431. a bad recommendation keeps its insight: AN-FS-10 item-level schema / Appendix B.
+432. ids are assigned by code and a model written id is ignored: AN-FS-10 code-assigned ids.
+433. a missing recommendation means none: AN-FS-10 item-level schema / Appendix B.
+434. an insight without metric ref is a schema error: AN-FS-10 item-level schema / Appendix B.
+435. metric ref must resolve to a number: AN-FS-11.
+436. braces around reference paths are removed before validation: AN-FS-11 syntax repair.
+437. a cash flow short form with a sub field means its full path: AN-FS-11 syntax repair.
+438. an impact ref written as the word null is null: AN-FS-11 syntax repair.
+439. a repaired path that still does not resolve still fails: AN-FS-11 syntax repair.
+440. a literal figure that matches a cited field becomes its token: AN-FS-11 number tokenization.
+441. a tokenized figure passes without the retry: AN-FS-11 number tokenization / AN-FS-20 numbers_tokenized.
+442. only the paths the item cites are searched: AN-FS-11 number tokenization.
+443. all recommendations removed keeps the insights: AN-FS-12 / AN-FS-11 drop rules.
+444. a summary that lost most items is kept with what is left: AN-FS-11 / AN-FS-15 no half-dropped rule.
+445. no highlight and no insight left falls back: AN-FS-11 / AN-FS-15 no usable output.
+446. percent figures match only percent fields and amounts only amounts: AN-FS-11 number tokenization.
+447. a negative field and an ambiguous figure are left alone: AN-FS-11 number tokenization.
+448. the preferred path wins among equal values: AN-FS-11 number tokenization.
+449. numbers inside tokens and dates are not touched: AN-FS-11 number tokenization.
+
+--- test_prompt_and_projection (fintracker-ai-assistant, retry text, 2026-10-28) (1) ---
+450. retry message keeps tokens out of reference fields: AN-FS-10 retry prompt.
+
+--- test_validation (fintracker-ai-assistant, EVL-012 to EVL-021, 2026-10-28) (17) ---
+451. a highlight metric used as an insight type is dropped without a retry: AN-FS-11 / AN-FS-20 schema_drops.
+452. a metric insight does not hide other problems that need the retry: AN-FS-11.
+453. a unit written beside a token is removed and costs no retry: AN-FS-11 syntax repair.
+454. a figure that is not beside a token still fails: AN-FS-11.
+455. iso dates are not figures: AN-FS-11 number rule.
+456. a date does not hide a figure next to it: AN-FS-11 number rule.
+457. a headline figure that matches one cash flow field becomes its token: AN-FS-11 number tokenization.
+458. a headline figure outside cash flow or matching nothing still asks for the retry: AN-FS-11.
+459. a highlight and an insight may cite a cash flow figure they do not cite by path: AN-FS-11 number tokenization.
+460. a percent word beside a token is removed but percentage points stay: AN-FS-11 syntax repair.
+461. an amount or percentage written in words asks for the retry: AN-FS-11 number rule.
+462. ordinary words and small counts are not numbers in words: AN-FS-11 number rule.
+463. a number in words is dropped when the retry is used and in the headline discards: AN-FS-11 / AN-FS-15.
+464. a null candidate impact means its data amount: AN-FS-11 syntax repair.
+465. a candidate impact that has a value is left alone: AN-FS-11 syntax repair.
+466. a missing candidate impact without a data amount still fails: AN-FS-11.
+467. the text limits allow a three sentence detail: AN-FS-10 item-level schema / Appendix B.
+--- test_eval (fintracker-ai-assistant, EVL-017, 2026-10-28) (2) ---
+468. repeating the merchant name from facts is not following the injection: AN-FS-20 / AN-FS-12.
+469. the marker written by the model itself is still found next to the merchant name: AN-FS-20 / AN-FS-12.
+
+*Updated 2026-10-28 (EVL-012 to EVL-021):* 429 (headline over the limit) and 430 (recommendation action over the limit) now use 161 characters, the new limits are 160 and 160; 430 no longer has the `savings_rate` insight type case, which is test 451 (dropped without a retry). 399 (retried run) uses a headline figure that is not in the facts (`$9,999`), because `$2,675` is now tokenized into the headline (457).
+
+*Updated 2026-10-28:* 190 (impact ref must resolve to a number) now drops only that recommendation and keeps its insight. The run-failure test for the eval report has a new case: an insight with `type: savings_rate` fails the run with `schema_drops` (AN-FS-20). Tests that built replies with top-level `recommendations` and insight ids now build the nested shape (EVL-007, EVL-008); figures used to force a number error are `$99.99`, which is not in FACTS, because `$64.20` is now tokenized (EVL-010). 116 (grounding discard falls back) now also has no highlights, because a summary with highlights left is kept (EVL-011). The replay `invented-evidence` now expects `success` with the highlight left and no insight; `injection-merchant-followed` puts the injected advice in the insight's recommendation, so the guardrail drops the recommendation and keeps the insight.
 
 =========================
 P2P TESTS (23)
