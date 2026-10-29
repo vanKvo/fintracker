@@ -2,7 +2,7 @@
 
 | Status | Owner | Last reviewed | Applies to |
 |---|---|---|---|
-| Current | Van Vo | 2026-10-23 | main |
+| Current | Van Vo | 2026-10-27 | main |
 
 This document describes how FinTracker works at a high-level architecture: which services exist, what each service owns, how they talk to each other, how identity and data isolation work, and how the system is deployed to AWS.
 
@@ -217,6 +217,13 @@ Two kinds of entry exist, and each needs its own trust rule (4.2):
 - **AI:**
   - If the LLM fails or a cost limit is reached, the Financial Summary returns a facts-only fallback with the reason. Cost limits never fail open.
   - Report numbers come from Analytics and render before the AI text, so the Reports tab works without the AI assistant.
+- **Dependency calls** (D25): every synchronous call to a database, cache, internal API, LLM or third-party API follows the same rules.
+  - **Timeouts:** every call has one, set at the client (socket), and it fits inside the caller's own deadline.
+  - **Classify the error before retrying.** Throttling (429 or the provider's throttling error) is load, not a fault: retry with exponential backoff and full jitter, and never count it as a failure. Infrastructure and provider failures (timeouts, 5xx, connection errors) are faults: retry if the call is safe to repeat, then count them toward a circuit breaker. Client errors (4xx other than 429) are never retried.
+  - **Retry budget by cost:** fast, cheap calls (DynamoDB, cache, internal APIs): up to 3 retries. Slow or paid calls (LLMs, third-party APIs): up to 2 retries, and only for errors that happened before the provider did any work; a read timeout on a paid call is never retried, because it may already be billed.
+  - **Retries are bounded:** a retry starts only if the caller's remaining deadline still fits the call. Retry at one layer only, the one making the call, so retries don't multiply through a chain of services (3 × 3 attempts is 9).
+  - **Only repeatable work is retried:** reads and idempotent writes. A non-idempotent write (an atomic counter or `ADD`) is retried only when the error proves it wasn't applied (throttling, connection refused), never after a timeout.
+  - **Circuit breakers** protect calls to dependencies that can be down for minutes (LLM providers, third-party APIs): after N faults in a row, skip the call and degrade for a cool-down, then try one call. Throttling doesn't count toward N.
 - **Isolation of failures:** chat, documents and analytics can be down without affecting the Ledger's read and write paths. The Dashboard keeps working without Analytics; only its spending-pace card fails (D21).
 - **Cold resume (dev):** Aurora can take about 15 seconds to resume after auto-pause, or 30 seconds or more after a day. Clients and Data API calls use timeouts above that and retry.
 - **Backups and recovery targets** (D16, proposed). RPO is how much recent data can be lost; RTO is how long recovery may take.
@@ -571,6 +578,7 @@ Decisions with a linked ADR have a full record of context, alternatives and cons
 | D22 | How Analytics reads Ledger data | Ledger-owned reporting views with counting fields, `security_invoker`, `SELECT` on views only; the Ledger's own totals use them too | Direct table reads (previous); event-fed copy in Analytics | One definition of income and spending; RLS still applies; no account names or numbers reach Analytics; the Ledger can change its tables | Analytics load affects Ledger latency, or the views can't express a need | Accepted | [ADR-014](architectural_decision_records/ADR-014-ledger-reporting-views.md) |
 | D23 | User settings for calculations | Timezone and primary currency travel in the verified user context, attached by the identity authorizer and forwarded on internal calls; no default on a missing value | Sync call to User profile, cached (previous); event-fed copy per service; client header | No runtime dependency or extra state; trusted values; works for AI assistant calls | A scheduled job needs settings, or changes must apply within seconds | Accepted | [ADR-015](architectural_decision_records/ADR-015-settings-in-verified-context.md) |
 | D24 | Transaction dates | Calendar dates as the source gives them, never converted between timezones; timezone only decides "today" | Timestamps converted to the user's timezone | History never moves when a user changes timezone, and dates match the user's statements | Bank sync delivers timestamps that need time-of-day logic | Accepted | — |
+| D25 | Dependency failure handling | Client-side timeouts within the caller's deadline; throttling retried with exponential backoff and jitter, never counted as a fault; faults retried only when safe, then counted by a circuit breaker on slow or paid dependencies; up to 3 retries for fast calls, up to 2 for slow or paid calls (before-processing errors only) | SDK default retries everywhere; one breaker counting every error | SDK retries don't know the caller's deadline and retry read timeouts, which double-bills paid calls; counting throttling as a fault opens breakers on a healthy provider | A dependency offers idempotency keys (paid calls could then retry timeouts) | Accepted | — (applied in AI assistant SDR-001) |
 
 *Candidate* marks decisions that would benefit from a full ADR: each had several credible alternatives, or a cost, security, or compliance trade-off worth recording.
 
@@ -632,7 +640,7 @@ Every Python service is organized by feature (one folder per feature, vertical s
 | `service.py` | The feature's workflow | HTTP or storage details |
 | `exceptions.py` | The feature's errors, subclassing `core/exceptions.py` (4.8) | Error responses (`core/error_handlers.py` builds them) |
 | `schemas.py` | Type objects: Pydantic request and response models | Stored records|
-| `interfaces.py` | Protocols for injected dependencies. Each module is typed with only the methods it calls, so a test fake implements only those | Protocols |
+| `interfaces.py` | Protocols for injected dependencies. Each module is typed with only the methods it calls, so a test fake implements only those | Implementation details |
 | `models.py` | Stored records: ORM models (SQLAlchemy) or item shapes (`TypedDict` for DynamoDB) | API shapes |
 | Other modules (`store.py`, `*_client.py`, …) | Behavior only; they import their types from `schemas.py` and `models.py` and their Protocols from `interfaces.py` | New types |
 
@@ -643,9 +651,47 @@ Every Python service is organized by feature (one folder per feature, vertical s
 - **A service without a web framework** (Knowledge's plain Lambda handlers) has no `response_model`: its handler returns the `schemas.py` type's dict and catches every exception in one place, `core/error_handlers.handle_error`.
 - Java services keep the same three roles (errors, transfer types, stored records) in per-feature packages.
 
+## 10. Testing strategy
+
+A test is recorded only when it protects behavior the system promises. Anything else is a scratch check: run it, learn from it, delete it. Every recorded test names one spec requirement (`<PREFIX>-<NN>`) and short description of spec requirement or one invariant from section 8. The feature's `<PREFIX>-…-tests.md` file lists it that way.
+
+**Shape: fewer, higher-level tests that assert outcomes.**
+- Assert what a caller or the next service can observe: the response or problem `code` (4.8), the stored record, the published event, the audit record. Never how the code got there.
+- Test at the highest layer that can prove the requirement. One service-level test that drives a route through a branch beats three unit tests of the helpers behind it.
+- Fake only at the edges: the AWS SDK, the LLM, other services. Never fake between our own classes. A fake implements only the methods the code calls (the `interfaces.py` protocols, 9.1).
+- Tests for a requirement are written first and committed before the implementation.
+
+| Layer | Record when | Fakes |
+|---|---|---|
+| Unit | Pure logic with real branches or edge values: parsing, validation, money and date math, LLM-output validation | None |
+| Service (default) | The requirement is an outcome of one service's workflow: drive the route or handler, assert the response, record, event or audit entry | Only the edges |
+| Integration | The database is the requirement: RLS, constraints, SQL, transactions, migrations | None below the database |
+| End-to-end | A flow in section 5 crosses services and no lower layer can prove it (statement import, account deletion) | None; very few |
+
+**Record a test when any of these is true:**
+1. It covers an acceptance criterion of a spec requirement. This is the normal case.
+2. It guards an invariant in section 8: cross-tenant 404, identity only from the authorizer, no exception text to clients, deletion cascades.
+3. It covers dependency-failure behavior (D25): timeout, throttling versus fault, retry budget, fallback. Specs rarely list these, and services break there.
+4. It pins a fixed bug whose symptom shows at a service boundary and isn't covered yet. Add or amend the requirement first, then record the test under its ID.
+5. Breaking it would affect money, permissions, data loss, or what the user sees.
+
+**Do not record a test (keep it as a scratch check) when:**
+- It asserts *how*, not *what*: which SDK method was called, with which arguments, in which order; `assert_called_with` on our own classes; private methods. A request parameter such as temperature is configuration, not behavior.
+- No requirement or invariant would change if it failed.
+- A refactor that keeps the behavior would break it.
+- It answered a question ("does this library do X?").
+- It repeats an outcome a higher-level test already proves.
+- It asserts exact LLM wording, timestamps or generated IDs.
+
+**The check before committing:** *if this fails in six months, what broke?* The answer must be a requirement or an invariant. If it can't be named, either the spec has a gap (fix the spec, then keep the test) or the test is scaffolding (delete it). A requirement for external, async, AI, financial or security behavior gets a test for every `[Fail]` criterion.
+
+**AI features.** The LLM is nondeterministic. Workflow tests use saved replies (replay tests) and assert structure and invariants: valid schema, numbers grounded in the facts payload, bounded length. Output quality is judged by the live evaluation, not by unit tests (AI assistant doc, *Evaluate prompt, model and schema changes*).
+
+**Where tests run.** Unit and service tests need no Docker or AWS, so they are the fast loop. Integration tests need containers and run separately (Java: `*IT` classes through Failsafe on `mvn verify`; see [writing_java_tests.md](../instructions/writing_java_tests.md)). A test that proves RLS must connect as a non-superuser role, because a superuser bypasses RLS and the test would prove nothing.
+
 ---
 
-## 10. Compliance and standards
+## 11. Compliance and standards
 
 Legal applicability must be confirmed with counsel before launch; until then, regulations show *Applies (to confirm)*.
 
@@ -662,13 +708,13 @@ Legal applicability must be confirmed with counsel before launch; until then, re
 
 ---
 
-## 11. Related documents
+## 12. Related documents
 
 **Service architecture documents** (each to be written from `docs/templates/service-level-architectural-doc-template.md`)
 
 | Service | Architecture doc | Interim source until then |
 |---|---|---|
-| User profile | *to be created* | [UP-AUTH-authentication-spec.md](../fintracker-user-profile-doc/specs/UP-AUTH-authentication-spec.md) |
+| User profile | [user-profile-architecture.md](../fintracker-user-profile-doc/architecture/user-profile-architecture.md) | — |
 | Ledger | [ledger-architecture.md](../fintracker-ledger-doc/architecture/ledger-architecture.md) | — |
 | Data pipeline | [data-pipeline-architecture.md](../fintracker-data-pipelines/architecture/data-pipeline-architecture.md) | [DP-CAT-categorization-spec.md](../fintracker-data-pipelines/specs/DP-CAT-categorization-spec.md) |
 | Analytics | [analytics-architecture.md](../fintracker-analytics/architecture/analytics-architecture.md) | — |
@@ -681,6 +727,7 @@ Legal applicability must be confirmed with counsel before launch; until then, re
 
 - **Architecture decision records:** [architectural_decision_records/](architectural_decision_records/)
 - **Error catalog** (every error code, by service; rules in 4.8): [error-catalog.md](error-catalog.md)
+- **Testing strategy** (rules in 9.2): [Java test guide](../instructions/writing_java_tests.md)
 - **Roadmap:** [roadmap.md](roadmap.md)
 - **Content moved out of this document, pending its service docs:** [moved-to-specs.md](moved-to-specs.md)
 - **Diagrams:** `images/` (SVG)
