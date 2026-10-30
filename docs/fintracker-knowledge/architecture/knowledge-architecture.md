@@ -17,7 +17,7 @@ This document describes how the Knowledge service works and the workflows it own
 - **Retrieve:** `retrieve(query, scope, k)` returns the most relevant chunks with their source paths. It embeds the query, filters by scope and owner, and re-checks every result.
 - **Delete:** remove the chunks of a replaced or removed help doc. Remove a user's documents and chunks when their account is deleted.
 - **Measure retrieval quality:** recall@k on a golden question set whenever chunking or the embedding model changes.
-- **Index user documents** *(later)*: extract text, redact identifiers, chunk and embed with `scope = mine`.
+- **Index user documents** *(later)*: extract text, redact identifiers, chunk and embed with `scope = user`.
 
 **Does not do**
 - Generate answers, build prompts or call a generation model. The AI assistant does.
@@ -69,7 +69,7 @@ This document describes how the Knowledge service works and the workflows it own
 
 1. Check that the caller is on the allow-list. Today only the AI assistant is.
 2. Validate the arguments:
-   - `scope` must be `system`, or `mine` *(later)*;
+   - `scope` must be `system`, or `user` *(later)*;
    - `k` is capped;
    - the query length is capped.
 3. Embed the query text.
@@ -94,7 +94,7 @@ Until user documents ship, a user owns nothing here, so this is a no-op that sti
 2. Extract the text.
 3. Redact account numbers, SSNs and similar identifiers.
 4. Chunk and embed, as for system docs.
-5. Write with `scope = mine` and the owner's `user_id`.
+5. Write with `scope = user` and the owner's `user_id`.
 6. On `DocumentDeleted`, remove that document's chunks.
 
 #### Evaluate retrieval quality
@@ -192,5 +192,5 @@ Embeddings are derived data: the source docs are the backup, and any version can
 - **App architecture:** [FinTracker architecture](../../fintracker-architecture/fintracker-architectural-doc.md). See the Store and Protect concepts, invariants 8–10, and D10 and D17.
 - **ADRs:** [ADR-006 vector store](../../fintracker-architecture/architectural_decision_records/ADR-006-vector-store-pgvector.md), [ADR-010 RAG ownership](../../fintracker-architecture/architectural_decision_records/ADR-010-rag-retrieval-in-knowledge-service.md).
 - **AI assistant** (the only caller of `retrieve`): [ai-assistant-architecture.md](../../fintracker-ai-assistant/architecture/ai-assistant-architecture.md).
-- **Earlier notes:** [rag_mcp_challenges.md](../../fintracker-analytics/rag_mcp_challenges.md) (isolation, PII in embeddings, freshness, evaluation). [ai-rag-pipelines-spec.md](../../fintracker-analytics/ai-rag-pipelines-spec.md) describes user-data retrieval, which is deferred with user documents.
+- **Earlier notes:** [rag_mcp_challenges.md](../../fintracker-analytics/rag_mcp_challenges.md) (isolation, PII in embeddings, freshness, evaluation). [KN-RAG-rag-use-cases-spec.md](../../fintracker-analytics/ai-rag-pipelines-spec.md) describes user-data retrieval, which is deferred with user documents.
 - **Diagram sources:** `images/` (an editable SVG for every PNG).

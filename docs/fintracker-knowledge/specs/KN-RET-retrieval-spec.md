@@ -24,7 +24,7 @@ The AI assistant needs relevant help-doc passages, with sources, to answer how-t
 ### Non-Goals
 - Building prompts, generating answers or citing: the AI assistant does (ADR-010).
 - Re-ranking, keyword or hybrid search (service decision S6).
-- `scope = mine` results before user documents ship (KN-UDOC).
+- `scope = user` results before user documents ship (KN-UDOC).
 
 ### Design Principles
 1. **Text in, chunks out.** The caller sends a query string and never sees vectors, SQL or the database.
@@ -90,7 +90,7 @@ The AI assistant needs relevant help-doc passages, with sources, to answer how-t
 - [Happy] `{ "query": "How do I confirm a CSV mapping?", "scope": "system", "k": 5 }` passes.
 - [Alt] A missing `k` defaults to 5.
 - [Fail] `k` < 1 or > 10, a blank query, a query over 1,000 characters, or any extra field returns 400 `invalid_argument` naming the field.
-- [Fail] `scope = mine` returns 400 `scope_not_enabled` until KN-UDOC ships; any other scope returns 400 `invalid_argument`.
+- [Fail] `scope = user` returns 400 `scope_not_enabled` until KN-UDOC ships; any other scope returns 400 `invalid_argument`.
 **Refs:** Appendix A
 
 ### KN-RET-03: Query embedding  `Priority: MVP`
@@ -114,7 +114,7 @@ The AI assistant needs relevant help-doc passages, with sources, to answer how-t
 
 ### KN-RET-05: Ownership re-check  `Priority: MVP`
 
-**Requirement:** Before returning, every chunk's `scope` and `user_id` are checked again in application code: `system` chunks must have a null owner, and `mine` chunks must belong to the context user. Any mismatch is dropped and counted.
+**Requirement:** Before returning, every chunk's `scope` and `user_id` are checked again in application code: `system` chunks must have a null owner, and `user` chunks must belong to the context user. Any mismatch is dropped and counted.
 **Acceptance Criteria:**
 - [Happy] With correct RLS, nothing is dropped and the mismatch count is 0.
 - [Alt] In a test where RLS is disabled and a user B chunk is returned, the response omits it.
@@ -165,7 +165,7 @@ Produced by: AI assistant `execute_tool` (code; arguments may originate from the
 ```json
 {
   "query":  "string, 1–1000 chars, required",
-  "scope":  "system | mine (mine rejected until KN-UDOC)",
+  "scope":  "system | user (user rejected until KN-UDOC)",
   "k":      "integer 1–10, default 5"
 }
 ```
@@ -203,7 +203,7 @@ Body: RFC 9457 `application/problem+json`, as every service (app doc 4.8; [error
 | HTTP | Code | When |
 |---|---|---|
 | 400 | `invalid_argument` | Schema validation failed |
-| 400 | `scope_not_enabled` | `scope = mine` before KN-UDOC |
+| 400 | `scope_not_enabled` | `scope = user` before KN-UDOC |
 | 401 | `user_context_missing` | No verified user context |
 | 403 | `caller_not_allowed` | Role not on the allow-list |
 | 503 | `embedding_unavailable` | Bedrock failed after retries |

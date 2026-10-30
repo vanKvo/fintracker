@@ -182,7 +182,7 @@ Where a statement here conflicts with the architecture doc (for example, Analyti
 **Responsibilities**
 
 - **Ingestion workers:** extract text → redact sensitive data (account numbers, SSNs) → split into chunks → create embeddings → store in the vector store.
-- **Retrieval API:** `retrieve(query, scope)`, where `scope` is `system` (help docs) or `mine` (the user's own documents).
+- **Retrieval API:** `retrieve(query, scope)`, where `scope` is `system` (help docs) or `user` (the user's own documents).
 - **Deletion:** when a document or account is deleted, removes its text, chunks, and vectors.
 
 **Why it's a separate service:** it is the **single owner of the vector store**. If several services queried the index directly, each would need to remember the per-user filter, and one missed filter leaks another user's documents. With one owner, the rule is written once:

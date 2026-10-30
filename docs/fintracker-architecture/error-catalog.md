@@ -39,7 +39,7 @@ Returned on internal APIs only. The calling service maps them to its own error a
 |---|---|---|---|
 | `user_context_missing` | 401 | Knowledge | A signed request without a forwarded user context (KN-RET-01) |
 | `caller_not_allowed` | 403 | Knowledge | The caller's IAM role isn't on the allow-list (KN-RET-01) |
-| `scope_not_enabled` | 400 | Knowledge | `scope = mine` before KN-UDOC ships (KN-RET-02) |
+| `scope_not_enabled` | 400 | Knowledge | `scope = user` before KN-UDOC ships (KN-RET-02) |
 | `embedding_unavailable` | 503 | Knowledge | Bedrock embedding failed after retries (KN-RET-03) |
 
 ## 3. Codes by service

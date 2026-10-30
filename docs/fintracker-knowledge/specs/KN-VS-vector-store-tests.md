@@ -20,7 +20,7 @@ F2P TESTS (36)
 13. retrieve role can select but insert, update and delete fail: KN-VS-02 Alt.
 14. ingest role can write system documents: KN-VS-02 Happy, Appendix B.
 15. delete role cannot delete system rows: KN-VS-02 Alt.
-16. delete role deletes only the current user's mine rows: KN-VS-02 Appendix B.
+16. delete role deletes only the current user's user rows: KN-VS-02 Appendix B.
 17. delete role without user context deletes nothing: KN-VS-02 Appendix B, KN-VS-03.
 18. other services' roles cannot connect or read: KN-VS-02 Fail.
 
@@ -30,9 +30,9 @@ F2P TESTS (36)
 21. no user context shows system rows only: KN-VS-03 Alt.
 22. context set in a separate call does not apply: KN-VS-03 Alt.
 23. context from one transaction does not leak into the next: KN-VS-03 Requirement.
-24. writing a mine row for another user is rejected: KN-VS-03 Fail.
-25. writing a mine row without user context is rejected: KN-VS-03 Fail.
-26. writing a mine row for the current user is accepted: KN-VS-03 Happy.
+24. writing a user row for another user is rejected: KN-VS-03 Fail.
+25. writing a user row without user context is rejected: KN-VS-03 Fail.
+26. writing a user row for the current user is accepted: KN-VS-03 Happy.
 
 --- test_vector_index (5) ---
 27. index is hnsw with cosine distance, m 16, ef_construction 64, and valid: KN-VS-04 Requirement, Fail.

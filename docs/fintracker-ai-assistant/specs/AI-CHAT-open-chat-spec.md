@@ -29,7 +29,7 @@ A conversational assistant can answer free-form questions from the user's own co
 
 ### Non-Goals
 - The user's own AI assistant over MCP (AI-EXT, later).
-- Searching the user's own documents (`scope = mine`, later).
+- Searching the user's own documents (`scope = user`, later).
 - Any write action: changing categories, budgets or transactions.
 - Retrieval and indexing of help docs: Knowledge does them (KN-SDOC, KN-RET).
 

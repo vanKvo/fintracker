@@ -33,7 +33,7 @@ Key requirements:
   - building the prompt with retrieved chunks as data;
   - calling the LLM, citing sources, post-checking the answer and logging unanswered questions.
 - **The contract between them is text in, chunks out.** The AI assistant sends a query string; Knowledge embeds it, searches, re-checks ownership and returns chunks with source paths. The AI assistant never sees vectors or the database.
-- **System help docs come first.** User documents reuse the same service later, with a redaction step and `scope = mine`.
+- **System help docs come first.** User documents reuse the same service later, with a redaction step and `scope = user`.
 
 ## Alternatives Considered
 
@@ -64,5 +64,5 @@ Key requirements:
   - Knowledge owns retrieval quality, measured as recall@k on a golden question set, re-run when chunking or the embedding model changes.
   - The AI assistant owns answer quality.
 - **Embedding-model access belongs only to Knowledge's role.** Generation-model access belongs only to the AI assistant's role. Both are enforced in IAM.
-- **User documents are additive later:** a new ingestion trigger (`UploadAccepted`), a redaction step and `scope = mine`. No change to the AI assistant's contract.
+- **User documents are additive later:** a new ingestion trigger (`UploadAccepted`), a redaction step and `scope = user`. No change to the AI assistant's contract.
 - **Revisit when** retrieval latency or cost becomes material, for example by moving to Bedrock Knowledge Bases in retrieve-only mode behind the same API.

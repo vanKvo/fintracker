@@ -11,7 +11,7 @@ F2P TESTS (56)
 6. query over 1000 characters is invalid and 1000 passes: KN-RET-02 Fail.
 7. extra field including a user id is rejected: KN-RET-02 Fail, KN-RET-01 Fail.
 8. missing query or scope is invalid: KN-RET-02 Requirement.
-9. scope mine returns scope_not_enabled: KN-RET-02 Fail.
+9. scope user returns scope_not_enabled: KN-RET-02 Fail.
 10. unknown scope is invalid: KN-RET-02 Fail.
 11. body that is not an object is invalid: KN-RET-02 Requirement.
 12. error message never echoes the input: KN-RET-02, KN-RET-07 Requirement.
@@ -30,7 +30,7 @@ F2P TESTS (56)
 --- test_search (9) ---
 22. system scope returns only system chunks nearest first even when user chunks are nearer: KN-RET-04 Happy.
 23. hits carry source path, heading, text and distance: KN-RET-04, KN-RET-06 Requirement.
-24. user context is set in the same transaction so only own mine rows are visible: KN-RET-04 Requirement.
+24. user context is set in the same transaction so only own user rows are visible: KN-RET-04 Requirement.
 25. only chunks of the active model are searched: KN-RET-03 Happy.
 26. fewer matches than the limit returns them all without error: KN-RET-04 Alt.
 27. empty index returns no hits and no commit: KN-RET-04 Alt.
