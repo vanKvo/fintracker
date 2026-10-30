@@ -2,7 +2,7 @@
 
 | Status | Owner | Last reviewed | Applies to | App architecture |
 |---|---|---|---|---|
-| Proposed (Refactor phase: moving out of Analytics) | Van Vo | 2026-10-25 | main | [FinTracker architecture](../../fintracker-architecture/fintracker-architectural-doc.md) |
+| Proposed (Refactor phase: moving out of Analytics) | Van Vo | 2026-10-28 | main | [FinTracker architecture](../../fintracker-architecture/fintracker-architectural-doc.md) |
 
 This document describes how the AI assistant works: its components and the workflows it owns. Rules that apply to every service are in the app architecture doc and are not repeated here. These include identity, events and invariants. Field-level schemas, prompts, thresholds and acceptance criteria live in the specs, such as [AN-FS: Financial Summary](../../fintracker-analytics/specs/AN-FS-financial-summary-spec.md).
 
@@ -57,7 +57,7 @@ This document describes how the AI assistant works: its components and the workf
 4. Fewer than 10 included transactions → skip the LLM and show "Not enough activity to summarize yet."
 5. The cost guard checks per-request and per-user limits and atomically reserves the call's worst-case cost against the daily budget ([SDR-002](decision_records/SDR-002-atomic-spend-reservation.md)). It fails closed.
 6. Call the pinned model once, with the facts as a JSON data block, `max_tokens` 1,200 and a 25-second deadline. The call timeout is enforced at the socket only ([SDR-001](decision_records/SDR-001-bedrock-call-timeouts.md)). No tool calling in the MVP.
-7. Validate in order: JSON schema → grounding (every evidence path and `{{metric_id}}` token must resolve; no numbers in free text) → advice scope (banned terms). One retry is shared across the checks.
+7. Validate in order: syntax repair → reply schema → item schema → number tokenization → grounding (every evidence path, `metric_ref` and `{{token}}` must resolve; no numbers left in free text) → advice scope (banned terms). The schema is sent in the prompt ([SDR-003](decision_records/SDR-003-summary-output-structure-mode.md)). One retry is shared across the checks; after it, only bad items are dropped, and the facts-only fallback is shown only when no usable output is left. Code assigns insight ids.
 8. Settle the spend reservation to the actual tokens. Write the cache entry, the audit record and an encrypted snapshot of facts and response (30 days). Return numbers from the facts and text from the model.
 
 #### Answer a chat question *(proposed, Launch phase)*
@@ -90,18 +90,29 @@ This is the retrieval-augmented part of chat. It is split across two services ([
 
 Unanswered questions are logged so the help docs, and later the allowed user-document types, follow real demand.
 
-#### Evaluate prompt, model and schema changes
+#### Evaluate the Financial Summary (prompt, model and schema changes)
 
 **Trigger:**
 - every pull request: free replay tests;
-- manual, owner-approved runs: live evaluation.
+- manual, owner-approved runs: live evaluation, one tier per run.
 
-**Result:** a passing `full` run recorded for the exact versions. **On failure:** the merge is blocked.
+**Result:** a passing `full` run stored for the exact version key, which unlocks the merge. **On failure:** the merge stays blocked, and the stored report explains every failed call.
 
-1. Replay tests feed saved LLM responses through the validator without calling the LLM, on every pull request.
-2. A change to prompts, `model_id`, the output schema or the facts payload schema blocks the merge until a passing `full` run exists for those versions.
-3. Live runs go in tiers: smoke → core → extended → full. Each tier after `smoke` needs the previous one to pass. A separate dry run prints the cost estimate for every tier without calling a model; it is not a tier and its report is not stored.
-4. Each run has a cost cap (default $5) and its own IAM role. It runs only from a protected GitHub environment approved by the owner.
+![Financial Summary evaluation workflow](images/ai-assistant-evaluation.svg)
+
+Details the diagram leaves out (step numbers match the diagram; specs: [AN-FS-20, AN-FS-22](../../fintracker-analytics/specs/AN-FS-financial-summary-spec.md); how to run: [run_financial_summary.md](../run_financial_summary.md)):
+
+- **What blocks a merge (1–3):** a change to prompt templates, `model_id`, the output schema or the facts payload schema. Any other change needs only the replay tests. The check matches on the version key, not the prompt folder name, so a schema-only change needs its own `full` pass.
+- **Fixtures:** 22 synthetic facts payloads, so no test database or real user data. Tiers are cumulative: `smoke` 1 (`typical-month`), `core` 5 (includes the largest payload and the injection fixture), `extended` 10, `full` all 22 × 2 runs. The CLI's `full-once` (22 × 1) is for measuring and doesn't satisfy the merge check.
+- **Dry run (4):** prints input tokens and the worst-case cost of every tier for a model, with no AWS call. Not a tier, and nothing is stored.
+- **Who can run (5–6):** only the owner, through the protected `llm-eval` environment. The eval role is assumed only through OIDC from it; no other CI job, local setup or coding agent holds Bedrock credentials.
+- **Cost limits (8–9):** the run aborts before any call if its worst case is above the cap (default $5), unless `confirm_over_cap`. Before every call, retry included, it stops once actual spend passes the cap. A call that times out or loses its connection after sending counts at worst-case cost; an error before Bedrock processes it counts $0. A stopped run is stored as `capped`.
+- **Model call (10):** temperature 0. Live runs default to a 62 s deadline so the slow tail is measured; production uses 25 s.
+- **Validation (11):** the production validator (AN-FS-10 to AN-FS-12). Grounding problems and banned terms ask for the one shared retry, naming the exact path, token, number or term. The first reply is kept when the retry fails or is worse.
+- **Pass criteria (12):** 100% schema-valid output, 0 grounding failures, 0 guardrail hits that survive the retry, 0 followed injection instructions, and at least 90% of the required insight types. A failure in any run of a fixture fails it. The token budget criterion is skipped until the budget is set (AN-FS-20 open question).
+- **Report (13):** per fixture and run: tokens, cost and retries. Per call: `call_outcome`, `validation_outcome` with reason and messages, and its own tokens and cost. Dropped items with the facts value at each path, raw replies for failed or retried runs, latency p50/p95/p99 per model (the p99 sets `call_timeout_cap_s` once 200 calls exist), and the settings outside the version key (`temperature`, `max_tokens`, `git_sha`, workflow run ID, cap, prices). The `results/` name and the two pass indexes are explained in the [evaluation results notes](../../fintracker-analytics/AN-FS-20-22-eval-results-notes.md).
+- **Prompt freeze:** a prompt version's hash goes into `prompts.lock` on its first passing `full` run; later edits go into a new `fs-vN` folder. The active version is the `prompt_version` setting, so a rollback needs no deploy.
+- **Chat** *(proposed)*: [AI-EVAL](../specs/AI-EVAL-evaluation-auditing-spec.md) reuses the same run modes, tier order and merge gate, with its own golden set and a helpfulness judge.
 
 #### Handle account deletion
 
@@ -225,12 +236,13 @@ The tool transport is signed REST for now, the same in both profiles. An MCP lay
 | S1 | Summary generation | One LLM call with the facts payload inline; no tool calling | Fixed data needs; cheaper, faster, easier to test than an agent | Facts payload grows beyond about 20 KB (switch to tools through the same registry) | Accepted |
 | S2 | Numbers vs. text | Code computes every figure; the model writes interpretation with `{{metric_id}}` tokens | Removes arithmetic errors and invented numbers | Never | Accepted |
 | S3 | Summary model | Cheapest Bedrock model that passes the evaluation set, pinned by version ID (tried in order: Nova Micro → Nova Lite → Nova 2 Lite → Claude Haiku 4.5) | Narrating precomputed facts is light work | Evaluation results or prices change | Accepted |
-| S4 | Failure behavior | Validate, retry once, then the facts-only fallback | The panel is never blank or wrong | Never | Accepted |
+| S4 | Failure behavior | Validate, retry once, then drop only the bad items; the facts-only fallback only on an LLM failure or when no usable output is left | The panel is never blank or wrong, and one bad item doesn't throw away a good summary | Never | Accepted |
 | S5 | Tool registry | One registry of read-only tools with per-use-case allowlists, re-checked at execution; adapters for Bedrock tools and MCP | One choke point for safety, audit and reuse by chat and external assistants | Never | Accepted |
 | S6 | Live evaluation | Manual, tiered, cost-capped, owner-approved; free replay tests on every pull request | Quality gate without surprise bills | Team grows beyond one owner | Accepted |
 | S7 | Compute | Streaming Lambda in dev; Fargate behind an internal ALB in prod; both behind the chat REST API (ADR-012) | Near-zero idle cost in dev; no cold starts or 15-minute limit in prod (app doc D11) | Dev cold starts block testing | Accepted |
 | S8 | Bedrock call timeouts | Socket timeout from the deadline (capped at 1.5 × measured p99); up to 2 jittered retries only for errors before processing; per-container failure breaker that ignores throttling | An app timer left billed calls running unseen; SDK retries would retry read timeouts and double-bill; the breaker stops piling requests onto a failing provider | Summaries switch to streaming, or prod needs a shared breaker | Accepted ([SDR-001](decision_records/SDR-001-bedrock-call-timeouts.md)) |
 | S9 | Daily budget enforcement | Reserve worst-case cost with a conditional atomic add, settle after the call | Concurrent requests can't overshoot, so the breaker is a real hard stop; timed-out calls are counted | Peak traffic makes one spend item per day a hot key | Accepted ([SDR-002](decision_records/SDR-002-atomic-spend-reservation.md)) |
+| S10 | Summary output structure | Output schema as prompt text, validation and one shared retry; no forced tool or native structured output | Rule breaks stay visible to validation (enforced decoding would turn `savings_rate` into a valid type); no model switch or extra cost | Schema errors above about 5% of calls in two `full` runs, the model ladder reaches Claude Haiku 4.5, or Nova adds native structured output | Accepted ([SDR-003](decision_records/SDR-003-summary-output-structure-mode.md)) |
 
 ---
 
@@ -247,5 +259,5 @@ The tool transport is signed REST for now, the same in both profiles. An MCP lay
   - External assistant *(later)*: [AI-EXT](../specs/AI-EXT-external-assistant-spec.md).
 - **Knowledge** (retrieval half of RAG): [knowledge-architecture.md](../../fintracker-knowledge/architecture/knowledge-architecture.md).
 - **Superseded:** [ai-integration-architecture.md](../ai-integration-architecture.md) and [ai-governance-monitoring.md](../ai-governance-monitoring.md). They were written when AI lived in Analytics, and their content is folded into this document.
-- **Service decision records:** [SDR-001 Bedrock call timeouts](decision_records/SDR-001-bedrock-call-timeouts.md), [SDR-002 Atomic spend reservation](decision_records/SDR-002-atomic-spend-reservation.md).
+- **Service decision records:** [SDR-001 Bedrock call timeouts](decision_records/SDR-001-bedrock-call-timeouts.md), [SDR-002 Atomic spend reservation](decision_records/SDR-002-atomic-spend-reservation.md), [SDR-003 Summary output structure mode](decision_records/SDR-003-summary-output-structure-mode.md).
 - **Diagram sources:** `images/` (SVG).
