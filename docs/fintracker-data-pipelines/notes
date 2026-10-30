@@ -15,7 +15,7 @@ The Ledger push itself doesn't scope by tenant either. data_dispatcher/service.p
 
 Silent correctness bug: data_dispatcher/handler.py:32-33 always sets job status to COMPLETED, even when push_transactions_to_ledger reports partial or total failure (all_succeeded=False is computed and then discarded). A user whose transactions silently failed to post sees "Completed" in their UI. This should branch to FAILED (or a new PARTIALLY_COMPLETED status) when all_succeeded is false.
 
-No failure path updates job status at all. The CDK stack (pipeline_stack.py:154-167) defines no Catch/Retry on any Step Functions task. If Textract throttles past the 3 tenacity retries, or the Normalizer throws, the execution just dies — update_job_status(..., FAILED) is never called, and the user's job sits at its last known status until the 7-day DynamoDB TTL quietly deletes it. For a SaaS with a persistent WebSocket status push, this means users can get permanently stuck jobs with no terminal notification.
+No failure path updates job status at all. The CDK stack (pipeline_stack.py:154-167) defines no Catch/Retry on any Step Functions task. If Textract throttles past the 3 tenacity retries, or the Normalizer throws, the execution just dies — update_job_status(..., FAILED) is never called, and the user's job sits at its last known status until the 7-day DynamoDB TTL quietly deletes it. The UI learns status by polling, so this means users can get permanently stuck jobs with no terminal status.
 
 Scalability/cost issues:
 

@@ -17,7 +17,6 @@ This document describes how the User Profile service works. Rules that apply to 
 - Run the **identity authorizer**: verify the token, map `sub` → `userId`, attach the subscription tier, timezone and primary currency (UP-AUTH-02, D23).
 - Serve and update the user's profile and settings.
 - Manage savings goals.
-- Manage WebSocket connections for push notifications.
 - Start account deletion and publish `UserAccountDeleted`.
 
 **Does not do**
@@ -26,7 +25,7 @@ This document describes how the User Profile service works. Rules that apply to 
 - Delete other services' data (each does its own, on `UserAccountDeleted`).
 
 **Owns**
-- Identity mappings, profiles, settings, savings goals, WebSocket connections: one DynamoDB table, `FinTracker_UserProfile`.
+- Identity mappings, profiles, settings, savings goals: one DynamoDB table, `FinTracker_UserProfile`.
 
 ---
 
@@ -87,7 +86,6 @@ This document describes how the User Profile service works. Rules that apply to 
 | `GET`, `POST /profile/goals`, `DELETE /profile/goals/{id}` | Public API | Web client | Manage savings goals |
 | `GET /profile/internal/users/{userId}/settings` | Internal API (`user-profile-internal`) | Analytics | Timezone and currency. Superseded by settings in the verified context (D23); retire once no caller uses it |
 | `GET /profile/internal/goals` | Internal API (`user-profile-internal`) | AI assistant | Raw savings goals for the user in the forwarded context |
-| WebSocket `$connect` / `$disconnect` | WebSocket API | Web client | Push notifications |
 | Post-Confirmation | Cognito trigger | Cognito | Create the user |
 | `UserAccountDeleted` | Event published | → every service that stores user data | Start deletion |
 | `UserDataDeleted` *(proposed)* | Event consumed | Each service | Track deletion completion |
@@ -118,7 +116,6 @@ User Profile calls no other FinTracker service.
 | Identity mapping (`sub` → `userId`) | DynamoDB | Life of the account | Deleted (last, after the `USER#` items) |
 | Profile, settings, subscription tier | DynamoDB | Life of the account | Deleted |
 | Savings goals | DynamoDB | Until the user deletes them | Deleted |
-| WebSocket connections | DynamoDB | 2 h (TTL) | Deleted |
 
 ### 3.5 Protect: what does this service guard beyond the app-level rules?
 
