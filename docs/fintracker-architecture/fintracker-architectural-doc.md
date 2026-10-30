@@ -2,7 +2,7 @@
 
 | Status | Owner | Last reviewed | Applies to |
 |---|---|---|---|
-| Current | Van Vo | 2026-10-27 | main |
+| Current | Van Vo | 2026-10-29 | main |
 
 This document describes how FinTracker works at a high-level architecture: which services exist, what each service owns, how they talk to each other, how identity and data isolation work, and how the system is deployed to AWS.
 
@@ -31,7 +31,7 @@ It leaves out how a single service does its job: workflow steps, schemas, prompt
 
 | Service | Status | Purpose | Owns | Workload type |
 |---|---|---|---|---|
-| User profile | Existing | Who the user is and what they're allowed to do | Users, Cognito `sub` → internal `userId` mapping, subscription tier, settings, savings goals, WebSocket connections | Synchronous, high-read, low-write |
+| User profile | Existing | Who the user is and what they're allowed to do | Users, Cognito `sub` → internal `userId` mapping, subscription tier, settings, savings goals | Synchronous, high-read, low-write |
 | Ledger | Existing (runs locally; AWS deployment planned) | The single source of truth for money; serves the Dashboard tab | Accounts, categories, transactions, budgets and templates, bills, statement records (each linked to a `documentId`) | Synchronous, transactional, strict consistency |
 | Data pipeline | Existing | Turns statement files into clean, pending transactions | Import job status, per-bank CSV column mappings | Asynchronous, retry-heavy, compute-intensive |
 | Analytics | Existing (refactor) | Turns ledger history into metrics and detected patterns, with deterministic code, for the Reports tab and the Dashboard's spending pace | No data of its own; reads the Ledger's reporting views | Read-only, analytical |
@@ -203,6 +203,7 @@ Two kinds of entry exist, and each needs its own trust rule (4.2):
   - Financial Summary: only an allow-listed facts payload reaches the model, and output is validated against the facts.
   - Knowledge filters every search by owner and re-checks each result. Isolation tests run in CI.
 - **Privacy:**
+  - Account and card numbers: only the last four digits are stored, returned or logged; card-number-like text is masked on every Ledger write (D26, [XS-ACCT](../fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md)). Card entry for paid plans happens only on the payment provider's hosted page.
   - Account numbers, SSNs and similar identifiers are redacted before chunking and embedding.
   - Embeddings get the same protection and deletion as their source text.
   - A user's documents are used only for that user's chat *(later)*. They are never put in a shared index, and never used for training or evaluation without opt-in.
@@ -386,7 +387,7 @@ One line per hop between services. The steps inside a service are in that servic
 *Relies on: Enter, Trust, Flow, Protect*
 
 1. Client → chat streaming API (identity authorizer) → AI assistant.
-2. AI assistant → Knowledge (`retrieve(scope=system)`; `scope=mine` *later*), Ledger and Analytics, as tools. Each call is signed and carries the user.
+2. AI assistant → Knowledge (`retrieve(scope=system)`; `scope=user` *later*), Ledger and Analytics, as tools. Each call is signed and carries the user.
 3. AI assistant → LLM, then streams the answer with sources back to the client.
 
 ### Update a help doc *(proposed)*
@@ -579,6 +580,7 @@ Decisions with a linked ADR have a full record of context, alternatives and cons
 | D23 | User settings for calculations | Timezone and primary currency travel in the verified user context, attached by the identity authorizer and forwarded on internal calls; no default on a missing value | Sync call to User profile, cached (previous); event-fed copy per service; client header | No runtime dependency or extra state; trusted values; works for AI assistant calls | A scheduled job needs settings, or changes must apply within seconds | Accepted | [ADR-015](architectural_decision_records/ADR-015-settings-in-verified-context.md) |
 | D24 | Transaction dates | Calendar dates as the source gives them, never converted between timezones; timezone only decides "today" | Timestamps converted to the user's timezone | History never moves when a user changes timezone, and dates match the user's statements | Bank sync delivers timestamps that need time-of-day logic | Accepted | — |
 | D25 | Dependency failure handling | Client-side timeouts within the caller's deadline; throttling retried with exponential backoff and jitter, never counted as a fault; faults retried only when safe, then counted by a circuit breaker on slow or paid dependencies; up to 3 retries for fast calls, up to 2 for slow or paid calls (before-processing errors only) | SDK default retries everywhere; one breaker counting every error | SDK retries don't know the caller's deadline and retry read timeouts, which double-bills paid calls; counting throttling as a fault opens breakers on a healthy provider | A dependency offers idempotency keys (paid calls could then retry timeouts) | Accepted | — (applied in AI assistant SDR-001) |
+| D26 | Account and card numbers | Store, return and log only the last four digits; mask card-number-like text on Ledger writes; future payments only through a PCI Level 1 provider's hosted checkout, storing its tokens | Store the full number encrypted at field level; tokenize account numbers in a vault | Nothing needs the full number; holding it would bring the Ledger, Aurora, backups, gateway, CDN, browser and logs into PCI DSS scope and make it the most sensitive field under GLBA. Minimizing beats protecting | A feature needs the full number (e.g. initiating payments from a bank account) | Accepted | *Candidate*; [XS-ACCT](../fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
 
 *Candidate* marks decisions that would benefit from a full ADR: each had several credible alternatives, or a cost, security, or compliance trade-off worth recording.
 
@@ -588,7 +590,7 @@ Decisions with a linked ADR have a full record of context, alternatives and cons
 |---|---|---|
 | Ledger on Lambda (dev) | `aws-serverless-java-container`; Lambda Web Adapter | One JAR for both hosts. SnapStart works only with JAR/ZIP packages on AWS's Java runtime, not container images. Leaning: `aws-serverless-java-container`, which supports Spring Boot 3 with SnapStart |
 | Tool transport, AI assistant → services | Signed internal REST; MCP over HTTP | Must be the same in both profiles. Leaning: signed REST now; add an MCP layer at the AI assistant if outside MCP clients need the tools |
-| Statement-processed notification | Keep polling; WebSocket push from one notification owner; push from each producer | Leaning: keep polling for now; later, one owner of WebSocket connections pushes on the Ledger's import-committed event |
+| Statement-processed notification | Keep polling; WebSocket push from one notification owner; push from each producer | Leaning: keep polling for now; no push layer exists today, so a push would be designed when needed, starting from the Ledger's import-committed event |
 | First user document type *(later)* | Loan agreements; credit card terms | Deferred: current focus is the refactor, LLM features and RAG over system docs |
 
 ---
@@ -693,18 +695,40 @@ A test is recorded only when it protects behavior the system promises. Anything 
 
 ## 11. Compliance and standards
 
-Legal applicability must be confirmed with counsel before launch; until then, regulations show *Applies (to confirm)*.
+Legal applicability must be confirmed with counsel before launch; until then, laws show *Applies (to confirm)*. Control-by-control status, gaps and offload decisions are tracked in [XS-COMP](../fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md).
 
-| Standard / regulation | Why it applies | How the architecture supports it | Status | Evidence |
+### 11.1 Standards FinTracker must follow
+
+| Standard / regulation | Type | Why it applies | How the architecture supports it | Status |
 |---|---|---|---|---|
-| GLBA / FTC Safeguards Rule | Consumer financial data | Encryption at rest and in transit, MFA, least-privilege access, tenant isolation, audit logging, deletion; disposal no later than 2 years after last use | Applies (to confirm) | Written security program, incident response plan and data retention review still needed |
-| State privacy laws (VCDPA, CCPA/CPRA) | Personal data of residents of those states | Download (access); deletion completed within the 45-day window (D15); records of requests kept 24 months | Applies (to confirm) | — |
-| Record retention obligations | Could require keeping records after closure | None identified for users' financial content. Kept: deletion records, audit logs, later billing records; legal hold process (D15) | To confirm | — |
-| GDPR | Only if serving EU users | Per-table erasure by `user_id` (ADR-001) is compatible with the right to erasure | Out of scope (no EU users) | ADR-001 |
-| PCI DSS | Card data | Kept out of scope by never storing full card numbers | Out of scope | — |
-| OWASP ASVS | Web application security baseline | Authentication, access control, input and file validation | Applies | — |
-| OWASP Top 10 for LLM Applications | AI chat and summary | Prompt-injection handling, output validation, least-privilege tools, cost limits | In progress | Financial Summary output validation and evaluation suite |
-| WCAG 2.2 AA | Accessible web app | Frontend concern; listed so it is tracked | Applies | — |
+| GLBA Safeguards Rule (16 CFR 314) | Law | A personal-finance app holding consumers' financial data | Tenant isolation (D2), encryption (D13), MFA, least-privilege IAM, audit logging (D20), disposal within 2 years and deletion (D15), data minimization (D26). Below 5,000 consumers the written risk assessment, penetration testing, written incident response plan and board report are exempt; the rest is not | Applies (to confirm). Program, incident runbook, user MFA and provider register missing (XS-COMP-01 to -05, -14) |
+| GLBA Privacy Rule (Reg P) | Law | Same | Privacy notice at sign-up; no sale or sharing beyond service providers; retention as in D15 | Applies (to confirm). XS-COMP-15 |
+| FTC Act §5 | Law | Privacy and security claims are enforceable | Every privacy-notice promise maps to a control (XS-COMP-15) | Applies |
+| State data-breach notification laws (Virginia first) | Law | Residents' personal information | Incident runbook with state and FTC notices (FTC: 500+ consumers, within 30 days) | Applies. XS-COMP-02 |
+| State consumer privacy laws (CCPA/CPRA and others) | Law | Only above their size thresholds; GLBA-covered data is exempt under CCPA, and Virginia's VCDPA exempts GLBA institutions | Deletion within the 45-day window (D15, XS-DEL); download of statements and transactions | Applies at thresholds (to confirm) |
+| CFPB §1033 Personal Financial Data Rights | Law | When bank sync ships (authorized third party); rule under reconsideration | Consent in the provider's flow, revoke, collect only what's needed (XS-COMP-17, XS-ACCT-07) | Later |
+| TCPA, CAN-SPAM | Law | When SMS alerts or marketing email ship | Opt-in, STOP and unsubscribe honored (XS-COMP-19) | Later |
+| OWASP ASVS Level 2 | Baseline | Web application security | Authentication, session, access control, file validation, error handling, headers | Applies. Gaps in XS-COMP Appendix B |
+| OWASP Top 10 for LLM Applications | Baseline | AI chat and summary | Prompt-injection handling, output validation, least-privilege tools, cost limits | In progress (AI-CHAT, AN-FS) |
+| WCAG 2.2 AA | Baseline | Accessible web app | Automated check in CI (XS-COMP-20) | Applies |
+
+**Removed:** GDPR (no EU users). PCI DSS: FinTracker stores no card numbers (D26), so it is out of scope. It returns as the smallest self-assessment (SAQ A) once paid plans ship through a hosted checkout (XS-COMP-18).
+
+### 11.2 Standards handled by integrated third parties
+
+FinTracker inherits these controls from providers it already uses. Each provider's attestation is kept in the service provider register (XS-COMP-14). The right column is what stays with FinTracker under the shared-responsibility split.
+
+| Provider | Attestations | What it handles for FinTracker | What stays with FinTracker | Status |
+|---|---|---|---|---|
+| AWS infrastructure (all services used) | SOC 1/2/3, ISO 27001, PCI DSS Level 1 service provider; reports in AWS Artifact | Physical data centers, hardware and media disposal, hypervisor and network isolation, managed-service patching | Configuration, IAM, data, application code | Existing |
+| Amazon Cognito | Covered by the AWS attestations | Password storage and hashing, token signing, managed sign-in, MFA (TOTP); with the Plus tier, adaptive authentication, compromised-credential detection and sign-in event logs | Pool settings (MFA required, Plus tier: XS-COMP-03, -04); token handling in the UI (UI-AUTH) | Existing (MFA and Plus not yet enabled) |
+| AWS KMS | FIPS 140 validated HSMs | Key storage and cryptography; every key use logged in CloudTrail | Key policies per data type (D13) | Existing (AWS-managed keys; customer-managed designed) |
+| Amazon Bedrock | Covered by the AWS attestations | Model hosting; prompts and outputs aren't used to train models or shared with model providers | What reaches the prompt (allow-listed facts, no account numbers); output validation; logging rules | Existing |
+| Amazon Textract | Covered by the AWS attestations | OCR of statements inside AWS | Deleting page images and intermediate output (DP-ING-11) | Existing |
+| AWS CloudTrail | Covered by the AWS attestations | Record of every AWS API call, with log-file integrity validation | Retention, archive with Object Lock (prod, later) | Existing |
+| AWS WAF and Shield Standard | Covered by the AWS attestations | Managed rule groups; network-layer DDoS protection | Rule selection and exclusions (XS-COMP-13) | Shield Existing; WAF prod (proposed) |
+
+Not yet integrated, so not listed above: GuardDuty Malware Protection for S3 (XS-COMP-07), Security Hub CSPM (XS-COMP-09), Teller (bank sync) and the payment provider (XS-COMP-18).
 
 ---
 
