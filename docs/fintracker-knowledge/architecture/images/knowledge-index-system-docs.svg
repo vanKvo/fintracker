@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="460" viewBox="0 0 1500 460" font-family="Helvetica, Arial, sans-serif"><defs><marker id="mk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#222"/></marker><marker id="mb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1F5FBF"/></marker><marker id="mo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#D9730D"/></marker><marker id="mg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2E8B57"/></marker><marker id="my" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#777"/></marker><marker id="mr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#B03A2E"/></marker></defs><rect width="1500" height="460" fill="#fff"/><text x="40" y="36" font-size="22" font-weight="bold" fill="#111" text-anchor="start">Knowledge — Index system help docs (current focus)</text>
+<text x="40" y="58" font-size="12" font-weight="normal" fill="#555" text-anchor="start">Triggered by a merge to main. Idempotent: re-running the same merge changes nothing. The old version of a doc stays searchable until its replacement commits.</text>
+<rect x="40" y="90" width="250" height="76" rx="8" fill="#F2F2F2" stroke="#555555" stroke-width="1.6"/>
+<text x="165.0" y="111" font-size="13" font-weight="bold" fill="#222" text-anchor="middle">1. Merge to main</text>
+<text x="165.0" y="129" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">developer edits a doc</text>
+<text x="165.0" y="144" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">in the help-docs folder</text>
+<polyline points="290,128 318,128" fill="none" stroke="#222" stroke-width="1.6" marker-end="url(#mk)"/>
+<rect x="320" y="90" width="250" height="76" rx="8" fill="#F2F2F2" stroke="#555555" stroke-width="1.6"/>
+<text x="445.0" y="111" font-size="13" font-weight="bold" fill="#222" text-anchor="middle">2. CI uploads</text>
+<text x="445.0" y="129" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">changed + deleted files</text>
+<text x="445.0" y="144" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">to the system-docs prefix</text>
+<polyline points="570,128 598,128" fill="none" stroke="#222" stroke-width="1.6" marker-end="url(#mk)"/>
+<rect x="600" y="90" width="250" height="76" rx="8" fill="#FFF4E5" stroke="#E8890C" stroke-width="1.6"/>
+<text x="725.0" y="111" font-size="13" font-weight="bold" fill="#222" text-anchor="middle">3. Storage event</text>
+<text x="725.0" y="129" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">starts the ingestion</text>
+<text x="725.0" y="144" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">workflow per doc</text>
+<polyline points="850,128 878,128" fill="none" stroke="#222" stroke-width="1.6" marker-end="url(#mk)"/>
+<rect x="880" y="90" width="250" height="76" rx="8" fill="#FFF4E5" stroke="#E8890C" stroke-width="1.6"/>
+<text x="1005.0" y="111" font-size="13" font-weight="bold" fill="#222" text-anchor="middle">4. Hash check</text>
+<text x="1005.0" y="129" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">same path + hash?</text>
+<text x="1005.0" y="144" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">→ skip</text>
+<polyline points="1130,128 1158,128" fill="none" stroke="#222" stroke-width="1.6" marker-end="url(#mk)"/>
+<rect x="1160" y="90" width="250" height="76" rx="8" fill="#FFF4E5" stroke="#E8890C" stroke-width="1.6"/>
+<text x="1285.0" y="111" font-size="13" font-weight="bold" fill="#222" text-anchor="middle">5. Chunk</text>
+<text x="1285.0" y="129" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">split by headings</text>
+<text x="1285.0" y="144" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">keep path + heading</text>
+<polyline points="1285.0,166 1285.0,196 165.0,196 165.0,224" fill="none" stroke="#222" stroke-width="1.6" marker-end="url(#mk)"/>
+<rect x="40" y="226" width="250" height="76" rx="8" fill="#FFF4E5" stroke="#E8890C" stroke-width="1.6"/>
+<text x="165.0" y="247" font-size="13" font-weight="bold" fill="#222" text-anchor="middle">6. Embed</text>
+<text x="165.0" y="265" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">embedding model</text>
+<text x="165.0" y="280" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">via Bedrock</text>
+<polyline points="290,264 318,264" fill="none" stroke="#222" stroke-width="1.6" marker-end="url(#mk)"/>
+<rect x="320" y="226" width="250" height="76" rx="8" fill="#FFF4E5" stroke="#E8890C" stroke-width="1.6"/>
+<text x="445.0" y="247" font-size="13" font-weight="bold" fill="#222" text-anchor="middle">7. Replace</text>
+<text x="445.0" y="265" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">write new version,</text>
+<text x="445.0" y="280" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">drop old, one txn</text>
+<polyline points="570,264 598,264" fill="none" stroke="#222" stroke-width="1.6" marker-end="url(#mk)"/>
+<rect x="600" y="226" width="250" height="76" rx="8" fill="#FFF4E5" stroke="#E8890C" stroke-width="1.6"/>
+<text x="725.0" y="247" font-size="13" font-weight="bold" fill="#222" text-anchor="middle">8. Deleted docs</text>
+<text x="725.0" y="265" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">remove their chunks</text>
+<text x="725.0" y="280" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">and document row</text>
+<polyline points="850,264 878,264" fill="none" stroke="#222" stroke-width="1.6" marker-end="url(#mk)"/>
+<rect x="880" y="226" width="250" height="76" rx="8" fill="#FFF4E5" stroke="#E8890C" stroke-width="1.6"/>
+<text x="1005.0" y="247" font-size="13" font-weight="bold" fill="#222" text-anchor="middle">9. Record</text>
+<text x="1005.0" y="265" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">indexed commit, counts,</text>
+<text x="1005.0" y="280" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">failures per doc</text>
+<polyline points="1130,264 1158,264" fill="none" stroke="#222" stroke-width="1.6" marker-end="url(#mk)"/>
+<rect x="1160" y="226" width="250" height="76" rx="8" fill="#FFF4E5" stroke="#E8890C" stroke-width="1.6"/>
+<text x="1285.0" y="247" font-size="13" font-weight="bold" fill="#222" text-anchor="middle">10. Retrieval eval</text>
+<text x="1285.0" y="265" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">recall@k on golden</text>
+<text x="1285.0" y="280" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">questions (on change)</text>
+<rect x="40" y="336" width="700" height="66" rx="8" fill="#F2F2F2" stroke="#555555" stroke-width="1.6"/>
+<text x="390.0" y="357" font-size="13" font-weight="bold" fill="#222" text-anchor="middle">On failure</text>
+<text x="390.0" y="375" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">a failing doc retries in its own branch and never blocks the others</text>
+<text x="390.0" y="390" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">the previous version stays searchable; the run reports which docs failed</text>
+<rect x="770" y="336" width="690" height="66" rx="8" fill="#F2F2F2" stroke="#555555" stroke-width="1.6"/>
+<text x="1115.0" y="357" font-size="13" font-weight="bold" fill="#222" text-anchor="middle">Rebuild</text>
+<text x="1115.0" y="375" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">changing the embedding model or chunking re-indexes everything from Git</text>
+<text x="1115.0" y="390" font-size="11" font-weight="normal" fill="#444" text-anchor="middle">embeddings are derived data, so the source docs are the backup</text>
+<rect x="40" y="420" width="1420" height="40" rx="8" fill="#FBFBFB" stroke="#ccc"/>
+<rect x="56" y="433" width="22" height="14" fill="#F2F2F2" stroke="#555555"/>
+<text x="86" y="445" font-size="12" font-weight="normal" fill="#222" text-anchor="start">trigger / rule</text>
+<rect x="195.60000000000002" y="433" width="22" height="14" fill="#FFF4E5" stroke="#E8890C"/>
+<text x="225.60000000000002" y="445" font-size="12" font-weight="normal" fill="#222" text-anchor="start">Knowledge step</text>
+<polyline points="335.20000000000005,440 375.20000000000005,440" fill="none" stroke="#222" stroke-width="1.6" marker-end="url(#mk)"/>
+<text x="383.20000000000005" y="445" font-size="12" font-weight="normal" fill="#222" text-anchor="start">flow</text></svg>
