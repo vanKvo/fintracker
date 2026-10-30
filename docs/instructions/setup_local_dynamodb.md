@@ -23,7 +23,7 @@ cd scripts
 export DYNAMODB_ENDPOINT_URL=http://localhost:8000
 poetry run python create_local_dynamodb_table.py
 ```
-This creates `FinTracker_UserProfile` with a `PK`/`SK` composite string primary key, on-demand billing, and TTL enabled on the `ttl` attribute — matching the schema `app/identity/repository.py`, `app/goals/repository.py`, and `app/websocket/repository.py` expect.
+This creates `FinTracker_UserProfile` with a `PK`/`SK` composite string primary key, on-demand billing, and TTL enabled on the `ttl` attribute — matching the schema `app/identity/repository.py` and `app/goals/repository.py` expect.
 
 Step 4: Point a script at the local table
 Any script or service that reads `DYNAMODB_ENDPOINT_URL` will use the local table instead of real AWS when it's set. For example:
