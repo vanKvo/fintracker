@@ -61,6 +61,31 @@ Run outside the workflow, the CLI uses your own AWS credentials, not the eval ro
 ### Step 3: dry run of the full set before paying for it
 `--tier dry` (step 1) already prices all 22 fixtures at `full`. Read the `full` line, and its worst case with retries, before you start a `full` run. A live run also prints its own estimate before its first call and aborts if the worst case is above `--cap-usd`.
 
+### Replaying a stored live run against the current code (free)
+Use this to check a change to `validation.py`, `schemas.py` or the retry rules against a live run you already paid for, before paying for another. It feeds the raw replies saved in a result file to today's `parse_output` and `validate_output`, the same calls generation makes. No LLM, no AWS, no cost.
+
+```bash
+cd services/fintracker-ai-assistant
+poetry run python -m scripts.replay_eval_result \
+  ../../docs/fintracker-ai-assistant/eval/ai_assistant_fs_eval_results/20261028T214725__fail__r1__4d4627be.json
+# one or more fixtures, and why each remaining retry is still asked for:
+poetry run python -m scripts.replay_eval_result <result.json> --fixture over-budget --fixture leakage --verbose
+```
+1. Pick the result file of the run to compare against: a `results/.../*.json` file synced from the eval bucket, or the `--out` file of a CLI run.
+2. Make your change and run `poetry run pytest tests/summary`. The replay does not replace the tests.
+3. Run the command. For each row it prints the stored first reply's outcome (`retry`, `partial`, `passed`) next to the current one (`passed`, `retry`, or `reply-level` when the reply fails the reply schema, e.g. it was cut off), then the stored and current final outcome (`success`, `partial` when items were dropped, or the fallback reason), and how many figures were tokenized.
+4. Read the totals: first replies needing a retry (stored → now), final fallbacks (stored → now), and final summaries with dropped items. A change helps when the retries and fallbacks go down and `partial` does not go up. `--verbose` lists the errors behind each retry that is still asked for.
+5. Record the numbers in the evaluation log entry for the change (**Result**, "offline replay"), then confirm with a live run.
+
+What it can and cannot tell you:
+- It tells you how the validator treats the same text now: repaired, accepted, or rejected.
+- It cannot test a prompt change: the replies are the old ones, so a new prompt line (or retry text) shows nothing until a live run.
+- A retry reply was written against the old retry message. The "final" columns judge that stored reply, not the one the model would write now.
+- Only rows with a retry, a failure or dropped items keep raw replies. A row with a clean first reply cannot be replayed; the test suite covers those.
+- Compare results of the same model: a stored run from another prompt version still replays, but its replies reflect that prompt.
+
+To keep a reply permanently, copy it into `tests/fixtures/fs/replay/<name>.json` (`fixture`, `responses`, `expect`; see `typical-month-good.json`). `tests/summary/test_replay.py` then runs it through the full generation path on every test run.
+
 ### Measuring latency for the call timeout (AN-FS-10, AN-FS-20)
 - Every call logs `llm_latency_ms`. Each report row has `calls[]`, one entry per attempt: `attempt`, `outcome`, `latency_ms` (our time), `bedrock_latency_ms` (Bedrock's own), `output_tokens`, `truncated`, `started_at`. Rows also keep the `summary`, or the `raw_responses` of a failed run.
 - `totals.llm_latency_ms.<model_id>` has `calls`, `p50`, `p95`, `p99` and `p99_usable` (true from 200 calls), over successful calls only. `totals.bedrock_latency_ms` is the same for Bedrock's time; `call_outcomes` counts attempts per outcome; `truncated_calls` and `max_output_tokens_per_call` show whether `max_tokens` is too low.
@@ -115,7 +140,7 @@ The Lambda timeout is 29 s (Terraform output `lambda_timeout_s`): a 25 s request
   "per_user_daily_generations": 10,
   "per_user_daily_refreshes": 5,
   "max_input_tokens": 8000,
-  "max_tokens": 1200,
+  "max_tokens": 2000,
   "llm_retry_attempts": 2,
   "breaker_failure_threshold": 5,
   "breaker_open_s": 60
