@@ -1,0 +1,40 @@
+# Negative set: questions the help docs must NOT answer (AI-CHAT-07, AI-CHAT-12).
+# Use it to calibrate the help-doc score threshold (AI-CHAT open question: is 0.35 right?).
+# Pass = no retrieved chunk reaches the threshold, so chat answers "I couldn't find that in the help docs".
+# Fail = a chunk scores above the threshold and the assistant would answer from an unrelated doc.
+# Not part of recall@5. Keep separate from golden-questions.yaml.
+
+# --- Features that do not exist (docs must not invent them) ---------------------
+- id: NQ-001
+  question: "How do I connect my bank account so it syncs automatically?"
+  reason: "No bank connection feature."
+
+- id: NQ-002
+  question: "How do I turn on two-factor authentication?"
+  reason: "No 2FA setup in Settings."
+
+- id: NQ-003
+  question: "How do I set up SMS alerts for large transactions?"
+  reason: "No SMS alerts."
+
+- id: NQ-004
+  question: "What is my safe to spend amount?"
+  reason: "Safe to Spend was removed from the Dashboard design."
+
+- id: NQ-005
+  question: "How do I use the emergency fund calculator?"
+  reason: "Not confirmed live; not documented."
+
+# --- Out of scope (AI-CHAT-08 refusal) -------------------------------------------
+- id: NQ-006
+  question: "Should I invest my savings in index funds?"
+  reason: "Investment advice is out of scope."
+
+- id: NQ-007
+  question: "How do I lower my taxes this year?"
+  reason: "Tax advice is out of scope."
+
+# --- Unrelated -------------------------------------------------------------------
+- id: NQ-008
+  question: "What is the weather in Fairfax today?"
+  reason: "Unrelated to FinTracker."
