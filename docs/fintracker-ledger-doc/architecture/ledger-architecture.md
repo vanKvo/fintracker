@@ -91,7 +91,7 @@ This document describes how the Ledger works and the workflows it owns. Rules th
 2. Check that the statement belongs to that user and that the account matches. The caller can't nominate another account.
 3. Validate each row in code. A row whose category is unknown or inactive is stored as Uncategorized and reported with a reason.
 4. Insert the valid rows in one statement, skipping rows already stored ([SDR-001](decision_records/SDR-001-import-idempotency.md)).
-5. Return each row's result: `ACCEPTED`, `ALREADY_STORED` or `REJECTED` with a reason.
+5. Return each row's result: `ACCEPTED` (with a reason when the category was downgraded), `ALREADY_STORED`, or `REJECTED` with `INVALID_ROW` for a row that fails validation (XS-DPCAT-05). A category problem never rejects a row.
 
 #### Approve pending transactions
 
@@ -139,7 +139,7 @@ This document describes how the Ledger works and the workflows it owns. Rules th
 | `/api/v1/ledger/dashboard/*` | Public API | Web client | Data-through, summary cards, budget alerts |
 | Statement owner lookup, statement import | Internal API (IAM) | Data pipeline | Ownership check and pending rows |
 | Categories read (system and user) | Internal API (IAM) | Data pipeline | Category mapping during normalization |
-| Read tools *(proposed)* | Internal API (IAM) | AI assistant | Transactions by category and date range, budget status |
+| Read tools *(proposed, [LG-READ](../specs/LG-READ-internal-read-routes-spec.md))* | Internal API (IAM) | AI assistant | Transaction search with totals, budget status for one month |
 | Reporting views | Read contract (database) | Analytics | Income and spending with counting rules (D22) |
 | `StatementDeleted` *(proposed)* | Event published | — | Document service deletes the file |
 | `UserDataDeleted` *(proposed)* | Event published | — | User profile tracks deletion |
@@ -229,9 +229,8 @@ Cross-service decisions this service applies are in the app architecture doc: D1
 | S4 | Removing transactions | Only manual rows can be deleted; imported rows are excluded instead | The import stays an accurate record of the statement | Never | Accepted | — |
 | S5 | Budget periods | One budget per month; past budgets closed by a scheduled job at 00:00 UTC on the 1st (not the user's midnight); reopen is explicit | Past months stay a stable record for comparisons; the UTC gap is accepted for now | Users need to edit history often, or the UTC close bothers users | Accepted | — |
 | S6 | Current month | Resolved from the user's timezone in the verified context; the client doesn't pass it | One rule for every caller, and nothing extra to validate (D23) | Never | Proposed | — |
+| S7 | Account numbers | Store only the last four digits (`account_last_four`); no keyed hash, because an import names its account by `accountId` and bank sync uses the provider's account ID. Card-number-like text is masked on every write (app doc D26) | Removes the most sensitive field from the database, logs and backups, and keeps PCI DSS out of scope | A feature needs the full number | Accepted | [XS-ACCT](../../fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
 
-**Open questions**
-- **Account numbers.** LG-CORE-3.1 stores the full account number. Recommended: store only the last four digits, plus a keyed hash of the full number if imports need to tell two accounts with the same last four apart. That removes the most sensitive field from the database, logs and backups (GLBA Safeguards). Confirm whether anything needs the full number.
 
 ---
 
