@@ -1,0 +1,9 @@
+profile     = "dev" # or "prod"
+aws_profile = "dev" # CLI profile of the matching account (architecture doc 6.1)
+
+headers_connect_src = [
+  "https://cognito-idp.us-east-1.amazonaws.com",
+  "https://<api-gateway-id>.execute-api.us-east-1.amazonaws.com",
+]
+
+# alarm_email = "you@example.com"
