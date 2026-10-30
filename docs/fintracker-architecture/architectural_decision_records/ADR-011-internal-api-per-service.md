@@ -26,27 +26,10 @@ Key requirements:
 - Each service owns and deploys its own interface.
 - No added fixed cost in dev.
 
-## Options
-
-- **API per service** *(chosen)*: one HTTP API for each service that receives internal requests: `analytics-internal`, `ledger-internal`, `knowledge-internal`, `user-profile-internal`, and later `document-internal`.
-- **Shared API**: one HTTP API, `fintracker-internal`, with a path prefix per service (`/analytics/*`, `/ledger/*`, …).
-
-## Trade-offs
-
-| Dimension | Shared API | API per service | Edge |
-|---|---|---|---|
-| **Least privilege** | IAM scoped by path; one `/*` grants every service | IAM scoped by API; a wildcard stays inside one service | Per service |
-| **Blast radius** | One stage misconfiguration hits every internal call, including Ledger imports | Contained to one service; prod can throttle or disable one API alone | Per service |
-| **Ownership** | Every service's routes depend on a shared platform stack | Each service deploys its own API | Per service |
-| **Setup** | 1 API and 1 base URL | 4 APIs (5 later); the AI assistant reads 4 URLs. One Terraform module keeps it to one block per service | Shared, slightly |
-| **Cost and latency** | $0 fixed; one TLS connection reused across targets | $0 fixed; dev: one extra handshake per target on a cold Lambda; prod: none (long-lived connections) | Tie |
-
-**Also considered**
-- **Shared now, split later:** splitting changes every URL and every caller's IAM policy, so the layout is cheapest to fix before the Refactor phase adds routes.
-- **A different mechanism** (private REST API, VPC Lattice, direct Lambda invocation): decided in [ADR-004](ADR-004-internal-api-regional-iam.md).
-
 ## Decision
 **One internal HTTP API per receiving service, in both profiles.** The mechanism stays as in ADR-004: IAM authorization, SigV4, a caller allow-list and the forwarded user context.
+
+**Why:** IAM scoped by API keeps a wildcard inside one service, a misconfiguration hits one service instead of every internal call, and each service deploys its own interface. The costs are small: one Terraform module keeps the extra APIs to one block per service, the fixed cost is $0 either way, and a TLS handshake is small next to an LLM or database call. Least privilege and ownership are the core security model, which `profile` must not change.
 
 1. **Which services get one:** every service that receives internal requests: Analytics, Ledger, Knowledge and User profile, plus the Document service when Knowledge starts indexing user documents. The AI assistant and the Data pipeline only make calls, so they have none.
 2. **One Terraform module, `internal_api`:** its inputs are the service name, the routes and their integrations, and the allowed caller roles. Each service's stack instantiates it, and the module:
@@ -59,14 +42,35 @@ Key requirements:
    - In dev, every internal API integrates directly with the service's Lambda.
    - In prod, `ledger-internal` integrates through the VPC link to the Ledger's internal load balancer. The other APIs integrate with Lambda.
 
+## Alternatives Considered
+
+### Shared API
+One HTTP API, `fintracker-internal`, with a path prefix per service (`/analytics/*`, `/ledger/*`, …).
+- Pros: 1 API and 1 base URL; $0 fixed cost; one TLS connection reused across targets.
+- Cons:
+  - IAM is scoped by path, so one `/*` grants every service.
+  - One stage misconfiguration hits every internal call, including Ledger imports.
+  - Every service's routes depend on a shared platform stack.
+- Rejected: It gives up least privilege and shares one blast radius on the path every internal call takes, to save a few base URLs.
+
+**Also considered**
+- **Shared now, split later:** Rejected. Splitting changes every URL and every caller's IAM policy, so the layout is cheapest to fix before the Refactor phase adds routes.
+- **A different mechanism** (private REST API, VPC Lattice, direct Lambda invocation): decided in [ADR-004](ADR-004-internal-api-regional-iam.md).
 
 ## Consequences
-- **Each service owns its interface end to end:** routes, throttles, access logs and alarms live in that service's Terraform and deploy with it.
-- **Least privilege is reviewable per service:** each caller's policy lists the APIs it may call, and each API's allowed callers are in one place.
-- **More resources:** 4 APIs now, 5 later, each with a stage and a log group. The shared module keeps this to one block per service.
-- **Callers need several base URLs:** the AI assistant reads 4 SSM parameters at startup.
-- **The first call to each target from a cold Lambda pays a separate TLS handshake.** This is small next to an LLM or database call.
-- **Follow-up:** the service architecture docs list their internal API in CONOPS "Enter", and the Analytics refactor creates `analytics-internal` from the module.
+
+**Pros**
+- Least privilege is reviewable per service: each caller's policy lists the APIs it may call, and each API's allowed callers are in one place.
+- Each service owns its interface end to end: routes, throttles, access logs and alarms live in that service's Terraform and deploy with it.
+- A misconfiguration or throttle affects one service, and prod can throttle or disable one API alone.
+
+**Cons**
+- More resources: 4 APIs now and 5 later, each with a stage and a log group. The shared module keeps this to one block per service.
+- Callers need several base URLs: the AI assistant reads 4 SSM parameters at startup.
+- Dev: the first call to each target from a cold Lambda pays a separate TLS handshake (prod: none). This is small next to an LLM or database call.
+
+**Follow-up**
+- The service architecture docs list their internal API in CONOPS "Enter", and the Analytics refactor creates `analytics-internal` from the module.
 
 ## Revisit when
 - Receiving services grow past about 10, and per-API configuration becomes a burden.

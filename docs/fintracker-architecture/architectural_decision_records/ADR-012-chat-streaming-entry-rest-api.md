@@ -23,30 +23,10 @@ Key requirements:
 - The same entry mechanism in dev and prod (app doc 6.1, invariant 12).
 - Lowest cost that meets the above; dev idle cost stays near zero.
 
-## Options
-
-- **Chat REST API with streaming** *(chosen)*: a Regional API Gateway REST API with one streaming route. It runs the same User profile identity authorizer as the gateway.
-  - dev: integrates with the AI assistant Lambda (`InvokeWithResponseStream`).
-  - prod: integrates through a VPC link with the AI assistant's **internal** ALB.
-- **CloudFront + origin access control → Function URL**: the Function URL switches to IAM auth, so only CloudFront can invoke it. The JWT is still checked in code.
-
-## Trade-offs
-
-| Dimension | Chat REST API | CloudFront + OAC | Edge |
-|---|---|---|---|
-| **Junk requests** | Rejected by the authorizer; the AI assistant never runs. A missing token is rejected without even invoking the authorizer | CloudFront signs and forwards every request, so the Lambda still runs and rejects in code | REST API |
-| **Rate limit** | Built in: stage and route throttles, which also cap the bill. WAF can be attached | CloudFront has no throttle; a limit needs WAF rate rules | REST API |
-| **Dev cost at equal protection** | $3.50 per million requests, cents a month at dev volume | CloudFront requests ≈ $0, but WAF (web ACL + rate rule) ≈ $6–7/month to get a rate limit | REST API |
-| **Prod** | Same API; VPC link to an internal ALB. Removes the public ALB and the in-code JWT check | Doesn't apply to Fargate. Prod keeps a public ALB with the JWT checked in code: two different chat entries | REST API |
-| **Client and maturity** | Plain `fetch` with a bearer token. Streaming on REST is newer (Nov 2025), so it needs a spike first | The browser must send the SHA-256 of every POST body in `x-amz-content-sha256` | REST API, slightly |
-
-**Also considered**
-- **Keep the open Function URL:** fails the first two requirements. Junk requests bill the Lambda, and the only rate limit is reserved concurrency.
-- **API Gateway WebSocket API:** chat streams one way, so a two-way connection adds connection tracking and cost for nothing.
-- **Lambda@Edge JWT check in front of the Function URL:** blocks junk at the edge, but it's a second authentication code path. It costs $0.60 per million requests plus duration, and it does nothing for prod.
-
 ## Decision
 **Chat streams through its own Regional REST API with response streaming, behind the same identity authorizer, in both profiles.** Only the integration target differs by profile, as for the Ledger (D11).
+
+**Why:** It is the only option that rejects junk before any FinTracker code runs, limits the request rate without extra services (the throttle also caps the bill), and gives one chat entry in both profiles. The maturity risk, that streaming on REST APIs is new (Nov 2025), is bounded by the spike in item 6 and a known fallback (see Revisit when).
 
 1. **One REST API (`chat-api`), Regional endpoint.**
    - An edge-optimized endpoint drops streams idle for 30 seconds; a Regional one allows 5 minutes.
@@ -61,15 +41,39 @@ Key requirements:
    - The public ALB is removed, and so is the in-code JWT check.
 6. **Spike first:** streaming end to end with the Python AI assistant before building the chat feature. Lambda streams natively only on Node.js and custom runtimes, so Python streams through Lambda Web Adapter. That's true for either option.
 
+## Alternatives Considered
+
+### CloudFront + origin access control → Function URL
+The Function URL switches to IAM auth, so only CloudFront can invoke it. The JWT is still checked in code.
+- Pros: CloudFront requests cost about $0; no new API Gateway resource.
+- Cons:
+  - CloudFront signs and forwards every request, so the Lambda still runs and rejects junk in code.
+  - It has no throttle. A rate limit needs WAF (web ACL + rate rule), about $6–7/month in dev.
+  - It doesn't apply to Fargate, so prod keeps a public ALB with the JWT checked in code: two different chat entries.
+  - The browser must send the SHA-256 of every POST body in `x-amz-content-sha256`.
+- Rejected: At equal protection it costs more in dev and leaves two chat entries and an in-code JWT check in prod.
+
+**Also considered**
+- **Keep the open Function URL:** Rejected. Junk requests bill the Lambda, and the only rate limit is reserved concurrency.
+- **API Gateway WebSocket API:** Rejected. Chat streams one way, so a two-way connection adds connection tracking and cost for nothing.
+- **Lambda@Edge JWT check in front of the Function URL:** Rejected. It blocks junk at the edge, but it is a second authentication code path, costs $0.60 per million requests plus duration, and does nothing for prod.
+
 ## Consequences
-- **Every user entry point now goes through the identity authorizer.** The "verified in code" exception is gone from invariant 2 and the Trust concept.
-- **Cost:**
-  - **dev:** a few cents a month. There's no WAF in dev; the throttle caps the bill instead.
-  - **prod:** the public ALB becomes an internal one, so the cost is about the same. It drops by about $16–20/month if the AI assistant shares the Ledger's internal ALB, using separate listener rules and target groups.
-- **One more API Gateway resource to deploy and monitor.**
-- **Two authorizer response formats** to keep in sync, handled in the shared identity library.
-- **Code changes:** the AI assistant reads the user from the REST authorizer context instead of a JWT library. The client calls the chat API's URL with its bearer token.
-- **Limits of streaming mode:** no response caching, mapping templates or content encoding on the chat route. Chat needs none of them.
+
+**Pros**
+- Junk requests never run the AI assistant: a missing token is rejected without even invoking the authorizer. Stage and route throttles are built in, and WAF can be attached.
+- Every user entry point now goes through the identity authorizer. The "verified in code" exception is gone from invariant 2 and the Trust concept.
+- Cost: dev is a few cents a month (about $3.50 per million requests), with no WAF; the throttle caps the bill instead. Prod's public ALB becomes an internal one, so the cost is about the same, and it drops by about $16–20/month if the AI assistant shares the Ledger's internal ALB, using separate listener rules and target groups.
+- Prod drops the public ALB and the in-code JWT check. The client uses plain `fetch` with a bearer token.
+
+**Cons**
+- Streaming on REST APIs is new (Nov 2025), so it needs a spike first.
+- One more API Gateway resource to deploy and monitor.
+- Two authorizer response formats to keep in sync, handled in the shared identity library.
+- Streaming mode has no response caching, mapping templates or content encoding on the chat route. Chat needs none of them.
+
+**Follow-up**
+- The AI assistant reads the user from the REST authorizer context instead of a JWT library. The client calls the chat API's URL with its bearer token.
 
 ## Revisit when
 - The spike shows streaming doesn't work with Lambda Web Adapter. Fall back to CloudFront + OAC with a WAF rate rule.
