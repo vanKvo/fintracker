@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from compliance.check_compliance_evidence import (
+from services.scripts.compliance.check_compliance_evidence import (
     check_incident_response,
     check_matrix,
     check_program,
