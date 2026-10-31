@@ -30,9 +30,9 @@ Search this page for any requirement ID or spec path, old or new, to find the cu
 
 | Status | Requirements |
 |---|---|
-| Proposed | 67 |
-| In progress | 29 |
-| Implemented | 128 |
+| Proposed | 69 |
+| In progress | 45 |
+| Implemented | 130 |
 | Superseded | 2 |
 | Removed | 1 |
 | Unverified | 6 |
@@ -42,8 +42,9 @@ Search this page for any requirement ID or spec path, old or new, to find the cu
 | Prefix | Feature | Service | Spec | Tests | Requirements | Status | Formerly (old path and IDs) |
 |---|---|---|---|---|---|---|---|
 | `AI-CHAT` | In-App Open Chat | AI assistant | [AI-CHAT-open-chat-spec.md](fintracker-ai-assistant/specs/AI-CHAT-open-chat-spec.md) | [AI-CHAT-open-chat-tests.md](fintracker-ai-assistant/specs/AI-CHAT-open-chat-tests.md) | AI-CHAT-01 … AI-CHAT-15 (15) | 1 In progress · 14 Implemented | `docs/fintracker-ai-assistant/ai-open-chat-spec.md`, no requirement IDs |
-| `AI-EVAL` | Evaluations and Auditing | AI assistant | [AI-EVAL-evaluation-auditing-spec.md](fintracker-ai-assistant/specs/AI-EVAL-evaluation-auditing-spec.md) | — | AI-EVAL-01 … AI-EVAL-08 (8) | 8 Proposed | `docs/fintracker-ai-assistant/ai-evaluation-auditing-spec.md`, no requirement IDs |
+| `AI-EVAL` | Evaluations and Auditing | AI assistant | [AI-EVAL-evaluation-auditing-spec.md](fintracker-ai-assistant/specs/AI-EVAL-evaluation-auditing-spec.md) | — | AI-EVAL-01 … AI-EVAL-09 (9) | 9 Proposed | `docs/fintracker-ai-assistant/ai-evaluation-auditing-spec.md`, no requirement IDs |
 | `AI-EXT` | User's Own AI Assistant | AI assistant | [AI-EXT-external-assistant-spec.md](fintracker-ai-assistant/specs/AI-EXT-external-assistant-spec.md) | — | AI-EXT-01 | 1 In progress | `docs/fintracker-ai-assistant/ai-chat-support.md`, no requirement IDs |
+| `AI-FAPI` | AI Assistant as a Container | AI assistant | [AI-FAPI-container-spec.md](fintracker-ai-assistant/specs/AI-FAPI-container-spec.md) | — | AI-FAPI-01 … AI-FAPI-08 (8) | 8 Proposed | — |
 | `AI-GUARD` | AI Data Access Rules | AI assistant | [AI-GUARD-data-access-rules-spec.md](fintracker-ai-assistant/specs/AI-GUARD-data-access-rules-spec.md) | — | — | — | `docs/fintracker-ai-assistant/ai-data-access-rules.md`, no requirement IDs |
 | `AN-FS` | Financial Summary | Analytics | [AN-FS-financial-summary-spec.md](fintracker-analytics/specs/AN-FS-financial-summary-spec.md) | [AN-FS-financial-summary-tests.md](fintracker-analytics/specs/AN-FS-financial-summary-tests.md) | AN-FS-01 … AN-FS-30 (30) | 1 Proposed · 6 In progress · 21 Implemented · 1 Removed · 1 Unverified | `docs/fintracker-analytics/FS-financial-summary-spec.md`, IDs FS-NN → AN-FS-NN |
 | `AN-RPT` | Dashboard and Reports Widgets | Analytics | [AN-RPT-dashboard-reports-widgets-spec.md](fintracker-analytics/specs/AN-RPT-dashboard-reports-widgets-spec.md) | [AN-RPT-dashboard-reports-widgets-tests.md](fintracker-analytics/specs/AN-RPT-dashboard-reports-widgets-tests.md) | AN-RPT-01 … AN-RPT-11 (11) | 1 Proposed · 10 Implemented | — |
@@ -52,8 +53,9 @@ Search this page for any requirement ID or spec path, old or new, to find the cu
 | `DP-MAP` | CSV Column Mapping | Data pipeline | [DP-MAP-csv-column-mapping-spec.md](fintracker-data-pipelines/specs/DP-MAP-csv-column-mapping-spec.md) | [DP-MAP-csv-column-mapping-tests.md](fintracker-data-pipelines/specs/DP-MAP-csv-column-mapping-tests.md) | DP-MAP-01 … DP-MAP-06 (6) | 6 Implemented | — |
 | `DP-TXT` | Transaction Type and Category | Data pipeline | [DP-TXT-transaction-type-category-spec.md](fintracker-data-pipelines/specs/DP-TXT-transaction-type-category-spec.md) | — | — | — | `docs/fintracker-data-pipelines/DPTXT-data-pipeline-transactions-type-category-spec.md`, IDs DPTXT → DP-TXT; problems keep P-NN |
 | `DS-DL` | Document Download | Document service | [DS-DL-document-download-spec.md](fintracker-document-service/specs/DS-DL-document-download-spec.md) | [DS-DL-document-download-tests.md](fintracker-document-service/specs/DS-DL-document-download-tests.md) | DS-DL-01 … DS-DL-02 (2) | 1 Proposed · 1 In progress | — |
-| `KN-CHUNK` | Chunking and Embedding | Knowledge | [KN-CHUNK-chunking-embedding-spec.md](fintracker-knowledge/specs/KN-CHUNK-chunking-embedding-spec.md) | [KN-CHUNK-chunking-embedding-tests.md](fintracker-knowledge/specs/KN-CHUNK-chunking-embedding-tests.md) | KN-CHUNK-01 … KN-CHUNK-04 (4) | 3 In progress · 1 Implemented | — |
+| `KN-CHUNK` | Chunking and Embedding | Knowledge | [KN-CHUNK-chunking-embedding-spec.md](fintracker-knowledge/specs/KN-CHUNK-chunking-embedding-spec.md) | [KN-CHUNK-chunking-embedding-tests.md](fintracker-knowledge/specs/KN-CHUNK-chunking-embedding-tests.md) | KN-CHUNK-01 … KN-CHUNK-05 (5) | 3 In progress · 1 Implemented · 1 Proposed | — |
 | `KN-DEL` | Account Deletion | Knowledge | [KN-DEL-account-deletion-spec.md](fintracker-knowledge/specs/KN-DEL-account-deletion-spec.md) | — | KN-DEL-01 … KN-DEL-04 (4) | 4 Proposed | — |
+| `KN-FAPI` | Knowledge as a FastAPI Container | Knowledge | [KN-FAPI-fastapi-container-spec.md](fintracker-knowledge/specs/KN-FAPI-fastapi-container-spec.md) | — | KN-FAPI-01 … KN-FAPI-10 (10) | 10 Proposed | — |
 | `KN-RAG` | RAG Use Cases | Knowledge | [KN-RAG-rag-use-cases-spec.md](fintracker-knowledge/specs/KN-RAG-rag-use-cases-spec.md) | — | KN-RAG-01 … KN-RAG-02 (2) | 2 Proposed | `docs/fintracker-knowledge/ai-rag-pipelines-spec.md`, IDs REQ-FA-NN → KN-RAG-NN |
 | `KN-RET` | Retrieval | Knowledge | [KN-RET-retrieval-spec.md](fintracker-knowledge/specs/KN-RET-retrieval-spec.md) | [KN-RET-retrieval-tests.md](fintracker-knowledge/specs/KN-RET-retrieval-tests.md) | KN-RET-01 … KN-RET-08 (8) | 2 In progress · 6 Implemented | — |
 | `KN-SDOC` | System Docs Indexing | Knowledge | [KN-SDOC-system-docs-indexing-spec.md](fintracker-knowledge/specs/KN-SDOC-system-docs-indexing-spec.md) | [KN-SDOC-system-docs-indexing-tests.md](fintracker-knowledge/specs/KN-SDOC-system-docs-indexing-tests.md) | KN-SDOC-01 … KN-SDOC-06 (6) | 3 In progress · 3 Implemented | — |
@@ -70,8 +72,8 @@ Search this page for any requirement ID or spec path, old or new, to find the cu
 | `UI-RPT` | Reports Tab | Frontend | [UI-RPT-reports-spec.md](fintracker-ui-doc/specs/UI-RPT-reports-spec.md) | — | UI-RPT-01 | 1 Proposed | — |
 | `UI-STMT` | Statement Actions | Frontend | [UI-STMT-statement-actions-spec.md](fintracker-ui-doc/specs/UI-STMT-statement-actions-spec.md) | — | UI-STMT-01 … UI-STMT-04 (4) | 4 Proposed | — |
 | `UP-AUTH` | Authentication and Token Issuance | User profile | [UP-AUTH-authentication-spec.md](fintracker-user-profile-doc/specs/UP-AUTH-authentication-spec.md) | [UP-AUTH-authentication-tests.md](fintracker-user-profile-doc/specs/UP-AUTH-authentication-tests.md) | UP-AUTH-01 … UP-AUTH-05 (5) | 1 Proposed · 1 In progress · 2 Implemented · 1 Unverified | `docs/fintracker-user-profile-doc/user-profile-spec-01.md`, IDs REQ-UP-NN → UP-AUTH-NN |
-| `XS-ACCT` | Account and Card Numbers | Cross-service | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) | — | XS-ACCT-01 … XS-ACCT-08 (8) | 8 Proposed | — |
-| `XS-COMP` | Compliance Controls | Cross-service | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) | — | XS-COMP-01 … XS-COMP-16 (20) | 20 Proposed | — |
+| `XS-ACCT` | Account and Card Numbers | Cross-service | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) | [XS-ACCT-account-and-card-numbers-tests.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-tests.md) | XS-ACCT-01 … XS-ACCT-08 (8) | 2 Proposed · 5 In progress · 1 Implemented | — |
+| `XS-COMP` | Compliance Controls | Cross-service | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) | [XS-COMP-compliance-controls-tests.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-tests.md) | XS-COMP-01 … XS-COMP-16 (20) | 8 Proposed · 11 In progress · 1 Implemented | — |
 | `XS-CTX` | Settings in the Verified User Context | Cross-service | [XS-CTX-verified-user-context-spec.md](fintracker-cross-services/specs/XS-CTX-verified-user-context-spec.md) | [XS-CTX-verified-user-context-tests.md](fintracker-cross-services/specs/XS-CTX-verified-user-context-tests.md) | XS-CTX-01 … XS-CTX-07 (7) | 5 In progress · 2 Implemented | — |
 | `XS-DEL` | Account Deletion | Cross-service | [XS-DEL-account-deletion-spec.md](fintracker-cross-services/specs/XS-DEL-account-deletion-spec.md) | — | XS-DEL-01 … XS-DEL-07 (7) | 5 Proposed · 2 In progress | — |
 | `XS-DPCAT` | Data Pipeline and Ledger Categories | Cross-service | [XS-DPCAT-dp-ledger-categories-spec.md](fintracker-cross-services/specs/XS-DPCAT-dp-ledger-categories-spec.md) | [XS-DPCAT-dp-ledger-categories-tests.md](fintracker-cross-services/specs/XS-DPCAT-dp-ledger-categories-tests.md) | XS-DPCAT-01 … XS-DPCAT-07 (7) | 1 In progress · 6 Implemented | `docs/fintracker-cross-services/dp-ledger-categories-spec.md`, IDs DP-LEDGER-CATEGORIES-NN → XS-DPCAT-NN |
@@ -105,7 +107,16 @@ Search this page for any requirement ID or spec path, old or new, to find the cu
 | AI-EVAL-06 | — | Shared trace and audit schema | Proposed | [AI-EVAL-evaluation-auditing-spec.md](fintracker-ai-assistant/specs/AI-EVAL-evaluation-auditing-spec.md) |
 | AI-EVAL-07 | — | User feedback and new cases | Proposed | [AI-EVAL-evaluation-auditing-spec.md](fintracker-ai-assistant/specs/AI-EVAL-evaluation-auditing-spec.md) |
 | AI-EVAL-08 | — | Tool contract tests | Proposed | [AI-EVAL-evaluation-auditing-spec.md](fintracker-ai-assistant/specs/AI-EVAL-evaluation-auditing-spec.md) |
+| AI-EVAL-09 | — | Manual live chat evaluation | Proposed | [AI-EVAL-evaluation-auditing-spec.md](fintracker-ai-assistant/specs/AI-EVAL-evaluation-auditing-spec.md) |
 | AI-EXT-01 | — | User AI Assistant | In progress (read-only MCP tool server runs locally over stdio; per-user connect, consent, disconnect and request log not built) | [AI-EXT-external-assistant-spec.md](fintracker-ai-assistant/specs/AI-EXT-external-assistant-spec.md) |
+| AI-FAPI-01 | — | The app runs as a container image | Proposed | [AI-FAPI-container-spec.md](fintracker-ai-assistant/specs/AI-FAPI-container-spec.md) |
+| AI-FAPI-02 | — | Health route for the container | Proposed | [AI-FAPI-container-spec.md](fintracker-ai-assistant/specs/AI-FAPI-container-spec.md) |
+| AI-FAPI-03 | — | Local configuration is one tested set and cannot run in AWS | Proposed | [AI-FAPI-container-spec.md](fintracker-ai-assistant/specs/AI-FAPI-container-spec.md) |
+| AI-FAPI-04 | — | Local state is DynamoDB Local with the deployed key schema | Proposed | [AI-FAPI-container-spec.md](fintracker-ai-assistant/specs/AI-FAPI-container-spec.md) |
+| AI-FAPI-05 | — | Local runs call the real model with capped spend | Proposed | [AI-FAPI-container-spec.md](fintracker-ai-assistant/specs/AI-FAPI-container-spec.md) |
+| AI-FAPI-06 | — | Other services are optional locally | Proposed | [AI-FAPI-container-spec.md](fintracker-ai-assistant/specs/AI-FAPI-container-spec.md) |
+| AI-FAPI-07 | — | Chat streams through the container | Proposed | [AI-FAPI-container-spec.md](fintracker-ai-assistant/specs/AI-FAPI-container-spec.md) |
+| AI-FAPI-08 | — | The local stack answers a help question end to end | Proposed | [AI-FAPI-container-spec.md](fintracker-ai-assistant/specs/AI-FAPI-container-spec.md) |
 | AN-FS-01 | FS-01 | Summary period selection | Implemented | [AN-FS-financial-summary-spec.md](fintracker-analytics/specs/AN-FS-financial-summary-spec.md) |
 | AN-FS-02 | FS-02 | User scoping from auth session | Implemented | [AN-FS-financial-summary-spec.md](fintracker-analytics/specs/AN-FS-financial-summary-spec.md) |
 | AN-FS-03 | FS-03 | Facts payload contract and period comparison rules | Implemented | [AN-FS-financial-summary-spec.md](fintracker-analytics/specs/AN-FS-financial-summary-spec.md) |
@@ -172,10 +183,21 @@ Search this page for any requirement ID or spec path, old or new, to find the cu
 | KN-CHUNK-02 | — | Embedding model and call | In progress | [KN-CHUNK-chunking-embedding-spec.md](fintracker-knowledge/specs/KN-CHUNK-chunking-embedding-spec.md) |
 | KN-CHUNK-03 | — | Embedding model switch | In progress | [KN-CHUNK-chunking-embedding-spec.md](fintracker-knowledge/specs/KN-CHUNK-chunking-embedding-spec.md) |
 | KN-CHUNK-04 | — | Retrieval quality gate | In progress | [KN-CHUNK-chunking-embedding-spec.md](fintracker-knowledge/specs/KN-CHUNK-chunking-embedding-spec.md) |
+| KN-CHUNK-05 | — | Live retrieval evaluation | Proposed | [KN-CHUNK-chunking-embedding-spec.md](fintracker-knowledge/specs/KN-CHUNK-chunking-embedding-spec.md) |
 | KN-DEL-01 | — | Consume UserAccountDeleted | Proposed (no Knowledge service yet) | [KN-DEL-account-deletion-spec.md](fintracker-knowledge/specs/KN-DEL-account-deletion-spec.md) |
 | KN-DEL-02 | — | Delete the user's documents and chunks | Proposed (no Knowledge service yet) | [KN-DEL-account-deletion-spec.md](fintracker-knowledge/specs/KN-DEL-account-deletion-spec.md) |
 | KN-DEL-03 | — | Publish UserDataDeleted | Proposed (no Knowledge service yet) | [KN-DEL-account-deletion-spec.md](fintracker-knowledge/specs/KN-DEL-account-deletion-spec.md) |
 | KN-DEL-04 | — | Retry, dead-letter and alarm | Proposed (no Knowledge service yet) | [KN-DEL-account-deletion-spec.md](fintracker-knowledge/specs/KN-DEL-account-deletion-spec.md) |
+| KN-FAPI-01 | — | One FastAPI app serves every HTTP route | Proposed | [KN-FAPI-fastapi-container-spec.md](fintracker-knowledge/specs/KN-FAPI-fastapi-container-spec.md) |
+| KN-FAPI-02 | — | The route uses the standard caller check and user context | Proposed | [KN-FAPI-fastapi-container-spec.md](fintracker-knowledge/specs/KN-FAPI-fastapi-container-spec.md) |
+| KN-FAPI-03 | — | Services come from dependencies and startup checks | Proposed | [KN-FAPI-fastapi-container-spec.md](fintracker-knowledge/specs/KN-FAPI-fastapi-container-spec.md) |
+| KN-FAPI-04 | — | Database access is per role, with RLS enforced | Proposed | [KN-FAPI-fastapi-container-spec.md](fintracker-knowledge/specs/KN-FAPI-fastapi-container-spec.md) |
+| KN-FAPI-05 | — | The embedding client is built from configuration | Proposed | [KN-FAPI-fastapi-container-spec.md](fintracker-knowledge/specs/KN-FAPI-fastapi-container-spec.md) |
+| KN-FAPI-06 | — | A local index command reads documents from a folder | Proposed | [KN-FAPI-fastapi-container-spec.md](fintracker-knowledge/specs/KN-FAPI-fastapi-container-spec.md) |
+| KN-FAPI-07 | — | Migrations and roles are separate, one-shot steps | Proposed | [KN-FAPI-fastapi-container-spec.md](fintracker-knowledge/specs/KN-FAPI-fastapi-container-spec.md) |
+| KN-FAPI-08 | — | The service runs as a container with health checks | Proposed | [KN-FAPI-fastapi-container-spec.md](fintracker-knowledge/specs/KN-FAPI-fastapi-container-spec.md) |
+| KN-FAPI-09 | — | The local stack proves retrieval end to end | Proposed | [KN-FAPI-fastapi-container-spec.md](fintracker-knowledge/specs/KN-FAPI-fastapi-container-spec.md) |
+| KN-FAPI-10 | — | Behavior is unchanged after the move | Proposed | [KN-FAPI-fastapi-container-spec.md](fintracker-knowledge/specs/KN-FAPI-fastapi-container-spec.md) |
 | KN-RAG-01 | REQ-FA-01 | Budget variance explanations with history | Proposed (no Knowledge service yet) | [KN-RAG-rag-use-cases-spec.md](fintracker-knowledge/specs/KN-RAG-rag-use-cases-spec.md) |
 | KN-RAG-02 | REQ-FA-02 | Semantic spending-pattern search | Proposed (no Knowledge service yet) | [KN-RAG-rag-use-cases-spec.md](fintracker-knowledge/specs/KN-RAG-rag-use-cases-spec.md) |
 | KN-RET-01 | — | Caller allow-list and user context | In progress | [KN-RET-retrieval-spec.md](fintracker-knowledge/specs/KN-RET-retrieval-spec.md) |
@@ -253,34 +275,34 @@ Search this page for any requirement ID or spec path, old or new, to find the cu
 | UP-AUTH-03 | REQ-UP-03 | API Gateway Authorizer Result Caching | In progress (60 s TTL set in the local SAM template; cost-route exclusion not built) | [UP-AUTH-authentication-spec.md](fintracker-user-profile-doc/specs/UP-AUTH-authentication-spec.md) |
 | UP-AUTH-04 | REQ-UP-04 | Fail-Closed Authorization | Implemented | [UP-AUTH-authentication-spec.md](fintracker-user-profile-doc/specs/UP-AUTH-authentication-spec.md) |
 | UP-AUTH-05 | REQ-UP-05 | Live, Uncached Check for Cost-Bearing Actions | Proposed | [UP-AUTH-authentication-spec.md](fintracker-user-profile-doc/specs/UP-AUTH-authentication-spec.md) |
-| XS-ACCT-01 | — | Accounts page shows and edits only the last four | Proposed | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
-| XS-ACCT-02 | — | The Ledger accepts only the last four | Proposed | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
-| XS-ACCT-03 | — | The Ledger returns only the last four | Proposed | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
-| XS-ACCT-04 | — | Remove stored full numbers | Proposed | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
-| XS-ACCT-05 | — | Mask card-number-like text on every Ledger write | Proposed | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
-| XS-ACCT-06 | — | No card numbers or SQL bound values in logs | Proposed | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
+| XS-ACCT-01 | — | Accounts page shows and edits only the last four | Implemented | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
+| XS-ACCT-02 | — | The Ledger accepts only the last four | In progress | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
+| XS-ACCT-03 | — | The Ledger returns only the last four | In progress | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
+| XS-ACCT-04 | — | Remove stored full numbers | In progress | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
+| XS-ACCT-05 | — | Mask card-number-like text on every Ledger write | In progress | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
+| XS-ACCT-06 | — | No card numbers or SQL bound values in logs | In progress | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
 | XS-ACCT-07 | — | Bank sync stores only the last four | Proposed | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
 | XS-ACCT-08 | — | Subscription payments through a tokenization vault | Proposed | [XS-ACCT-account-and-card-numbers-spec.md](fintracker-cross-services/specs/XS-ACCT-account-and-card-numbers-spec.md) |
-| XS-COMP-01 | — | Written information security program | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
-| XS-COMP-02 | — | Incident response and breach notification | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
-| XS-COMP-14 | — | Service provider register | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
-| XS-COMP-15 | — | Privacy notice and policy | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
+| XS-COMP-01 | — | Written information security program | In progress | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
+| XS-COMP-02 | — | Incident response and breach notification | In progress | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
+| XS-COMP-14 | — | Service provider register | In progress | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
+| XS-COMP-15 | — | Privacy notice and policy | In progress | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
 | XS-COMP-03 | — | MFA for every user through Cognito managed sign-in | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
-| XS-COMP-04 | — | Sign-in lockout and auth event logs with Cognito's built-in features | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
+| XS-COMP-04 | — | Sign-in threat protection and auth event logs (Cognito Plus) | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
 | XS-COMP-05 | — | Workforce access with MFA and no long-lived keys | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
-| XS-COMP-06 | — | Customer-managed keys and TLS-only access on every store | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
-| XS-COMP-07 | — | Malware scan on upload (GuardDuty) | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
+| XS-COMP-06 | — | Customer-managed keys and TLS-only access on every store | In progress | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
+| XS-COMP-07 | — | Malware scan on upload (GuardDuty) | In progress | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
 | XS-COMP-08 | — | Sensitive-data discovery on file buckets (Macie) | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
-| XS-COMP-12 | — | Security headers and CSP at CloudFront | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
-| XS-COMP-13 | — | WAF managed rules in prod | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
-| XS-COMP-09 | — | Continuous configuration checks (Security Hub CSPM) | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
-| XS-COMP-10 | — | Vulnerability scanning and patching | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
+| XS-COMP-12 | — | Security headers and CSP at CloudFront | In progress | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
+| XS-COMP-13 | — | WAF managed rules in prod | In progress | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
+| XS-COMP-09 | — | Continuous configuration checks (Security Hub CSPM) | In progress | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
+| XS-COMP-10 | — | Vulnerability scanning and patching | In progress | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
 | XS-COMP-11 | — | Annual penetration test | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
-| XS-COMP-20 | — | Accessibility check in CI | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
+| XS-COMP-20 | — | Accessibility check in CI | Implemented | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
 | XS-COMP-17 | — | Bank sync consent and data limits | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
 | XS-COMP-18 | — | Payment provider and PCI SAQ A | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
 | XS-COMP-19 | — | SMS and marketing consent | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
-| XS-COMP-16 | — | Compliance review and evidence | Proposed | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
+| XS-COMP-16 | — | Compliance review and evidence | In progress | [XS-COMP-compliance-controls-spec.md](fintracker-cross-services/specs/XS-COMP-compliance-controls-spec.md) |
 | XS-CTX-01 | — | Every user has a timezone and a primary currency | Implemented | [XS-CTX-verified-user-context-spec.md](fintracker-cross-services/specs/XS-CTX-verified-user-context-spec.md) |
 | XS-CTX-02 | — | Authorizer attaches timezone and currency | Implemented | [XS-CTX-verified-user-context-spec.md](fintracker-cross-services/specs/XS-CTX-verified-user-context-spec.md) |
 | XS-CTX-03 | — | Trusted headers on public routes | In progress | [XS-CTX-verified-user-context-spec.md](fintracker-cross-services/specs/XS-CTX-verified-user-context-spec.md) |
