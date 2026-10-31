@@ -9,6 +9,9 @@
 name: fintracker
 include:
   - services/fintracker-ledger/docker-compose.yml
+  - services/fintracker-user-profile/docker-compose.yml
+  - services/fintracker-analytics/docker-compose.yml
+  - services/fintracker-knowledge/docker-compose.yml
 
 services:
   dynamodb-local:
