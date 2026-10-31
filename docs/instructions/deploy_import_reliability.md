@@ -14,9 +14,9 @@ Covers DP-ING-09/10/11, XS-IMP-01…04, XS-DPCAT v3, LG-STMT-04/08 and DP-MAP. D
 ## 2. Data pipeline
 
 1. Build the Lambda package (see the Terraform README).
-2. **Check the codes** against the Ledger you just deployed: `LEDGER_API_URL=<ledger url> python -m scripts.check_category_codes`. It must exit 0. Warnings (an active SYSTEM code with no bank-label entry) don't block.
+2. **Check the codes** against the Ledger you just deployed: `INTERNAL_BASE_URL_LEDGER=<ledger url> python -m scripts.check_category_codes`. It must exit 0. Warnings (an active SYSTEM code with no bank-label entry) don't block.
 3. In `terraform.tfvars`: nothing is required. Optional: `pause_timeout_seconds` (default 1800), `mapping_promotion_*` (3 users, 80%, 30 days), `alarm_sns_topic_arn`.
-4. `terraform plan` should show: five new Lambdas (cancel, RecordFailure, DuplicateCheck, DuplicatePause, UserAccountDeleted), the cancel route, the new states in the state machine, the bank mapping baseline items, the SNS topic and the new alarms; it should also show the removed `CategoryRefreshFailed` filter and alarm, the Normalizer losing `LEDGER_API_URL`, and the Extractor losing `s3:PutObject`.
+4. `terraform plan` should show: five new Lambdas (cancel, RecordFailure, DuplicateCheck, DuplicatePause, UserAccountDeleted), the cancel route, the new states in the state machine, the bank mapping baseline items, the SNS topic and the new alarms; it should also show the removed `CategoryRefreshFailed` filter and alarm, the Normalizer losing `INTERNAL_BASE_URL_LEDGER`, and the Extractor losing `s3:PutObject`.
 5. `terraform apply`, then copy `ledger_allowed_caller_arns` into the Ledger (step 1.3) and restart it.
 6. **Subscribe** to the `mapping_promotion_topic_arn` SNS topic to hear when users agree on a new column mapping. Promote with `python -m scripts.promote_bank_mapping --bank … --signature … --mapping-hash …` (the notice has the exact command).
 7. **Remove the page images** earlier runs left, once per environment:

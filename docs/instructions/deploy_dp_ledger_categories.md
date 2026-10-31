@@ -34,7 +34,7 @@ The pipeline's HTTP API now uses User Profile's identity authorizer. Deploy User
 2. If the merchant seed changed, regenerate it with `python -m scripts.build_merchant_category_map`. The test suite fails if the JSON and the SQL differ.
 3. Run `terraform plan` and check it shows these changes:
    - The new `MerchantCategoryMap` table and its 85 items.
-   - `LEDGER_API_URL` and `MERCHANT_CATEGORY_MAP_TABLE` on the Normalizer.
+   - `INTERNAL_BASE_URL_LEDGER` and `MERCHANT_CATEGORY_MAP_TABLE` on the Normalizer.
    - The REQUEST authorizer replacing the JWT authorizer.
    - The metric filter and alarm.
 4. `terraform apply`, then copy the `ledger_allowed_caller_arns` output into the Ledger (step 1.4) and restart the Ledger.
