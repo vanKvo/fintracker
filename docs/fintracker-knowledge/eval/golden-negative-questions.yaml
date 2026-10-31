@@ -3,38 +3,48 @@
 # Pass = no retrieved chunk reaches the threshold, so chat answers "I couldn't find that in the help docs".
 # Fail = a chunk scores above the threshold and the assistant would answer from an unrelated doc.
 # Not part of recall@5. Keep separate from golden-questions.yaml.
+# expected_outcome (live chat evaluation, AI-EVAL-09): the audit outcome codes that count as a pass.
+# A nonexistent feature must end in fallback:no_docs, so the assistant never invents steps for it.
 
 # --- Features that do not exist (docs must not invent them) ---------------------
 - id: NQ-001
   question: "How do I connect my bank account so it syncs automatically?"
   reason: "No bank connection feature."
+  expected_outcome: [fallback:no_docs]
 
 - id: NQ-002
   question: "How do I turn on two-factor authentication?"
   reason: "No 2FA setup in Settings."
+  expected_outcome: [fallback:no_docs]
 
 - id: NQ-003
   question: "How do I set up SMS alerts for large transactions?"
   reason: "No SMS alerts."
+  expected_outcome: [fallback:no_docs]
 
 - id: NQ-004
   question: "What is my safe to spend amount?"
   reason: "Safe to Spend was removed from the Dashboard design."
+  expected_outcome: [fallback:no_docs]
 
 - id: NQ-005
   question: "How do I use the emergency fund calculator?"
   reason: "Not confirmed live; not documented."
+  expected_outcome: [fallback:no_docs]
 
 # --- Out of scope (AI-CHAT-08 refusal) -------------------------------------------
 - id: NQ-006
   question: "Should I invest my savings in index funds?"
   reason: "Investment advice is out of scope."
+  expected_outcome: [fallback:out_of_scope]
 
 - id: NQ-007
   question: "How do I lower my taxes this year?"
   reason: "Tax advice is out of scope."
+  expected_outcome: [fallback:out_of_scope]
 
 # --- Unrelated -------------------------------------------------------------------
 - id: NQ-008
   question: "What is the weather in Fairfax today?"
   reason: "Unrelated to FinTracker."
+  expected_outcome: [fallback:no_docs, fallback:out_of_scope]

@@ -3,39 +3,68 @@
 # Gate: recall@5 >= 0.90, and no drop > 0.05 from the last accepted run.
 # Phrase questions the way users type them, not the way the docs are worded.
 # Where two docs could reasonably answer, both are listed.
+#
+# must_mention (used by the live chat evaluation, AI-EVAL-09; ignored by the retrieval gate):
+# phrases the chat answer must contain. Every entry must match; inside an entry, "a|b" means
+# either a or b. Case-insensitive substring match. Each entry must also appear in at least one
+# expected doc, so the set can't drift from the docs. Use UI labels, numbers and rule words from
+# the docs, not paraphrases the model might choose differently.
 
 # --- Getting started ---------------------------------------------------------
 - id: GQ-001
   question: "What tabs does FinTracker have?"
   expected_paths:
     - help/getting-started/app-overview.md
+  must_mention:
+    - "Dashboard"
+    - "Transactions"
+    - "Statements"
+    - "Budgets"
+    - "Reports"
+    - "Accounts"
+    - "Settings"
 
 - id: GQ-002
   question: "Where do I go to see how much I spent last month?"
   expected_paths:
     - help/reports.md
     - help/getting-started/app-overview.md
+  must_mention:
+    - "Reports"
+    - "last month"
 
 - id: GQ-003
   question: "How do I sign in?"
   expected_paths:
     - help/getting-started/sign-in-and-session.md
+  must_mention:
+    - "login page|sign-in page"
+    - "password"
 
 - id: GQ-004
   question: "Why did FinTracker ask me to pick a timezone?"
   expected_paths:
     - help/getting-started/sign-in-and-session.md
+  must_mention:
+    - "this month|today|due dates"
+    - "timezone"
 
 - id: GQ-005
   question: "I got a warning that I'm about to be signed out. What is that?"
   expected_paths:
     - help/getting-started/sign-in-and-session.md
+  must_mention:
+    - "13 minutes"
+    - "Stay signed in"
 
 - id: GQ-006
   question: "How do I close my account and what happens to my data?"
   expected_paths:
     - help/getting-started/sign-in-and-session.md
     - help/settings.md
+  must_mention:
+    - "30-day|30 day|30 days"
+    - "permanently deleted"
 
 # --- Dashboard ----------------------------------------------------------------
 - id: GQ-007
@@ -43,189 +72,295 @@
   expected_paths:
     - help/dashboard.md
     - help/concepts.md
+  must_mention:
+    - "pending"
+    - "approve"
 
 - id: GQ-008
   question: "What does 'awaiting approval aren't in these totals' mean?"
   expected_paths:
     - help/dashboard.md
     - help/concepts.md
+  must_mention:
+    - "pending"
+    - "Transactions"
 
 - id: GQ-009
   question: "What is the spending pace card?"
   expected_paths:
     - help/dashboard.md
+  must_mention:
+    - "same days|same point"
+    - "last month"
 
 - id: GQ-010
   question: "Can I see a previous month on the Dashboard?"
   expected_paths:
     - help/dashboard.md
     - help/reports.md
+  must_mention:
+    - "Reports"
+    - "current month"
 
 # --- Transactions -------------------------------------------------------------
 - id: GQ-011
   question: "How do I approve my imported transactions?"
   expected_paths:
     - help/transactions.md
+  must_mention:
+    - "Approve"
+    - "bulk|checkbox|many rows"
 
 - id: GQ-012
   question: "How do I change the category of a transaction?"
   expected_paths:
     - help/transactions.md
+  must_mention:
+    - "category"
+    - "row"
 
 - id: GQ-013
   question: "How do I split one purchase into two categories?"
   expected_paths:
     - help/transactions.md
+  must_mention:
+    - "Split"
+    - "amounts"
 
 - id: GQ-014
   question: "How do I add a cash purchase?"
   expected_paths:
     - help/transactions.md
+  must_mention:
+    - "Add Transaction"
+    - "cash"
 
 - id: GQ-015
   question: "Why can't I delete a transaction?"
   expected_paths:
     - help/transactions.md
+  must_mention:
+    - "by hand|manual"
+    - "Exclude"
 
 - id: GQ-016
   question: "What does Exclude do?"
   expected_paths:
     - help/transactions.md
     - help/concepts.md
+  must_mention:
+    - "budgets"
+    - "reports"
+    - "delete"
 
 - id: GQ-017
   question: "How do refunds affect my budget?"
   expected_paths:
     - help/concepts.md
     - help/budgets.md
+  must_mention:
+    - "reduce"
+    - "category"
 
 # --- Statements ---------------------------------------------------------------
 - id: GQ-018
   question: "How do I upload a bank statement?"
   expected_paths:
     - help/statements/upload-statement.md
+  must_mention:
+    - "Statements"
+    - "account"
+    - "CSV|PDF"
 
 - id: GQ-019
   question: "What file types can I upload?"
   expected_paths:
     - help/statements/upload-statement.md
+  must_mention:
+    - "CSV"
+    - "PDF"
+    - "photo|image"
 
 - id: GQ-020
   question: "It says I already uploaded this statement. What should I do?"
   expected_paths:
     - help/statements/upload-statement.md
+  must_mention:
+    - "Overwrite"
+    - "Cancel"
 
 - id: GQ-021
   question: "My upload says Processing. How long does it take?"
   expected_paths:
     - help/statements/upload-statement.md
+  must_mention:
+    - "Processing"
+    - "few seconds|do not need to refresh"
 
 - id: GQ-022
   question: "How do I confirm a CSV column mapping?"
   expected_paths:
     - help/statements/csv-mapping.md
+  must_mention:
+    - "Confirm"
+    - "Date"
+    - "Merchant"
+    - "Amount"
 
 - id: GQ-023
   question: "FinTracker picked the wrong column for the amount. How do I fix it?"
   expected_paths:
     - help/statements/csv-mapping.md
+  must_mention:
+    - "Confirm"
+    - "remembered|save"
 
 - id: GQ-024
   question: "Why does it ask me to confirm columns every time I upload a CSV?"
   expected_paths:
     - help/statements/csv-mapping.md
+  must_mention:
+    - "every CSV upload|each CSV upload|every upload"
+    - "confirm"
 
 - id: GQ-025
   question: "How do I delete a statement?"
   expected_paths:
     - help/statements/manage-statements.md
+  must_mention:
+    - "Delete"
+    - "transactions"
 
 - id: GQ-026
   question: "What happens to my transactions if I delete a statement?"
   expected_paths:
     - help/statements/manage-statements.md
+  must_mention:
+    - "delete"
+    - "cannot be undone|can't be undone|undone"
 
 - id: GQ-027
   question: "How do I approve all the transactions from one statement at once?"
   expected_paths:
     - help/statements/manage-statements.md
     - help/transactions.md
+  must_mention:
+    - "Approve all pending"
 
 - id: GQ-028
   question: "I uploaded the wrong file. How do I replace it?"
   expected_paths:
     - help/statements/manage-statements.md
     - help/statements/upload-statement.md
+  must_mention:
+    - "Overwrite|Delete"
 
 # --- Accounts -----------------------------------------------------------------
 - id: GQ-029
   question: "How do I add a new bank account?"
   expected_paths:
     - help/accounts.md
+  must_mention:
+    - "Accounts"
+    - "name"
+    - "type"
 
 # --- Budgets ------------------------------------------------------------------
 - id: GQ-030
   question: "How do I set a budget for this month?"
   expected_paths:
     - help/budgets.md
+  must_mention:
+    - "Budgets"
+    - "template|last month|scratch"
 
 - id: GQ-031
   question: "Why can't I edit last month's budget?"
   expected_paths:
     - help/budgets.md
+  must_mention:
+    - "closed|read-only"
+    - "next month"
 
 - id: GQ-032
   question: "Can I copy last month's budget?"
   expected_paths:
     - help/budgets.md
+  must_mention:
+    - "last month"
 
 - id: GQ-033
   question: "Why does my budget show less spent than I actually spent?"
   expected_paths:
     - help/budgets.md
     - help/concepts.md
+  must_mention:
+    - "approved"
+    - "pending"
 
 # --- Reports ------------------------------------------------------------------
 - id: GQ-034
   question: "Why is there no 'This month' option in Reports?"
   expected_paths:
     - help/reports.md
+  must_mention:
+    - "Dashboard"
+    - "current month"
 
 - id: GQ-035
   question: "What is the Financial Summary and who writes it?"
   expected_paths:
     - help/reports.md
+  must_mention:
+    - "AI"
+    - "approved"
 
 - id: GQ-036
   question: "It says no refreshes left today. What does that mean?"
   expected_paths:
     - help/reports.md
+  must_mention:
+    - "refresh"
+    - "tomorrow"
 
 - id: GQ-037
   question: "How do I see my top merchants?"
   expected_paths:
     - help/reports.md
+  must_mention:
+    - "Reports"
+    - "top merchants|Top merchants"
 
 - id: GQ-038
   question: "Can I export my reports to PDF?"
   expected_paths:
     - help/reports.md
+  must_mention:
+    - "not available"
 
 # --- Settings -----------------------------------------------------------------
 - id: GQ-039
   question: "How do I create my own spending category?"
   expected_paths:
     - help/settings.md
+  must_mention:
+    - "Settings"
+    - "letters"
 
 - id: GQ-040
   question: "I traveled. How do I change my timezone?"
   expected_paths:
     - help/settings.md
+  must_mention:
+    - "Settings"
+    - "timezone"
 
 - id: GQ-041
   question: "Can I change my currency?"
   expected_paths:
     - help/settings.md
+  must_mention:
+    - "USD"
 
 # --- Concepts -----------------------------------------------------------------
 - id: GQ-042
@@ -233,19 +368,32 @@
   expected_paths:
     - help/concepts.md
     - help/transactions.md
+  must_mention:
+    - "pending"
+    - "approved"
+    - "counted"
 
 - id: GQ-043
   question: "Why don't my Dashboard and Reports numbers match?"
   expected_paths:
     - help/concepts.md
+  must_mention:
+    - "current month"
+    - "pending|excluded"
 
 - id: GQ-044
   question: "What counts as a transfer and is it counted as spending?"
   expected_paths:
     - help/concepts.md
+  must_mention:
+    - "transfer"
+    - "not counted|isn't counted|not as spending"
 
 - id: GQ-045
   question: "A transaction from the last night of the month shows up in the next month. Why?"
   expected_paths:
     - help/concepts.md
     - help/settings.md
+  must_mention:
+    - "timezone"
+    - "Settings"
