@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Build docs/instructions/INSTRUCTIONS.md, the index of every instruction file, grouped by topic.
+"""Build docs/INSTRUCTIONS.md, the index of every instruction file, grouped by topic.
 
 Usage (from anywhere):
-    python3 docs/scripts/build_instruction_index.py           # rewrite docs/instructions/INSTRUCTIONS.md
+    python3 docs/scripts/build_instruction_index.py           # rewrite docs/INSTRUCTIONS.md
     python3 docs/scripts/build_instruction_index.py --check   # exit 1 if the index is stale or a file is not in CATEGORIES
 
-Every regular file in docs/instructions/ except INSTRUCTIONS.md is an instruction. Add a new file by adding
+Every regular file in docs/instructions/ is an instruction. Add a new file by adding
 one line to CATEGORIES below, then re-run the script. The file itself is not edited.
 Standard library only.
 """
@@ -14,7 +14,7 @@ import sys
 
 DOCS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FOLDER = os.path.join(DOCS, "instructions")
-OUT = os.path.join(FOLDER, "INSTRUCTIONS.md")
+OUT = os.path.join(DOCS, "INSTRUCTIONS.md")
 
 # Topic order is the order of the index. Each file belongs to exactly one topic.
 CATEGORIES = [
@@ -29,6 +29,8 @@ CATEGORIES = [
     ]),
     ("Build and run", [
         "rebuild_ledger_container_and_migrations.md",
+        "knowledge_service_build_test_deploy.md",
+        "knowledge_rag_live_evaluation.md",
         "useful_commands.md",
     ]),
     ("Local users and identity", [
@@ -64,6 +66,7 @@ TITLES = {
     "build_new_spec_in_SPEC.md": "Add a new spec to SPECS.md",
     "debugging_tips.md": "Find the real cause in a Spring bean-wiring failure",
     "explanation_clock_vs_monotic.md": "Why service.py uses two time sources",
+    "knowledge_rag_live_evaluation.md": "Run the live RAG evaluation (paid, owner only)",
 }
 
 SUMMARY_MAX = 180
@@ -72,7 +75,7 @@ SUMMARY_MAX = 180
 def instruction_files():
     return sorted(
         f for f in os.listdir(FOLDER)
-        if os.path.isfile(os.path.join(FOLDER, f)) and f != os.path.basename(OUT)
+        if os.path.isfile(os.path.join(FOLDER, f))
     )
 
 
@@ -135,7 +138,7 @@ def build(files):
         out += [f"## {topic}", "", "| Instruction | What it covers |", "|---|---|"]
         for name in names:
             title, summary = title_and_summary(os.path.join(FOLDER, name))
-            out.append(f"| [{title}]({name}) | {summary} |")
+            out.append(f"| [{title}](instructions/{name}) | {summary} |")
         out.append("")
     return "\n".join(out)
 
