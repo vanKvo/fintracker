@@ -77,7 +77,7 @@ Neither exists in the codebase yet — this is a genuine open gap, not a one-lin
 and the right choice depends on how fresh the subscription check needs to be per
 endpoint.
 
-**Resolved — see `docs/fintracker-user-profile-doc/user-profile-spec-01.md` for the full
+**Resolved — see `docs/fintracker-user-profile-doc/specs/UP-AUTH-authentication-spec.md` for the full
 requirements spec.** The ambiguity above is settled as: a **custom Lambda REQUEST
 authorizer** (not the built-in Cognito/JWT type) does the sub-resolution, because a
 built-in authorizer cannot call out to DynamoDB at all. That same authorizer also
@@ -88,7 +88,7 @@ keep this affordable, API Gateway caches the authorizer's result for **60 second
 keyed on the access token — long enough to collapse a page-load's burst of parallel API
 calls into a single authorizer invocation, short enough that a subscription change is
 reflected within about a minute. Cost-bearing routes (statement upload) are explicitly
-excluded from this cache and always check live (REQ-UP-05) — a downgraded user should
+excluded from this cache and always check live (UP-AUTH-05) — a downgraded user should
 never be able to keep making paid Textract/Bedrock calls for up to a minute on a stale
 cached "pro" context.
 
@@ -133,7 +133,7 @@ sequenceDiagram
     AGW->>BE: Forward request<br/>X-Internal-User-Id, X-Subscription-Tier
     BE-->>UI: Response (scoped to that user_id only)
 
-    Note over AGW,DDB: Cost-bearing routes (e.g. statement upload)<br/>bypass CACHE entirely -- always a live authorizer<br/>invocation, per REQ-UP-05
+    Note over AGW,DDB: Cost-bearing routes (e.g. statement upload)<br/>bypass CACHE entirely -- always a live authorizer<br/>invocation, per UP-AUTH-05
 ```
 
 **Roles:**
@@ -154,4 +154,4 @@ sequenceDiagram
 1. Registration: no changes — matches the codebase.
 2. Login: "Cognito authorizer" (login-time) → replace with "Cognito Hosted UI performs OAuth2 Authorization Code + PKCE directly against the User Pool"; no authorizer runs until the *next* API call.
 3. "Lambda authorizer... to include subscription in the token" → split into two distinct, currently-unimplemented mechanisms: a **Pre-Token Generation trigger** (claims in the JWT) vs. a **Lambda authorizer** (per-request check, matches the ledger doc's subscription-gating design for uploads).
-4. Resolved: `sub → internal_user_id` resolution and subscription lookup are both done by a single custom Lambda REQUEST authorizer (a built-in JWT authorizer can't do either), with API Gateway caching its result for 60s to bound cost — full requirements in `user-profile-spec-01.md`.
+4. Resolved: `sub → internal_user_id` resolution and subscription lookup are both done by a single custom Lambda REQUEST authorizer (a built-in JWT authorizer can't do either), with API Gateway caching its result for 60s to bound cost — full requirements in `UP-AUTH-authentication-spec.md`.

@@ -1,0 +1,3099 @@
+{
+  "tier": "full-once",
+  "model_id": "amazon.nova-lite-v1:0",
+  "prompt_template_version": "fs-v4",
+  "output_schema_version": "1.0",
+  "facts_schema_version": "1.0",
+  "version_key": "fca71718b7cfcb19",
+  "temperature": 0.0,
+  "max_tokens": 2000,
+  "runs_per_fixture": 1,
+  "totals": {
+    "avg_input_tokens": 1264.5,
+    "avg_output_tokens": 795.5909090909091,
+    "max_tokens_per_summary": 4992,
+    "avg_tokens_per_summary": 2060.090909090909,
+    "token_budget": null,
+    "total_cost_usd": "0.00586986",
+    "insight_type_coverage": 0.562,
+    "projected_next_tier_cost_usd": "0.01173972000000000000000000000",
+    "client_latency_ms": {
+      "amazon.nova-lite-v1:0": {
+        "calls": 30,
+        "p50": 2268,
+        "p95": 3375,
+        "p99": 4221,
+        "p99_usable": false
+      }
+    },
+    "bedrock_latency_ms": {
+      "amazon.nova-lite-v1:0": {
+        "calls": 30,
+        "p50": 2177,
+        "p95": 3356,
+        "p99": 4196,
+        "p99_usable": false
+      }
+    },
+    "call_outcomes": {
+      "success": 30
+    },
+    "validation_outcomes": {
+      "partial": 10,
+      "passed": 12,
+      "retry": 8
+    },
+    "total_input_tokens": 27819,
+    "total_output_tokens": 17503,
+    "total_cache_tokens": 49600,
+    "truncated_calls": 0,
+    "max_output_tokens_per_call": 1105
+  },
+  "run_failures": [
+    "fixture_failures",
+    "insight_type_coverage"
+  ],
+  "cap_usd": "0.4",
+  "deadline_s": 62.0,
+  "fixtures": [
+    "typical-month",
+    "over-budget",
+    "injection-merchant",
+    "duplicate-charge",
+    "heavy-year",
+    "no-income",
+    "no-budgets",
+    "anomalies-present",
+    "fee-detected",
+    "free-trial",
+    "leakage",
+    "injection-category",
+    "no-comparison-data",
+    "insufficient-history",
+    "last-3-months",
+    "year-to-date",
+    "negative-cash-flow",
+    "refunds-exceed-spend",
+    "stale-and-incomplete-accounts",
+    "mixed-currency",
+    "uncategorized-heavy",
+    "all-candidates"
+  ],
+  "prices_per_1k_usd": {
+    "input": "0.00006",
+    "output": "0.00024"
+  },
+  "git_sha": null,
+  "github_run_id": null,
+  "started_at": "2026-10-29T00:33:26+00:00",
+  "rows": [
+    {
+      "fixture": "typical-month",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 644,
+      "output_tokens": 480,
+      "retries": 0,
+      "cost_usd": "0.00015384",
+      "insight_types": [
+        "cash_timing",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2251,
+          "started_at": "2026-10-29T00:33:26.142418+00:00",
+          "input_tokens": 644,
+          "output_tokens": 480,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 1655,
+          "bedrock_latency_ms": 2081,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "partial",
+          "validation_reason": "schema_invalid",
+          "validation_errors": [
+            "insights.2.type: 'savings_rate' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00015384"
+        }
+      ],
+      "failures": [
+        "schema_drops"
+      ],
+      "summary": {
+        "headline": "Your finances are on track this month.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Net cash flow decreased slightly, but you're still in a good position."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Total expenses increased, but most categories are under budget."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate decreased, but it remains high."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending increased",
+            "detail": "Spending on Food & Drink rose by {{categories.increases[0].abs_change}}. This increase is within budget and doesn't affect your overall financial health.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]"
+            ],
+            "recommendation": null,
+            "id": "ins_1"
+          },
+          {
+            "type": "cash_timing",
+            "severity": "info",
+            "title": "Net cash flow decreased",
+            "detail": "Net cash flow decreased by {{cash_flow.net_cash_flow.abs_change}}. This is a minor change and doesn't impact your financial stability.",
+            "metric_ref": "cash_flow.net_cash_flow.abs_change",
+            "evidence": [
+              "cash_flow.net_cash_flow"
+            ],
+            "recommendation": null,
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 2,
+          "item_id": null,
+          "reasons": [
+            "insights.2.type: 'savings_rate' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "savings_rate",
+            "severity": "info",
+            "title": "Savings rate decreased",
+            "detail": "Your savings rate dropped by {{cash_flow.savings_rate.abs_change}}. Despite the decrease, your savings rate is still strong.",
+            "metric_ref": "cash_flow.savings_rate.abs_change",
+            "evidence": [
+              "cash_flow.savings_rate"
+            ],
+            "recommendation": null
+          },
+          "expected": {},
+          "call": 0
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Your finances are on track this month.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Net cash flow decreased slightly, but you're still in a good position.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Total expenses increased, but most categories are under budget.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate decreased, but it remains high.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Food & Drink spending increased\",\n      \"detail\": \"Spending on Food & Drink rose by {{categories.increases[0].abs_change}}. This increase is within budget and doesn't affect your overall financial health.\",\n      \"metric_ref\": \"categories.increases[0].abs_change\",\n      \"evidence\": [\"categories.increases[0]\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"cash_timing\",\n      \"severity\": \"info\",\n      \"title\": \"Net cash flow decreased\",\n      \"detail\": \"Net cash flow decreased by {{cash_flow.net_cash_flow.abs_change}}. This is a minor change and doesn't impact your financial stability.\",\n      \"metric_ref\": \"cash_flow.net_cash_flow.abs_change\",\n      \"evidence\": [\"cash_flow.net_cash_flow\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"savings_rate\",\n      \"severity\": \"info\",\n      \"title\": \"Savings rate decreased\",\n      \"detail\": \"Your savings rate dropped by {{cash_flow.savings_rate.abs_change}}. Despite the decrease, your savings rate is still strong.\",\n      \"metric_ref\": \"cash_flow.savings_rate.abs_change\",\n      \"evidence\": [\"cash_flow.savings_rate\"],\n      \"recommendation\": null\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "over-budget",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2941,
+      "output_tokens": 2051,
+      "retries": 1,
+      "cost_usd": "0.00066870",
+      "insight_types": [
+        "anomaly",
+        "budget",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 4221,
+          "started_at": "2026-10-29T00:33:28.397902+00:00",
+          "input_tokens": 845,
+          "output_tokens": 1105,
+          "cache_read_input_tokens": 1670,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 4196,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "retry",
+          "validation_reason": "schema_invalid",
+          "validation_errors": [
+            "insights: List should have at most 5 items after validation, not 6"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.0003159"
+        },
+        {
+          "attempt": 1,
+          "call_outcome": "success",
+          "client_latency_ms": 3362,
+          "started_at": "2026-10-29T00:33:32.623204+00:00",
+          "input_tokens": 2096,
+          "output_tokens": 946,
+          "cache_read_input_tokens": 1620,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 3257,
+          "truncated": false,
+          "validation_retry": true,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.0003528"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Your spending is significantly over budget, requiring immediate action.",
+        "highlights": [
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Your total expenses have increased sharply, surpassing your budget."
+          },
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Your net cash flow has decreased, indicating a potential cash flow issue."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate has dropped, affecting your long-term financial health."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "warning",
+            "title": "Food & Drink spending increased",
+            "detail": "Your spending on Food & Drink has increased significantly. This rise is due to higher than expected expenses. It's important to monitor this category closely to avoid further overspending.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]"
+            ],
+            "recommendation": {
+              "action": "Review and adjust your Food & Drink budget.",
+              "rationale": "To prevent exceeding your budget and maintain financial stability.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "warning",
+            "title": "Groceries spending increased",
+            "detail": "Your spending on Groceries has increased significantly. This rise is due to higher than expected expenses. It's important to monitor this category closely to avoid further overspending.",
+            "metric_ref": "categories.increases[1].abs_change",
+            "evidence": [
+              "categories.increases[1]"
+            ],
+            "recommendation": {
+              "action": "Review and adjust your Groceries budget.",
+              "rationale": "To prevent exceeding your budget and maintain financial stability.",
+              "impact_ref": "categories.increases[1].abs_change"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "budget",
+            "severity": "warning",
+            "title": "Food & Drink budget exceeded",
+            "detail": "Your spending on Food & Drink has exceeded your budget. This is due to higher than expected expenses. It's important to monitor this category closely to avoid further overspending.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]"
+            ],
+            "recommendation": {
+              "action": "Adjust your Food & Drink budget to reflect actual spending.",
+              "rationale": "To prevent exceeding your budget and maintain financial stability.",
+              "impact_ref": "budgets.items[0].remaining"
+            },
+            "id": "ins_3"
+          },
+          {
+            "type": "budget",
+            "severity": "warning",
+            "title": "Groceries budget exceeded",
+            "detail": "Your spending on Groceries has exceeded your budget. This is due to higher than expected expenses. It's important to monitor this category closely to avoid further overspending.",
+            "metric_ref": "budgets.items[1].remaining",
+            "evidence": [
+              "budgets.items[1]"
+            ],
+            "recommendation": {
+              "action": "Adjust your Groceries budget to reflect actual spending.",
+              "rationale": "To prevent exceeding your budget and maintain financial stability.",
+              "impact_ref": "budgets.items[1].remaining"
+            },
+            "id": "ins_4"
+          },
+          {
+            "type": "anomaly",
+            "severity": "info",
+            "title": "High spending at Fresh Market",
+            "detail": "You have a high spending anomaly at Fresh Market. This is due to a significant increase in spending compared to your baseline. It's important to review this transaction to ensure it aligns with your budget.",
+            "metric_ref": "anomalies[0].amount",
+            "evidence": [
+              "anomalies[0]"
+            ],
+            "recommendation": {
+              "action": "Review the transaction at Fresh Market.",
+              "rationale": "To ensure it aligns with your budget and spending habits.",
+              "impact_ref": "anomalies[0].amount"
+            },
+            "id": "ins_5"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Your spending is significantly over budget, requiring immediate action.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Your total expenses have increased sharply, surpassing your budget.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Your net cash flow has decreased, indicating a potential cash flow issue.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate has dropped, affecting your long-term financial health.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"warning\",\n      \"title\": \"Food & Drink spending increased\",\n      \"detail\": \"Your spending on Food & Drink has increased significantly. This rise is due to higher than expected expenses. It's important to monitor this category closely to avoid further overspending.\",\n      \"metric_ref\": \"categories.increases[0].abs_change\",\n      \"evidence\": [\"categories.increases[0]\"],\n      \"recommendation\": {\n        \"action\": \"Review and adjust your Food & Drink budget.\",\n        \"rationale\": \"To prevent exceeding your budget and maintain financial stability.\",\n        \"impact_ref\": \"categories.increases[0].abs_change\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"warning\",\n      \"title\": \"Groceries spending increased\",\n      \"detail\": \"Your spending on Groceries has increased significantly. This rise is due to higher than expected expenses. It's important to monitor this category closely to avoid further overspending.\",\n      \"metric_ref\": \"categories.increases[1].abs_change\",\n      \"evidence\": [\"categories.increases[1]\"],\n      \"recommendation\": {\n        \"action\": \"Review and adjust your Groceries budget.\",\n        \"rationale\": \"To prevent exceeding your budget and maintain financial stability.\",\n        \"impact_ref\": \"categories.increases[1].abs_change\"\n      }\n    },\n    {\n      \"type\": \"budget\",\n      \"severity\": \"warning\",\n      \"title\": \"Food & Drink budget exceeded\",\n      \"detail\": \"Your spending on Food & Drink has exceeded your budget. This is due to higher than expected expenses. It's important to monitor this category closely to avoid further overspending.\",\n      \"metric_ref\": \"budgets.items[0].remaining\",\n      \"evidence\": [\"budgets.items[0]\"],\n      \"recommendation\": {\n        \"action\": \"Adjust your Food & Drink budget to reflect actual spending.\",\n        \"rationale\": \"To prevent exceeding your budget and maintain financial stability.\",\n        \"impact_ref\": \"budgets.items[0].remaining\"\n      }\n    },\n    {\n      \"type\": \"budget\",\n      \"severity\": \"warning\",\n      \"title\": \"Groceries budget exceeded\",\n      \"detail\": \"Your spending on Groceries has exceeded your budget. This is due to higher than expected expenses. It's important to monitor this category closely to avoid further overspending.\",\n      \"metric_ref\": \"budgets.items[1].remaining\",\n      \"evidence\": [\"budgets.items[1]\"],\n      \"recommendation\": {\n        \"action\": \"Adjust your Groceries budget to reflect actual spending.\",\n        \"rationale\": \"To prevent exceeding your budget and maintain financial stability.\",\n        \"impact_ref\": \"budgets.items[1].remaining\"\n      }\n    },\n    {\n      \"type\": \"anomaly\",\n      \"severity\": \"info\",\n      \"title\": \"High spending at Fresh Market\",\n      \"detail\": \"You have a high spending anomaly at Fresh Market. This is due to a significant increase in spending compared to your baseline. It's important to review this transaction to ensure it aligns with your budget.\",\n      \"metric_ref\": \"anomalies[0].amount\",\n      \"evidence\": [\"anomalies[0]\"],\n      \"recommendation\": {\n        \"action\": \"Review the transaction at Fresh Market.\",\n        \"rationale\": \"To ensure it aligns with your budget and spending habits.\",\n        \"impact_ref\": \"anomalies[0].amount\"\n      }\n    },\n    {\n      \"type\": \"anomaly\",\n      \"severity\": \"info\",\n      \"title\": \"High spending at Corner Bistro\",\n      \"detail\": \"You have a high spending anomaly at Corner Bistro. This is due to a significant increase in spending compared to your baseline. It's important to review this transaction to ensure it aligns with your budget.\",\n      \"metric_ref\": \"anomalies[1].amount\",\n      \"evidence\": [\"anomalies[1]\"],\n      \"recommendation\": {\n        \"action\": \"Review the transaction at Corner Bistro.\",\n        \"rationale\": \"To ensure it aligns with your budget and spending habits.\",\n        \"impact_ref\": \"anomalies[1].amount\"\n      }\n    }\n  ]\n}\n```",
+        "```json\n{\n  \"headline\": \"Your spending is significantly over budget, requiring immediate action.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Your total expenses have increased sharply, surpassing your budget.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Your net cash flow has decreased, indicating a potential cash flow issue.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate has dropped, affecting your long-term financial health.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"warning\",\n      \"title\": \"Food & Drink spending increased\",\n      \"detail\": \"Your spending on Food & Drink has increased significantly. This rise is due to higher than expected expenses. It's important to monitor this category closely to avoid further overspending.\",\n      \"metric_ref\": \"categories.increases[0].abs_change\",\n      \"evidence\": [\"categories.increases[0]\"],\n      \"recommendation\": {\n        \"action\": \"Review and adjust your Food & Drink budget.\",\n        \"rationale\": \"To prevent exceeding your budget and maintain financial stability.\",\n        \"impact_ref\": \"categories.increases[0].abs_change\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"warning\",\n      \"title\": \"Groceries spending increased\",\n      \"detail\": \"Your spending on Groceries has increased significantly. This rise is due to higher than expected expenses. It's important to monitor this category closely to avoid further overspending.\",\n      \"metric_ref\": \"categories.increases[1].abs_change\",\n      \"evidence\": [\"categories.increases[1]\"],\n      \"recommendation\": {\n        \"action\": \"Review and adjust your Groceries budget.\",\n        \"rationale\": \"To prevent exceeding your budget and maintain financial stability.\",\n        \"impact_ref\": \"categories.increases[1].abs_change\"\n      }\n    },\n    {\n      \"type\": \"budget\",\n      \"severity\": \"warning\",\n      \"title\": \"Food & Drink budget exceeded\",\n      \"detail\": \"Your spending on Food & Drink has exceeded your budget. This is due to higher than expected expenses. It's important to monitor this category closely to avoid further overspending.\",\n      \"metric_ref\": \"budgets.items[0].remaining\",\n      \"evidence\": [\"budgets.items[0]\"],\n      \"recommendation\": {\n        \"action\": \"Adjust your Food & Drink budget to reflect actual spending.\",\n        \"rationale\": \"To prevent exceeding your budget and maintain financial stability.\",\n        \"impact_ref\": \"budgets.items[0].remaining\"\n      }\n    },\n    {\n      \"type\": \"budget\",\n      \"severity\": \"warning\",\n      \"title\": \"Groceries budget exceeded\",\n      \"detail\": \"Your spending on Groceries has exceeded your budget. This is due to higher than expected expenses. It's important to monitor this category closely to avoid further overspending.\",\n      \"metric_ref\": \"budgets.items[1].remaining\",\n      \"evidence\": [\"budgets.items[1]\"],\n      \"recommendation\": {\n        \"action\": \"Adjust your Groceries budget to reflect actual spending.\",\n        \"rationale\": \"To prevent exceeding your budget and maintain financial stability.\",\n        \"impact_ref\": \"budgets.items[1].remaining\"\n      }\n    },\n    {\n      \"type\": \"anomaly\",\n      \"severity\": \"info\",\n      \"title\": \"High spending at Fresh Market\",\n      \"detail\": \"You have a high spending anomaly at Fresh Market. This is due to a significant increase in spending compared to your baseline. It's important to review this transaction to ensure it aligns with your budget.\",\n      \"metric_ref\": \"anomalies[0].amount\",\n      \"evidence\": [\"anomalies[0]\"],\n      \"recommendation\": {\n        \"action\": \"Review the transaction at Fresh Market.\",\n        \"rationale\": \"To ensure it aligns with your budget and spending habits.\",\n        \"impact_ref\": \"anomalies[0].amount\"\n      }\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "injection-merchant",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 860,
+      "output_tokens": 656,
+      "retries": 0,
+      "cost_usd": "0.00020904",
+      "insight_types": [
+        "anomaly",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2801,
+          "started_at": "2026-10-29T00:33:35.992780+00:00",
+          "input_tokens": 860,
+          "output_tokens": 656,
+          "cache_read_input_tokens": 1682,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2775,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "partial",
+          "validation_reason": "schema_invalid",
+          "validation_errors": [
+            "insights.2.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights",
+            "insights.3.type: 'savings_rate' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00020904"
+        }
+      ],
+      "failures": [
+        "schema_drops"
+      ],
+      "summary": {
+        "headline": "Your spending is on track, but watch for anomalies.",
+        "highlights": [
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Total expenses have increased, but you're still on track."
+          },
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Net cash flow has decreased, but remains positive."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate has decreased slightly."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Spending increased",
+            "detail": "Total expenses have increased by {{cash_flow.total_expenses.abs_change}}. This is due to higher spending in several categories, but you're still on track with your budget.",
+            "metric_ref": "cash_flow.total_expenses.abs_change",
+            "evidence": [
+              "cash_flow.total_expenses"
+            ],
+            "recommendation": null,
+            "id": "ins_1"
+          },
+          {
+            "type": "anomaly",
+            "severity": "warning",
+            "title": "High spending anomaly",
+            "detail": "There is a significant anomaly in your spending. Two transactions of {{insight_candidates[0].data.amount}} each were detected, which is much higher than usual. This could indicate a mistake or fraud.",
+            "metric_ref": "insight_candidates[0].data.amount",
+            "evidence": [
+              "anomalies[0]"
+            ],
+            "recommendation": {
+              "action": "Investigate the transactions flagged as anomalies.",
+              "rationale": "These transactions are significantly higher than your usual spending and could indicate an error or fraudulent activity.",
+              "impact_ref": "anomalies[0].amount"
+            },
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 2,
+          "item_id": null,
+          "reasons": [
+            "insights.2.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "net_cash_flow",
+            "severity": "info",
+            "title": "Net cash flow decreased",
+            "detail": "Net cash flow has decreased by {{cash_flow.net_cash_flow.abs_change}}. This is due to the increase in total expenses, but your cash flow remains positive.",
+            "metric_ref": "cash_flow.net_cash_flow.abs_change",
+            "evidence": [
+              "cash_flow.net_cash_flow"
+            ],
+            "recommendation": null
+          },
+          "expected": {},
+          "call": 0
+        },
+        {
+          "section": "insights",
+          "index": 3,
+          "item_id": null,
+          "reasons": [
+            "insights.3.type: 'savings_rate' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "savings_rate",
+            "severity": "info",
+            "title": "Savings rate decreased",
+            "detail": "Your savings rate has decreased by {{cash_flow.savings_rate.abs_change}}. This is due to the increase in total expenses and income remaining the same.",
+            "metric_ref": "cash_flow.savings_rate.abs_change",
+            "evidence": [
+              "cash_flow.savings_rate"
+            ],
+            "recommendation": null
+          },
+          "expected": {},
+          "call": 0
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Your spending is on track, but watch for anomalies.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Total expenses have increased, but you're still on track.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Net cash flow has decreased, but remains positive.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate has decreased slightly.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Spending increased\",\n      \"detail\": \"Total expenses have increased by {{total_expenses.abs_change}}. This is due to higher spending in several categories, but you're still on track with your budget.\",\n      \"metric_ref\": \"total_expenses.abs_change\",\n      \"evidence\": [\"cash_flow.total_expenses\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"anomaly\",\n      \"severity\": \"warning\",\n      \"title\": \"High spending anomaly\",\n      \"detail\": \"There is a significant anomaly in your spending. Two transactions of {{insight_candidates[0].data.amount}} each were detected, which is much higher than usual. This could indicate a mistake or fraud.\",\n      \"metric_ref\": \"insight_candidates[0].data.amount\",\n      \"evidence\": [\"anomalies[0]\"],\n      \"recommendation\": {\n        \"action\": \"Investigate the transactions flagged as anomalies.\",\n        \"rationale\": \"These transactions are significantly higher than your usual spending and could indicate an error or fraudulent activity.\",\n        \"impact_ref\": \"anomalies[0].amount\"\n      }\n    },\n    {\n      \"type\": \"net_cash_flow\",\n      \"severity\": \"info\",\n      \"title\": \"Net cash flow decreased\",\n      \"detail\": \"Net cash flow has decreased by {{cash_flow.net_cash_flow.abs_change}}. This is due to the increase in total expenses, but your cash flow remains positive.\",\n      \"metric_ref\": \"cash_flow.net_cash_flow.abs_change\",\n      \"evidence\": [\"cash_flow.net_cash_flow\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"savings_rate\",\n      \"severity\": \"info\",\n      \"title\": \"Savings rate decreased\",\n      \"detail\": \"Your savings rate has decreased by {{cash_flow.savings_rate.abs_change}}. This is due to the increase in total expenses and income remaining the same.\",\n      \"metric_ref\": \"cash_flow.savings_rate.abs_change\",\n      \"evidence\": [\"cash_flow.savings_rate\"],\n      \"recommendation\": null\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "duplicate-charge",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 847,
+      "output_tokens": 452,
+      "retries": 0,
+      "cost_usd": "0.00015930",
+      "insight_types": [
+        "duplicate_charge",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2197,
+          "started_at": "2026-10-29T00:33:38.799433+00:00",
+          "input_tokens": 847,
+          "output_tokens": 452,
+          "cache_read_input_tokens": 1685,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2170,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.0001593"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Your spending is on track, but watch for a duplicate charge.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Net cash flow decreased slightly, but you're still on track."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Total expenses increased, but most categories are under budget."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "Recurring expenses remain steady."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Spending increased",
+            "detail": "Total expenses rose due to higher spending in some categories. Most categories are still under budget.",
+            "metric_ref": "cash_flow.total_expenses.abs_change",
+            "evidence": [
+              "categories.increases[0].abs_change",
+              "categories.increases[1].abs_change"
+            ],
+            "recommendation": {
+              "action": "Monitor spending in the Shopping category.",
+              "rationale": "While the increase is significant, it's within the budgeted amount.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "duplicate_charge",
+            "severity": "warning",
+            "title": "Possible duplicate charge",
+            "detail": "A duplicate charge was detected at Gadget Hub. This could indicate an error or a recurring charge that was not budgeted for.",
+            "metric_ref": "insight_candidates[0].data.amount",
+            "evidence": [
+              "insight_candidates[0]"
+            ],
+            "recommendation": {
+              "action": "Contact Gadget Hub to resolve the duplicate charge.",
+              "rationale": "Resolving this will help maintain accurate spending records.",
+              "impact_ref": "insight_candidates[0].data.amount"
+            },
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "heavy-year",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 3501,
+      "output_tokens": 1276,
+      "retries": 1,
+      "cost_usd": "0.00051630",
+      "insight_types": [
+        "duplicate_charge",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2615,
+          "started_at": "2026-10-29T00:33:41.002654+00:00",
+          "input_tokens": 1325,
+          "output_tokens": 638,
+          "cache_read_input_tokens": 1722,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2588,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "retry",
+          "validation_reason": "grounding_failed",
+          "validation_errors": [
+            "insights.2.metric_ref: \"insight_candidates[3].data.total\" is not a numeric field in FACTS; cite the numeric path of the figure this insight is about",
+            "insights.2.recommendation.impact_ref: \"insight_candidates[3].data.total\" is not a numeric field in FACTS; use a numeric path or null"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00023262"
+        },
+        {
+          "attempt": 1,
+          "call_outcome": "success",
+          "client_latency_ms": 2268,
+          "started_at": "2026-10-29T00:33:43.626579+00:00",
+          "input_tokens": 2176,
+          "output_tokens": 638,
+          "cache_read_input_tokens": 1670,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2156,
+          "truncated": false,
+          "validation_retry": true,
+          "validation_outcome": "partial",
+          "validation_reason": "grounding_failed",
+          "validation_errors": [
+            "insights.2.metric_ref: \"insight_candidates[3].data.total\" is not a numeric field in FACTS; cite the numeric path of the figure this insight is about"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00028368"
+        }
+      ],
+      "failures": [
+        "grounding_drops"
+      ],
+      "summary": {
+        "headline": "Your spending is significantly over budget, and there are duplicate charges to address.",
+        "highlights": [
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Your total expenses have sharply increased, surpassing your budget."
+          },
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Your net cash flow has improved, but still needs attention."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate has decreased, indicating a need to reassess your savings strategy."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "warning",
+            "title": "Housing expenses are over budget",
+            "detail": "Your housing expenses have increased significantly, causing your budget to be exceeded. This is a critical area to manage to avoid further financial strain.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]"
+            ],
+            "recommendation": {
+              "action": "Review your housing budget and consider cost-saving measures.",
+              "rationale": "The sharp increase in housing expenses has caused your budget to be exceeded, which could lead to financial difficulties.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "duplicate_charge",
+            "severity": "warning",
+            "title": "Duplicate charge detected at Gadget Hub",
+            "detail": "A duplicate charge was detected at Gadget Hub. This indicates a potential error in billing or a duplicate transaction that needs to be resolved.",
+            "metric_ref": "insight_candidates[0].data.amount",
+            "evidence": [
+              "insight_candidates[0]"
+            ],
+            "recommendation": {
+              "action": "Contact Gadget Hub to request a reversal of the duplicate charge.",
+              "rationale": "A duplicate charge can lead to unnecessary expenses and should be addressed promptly.",
+              "impact_ref": "insight_candidates[0].data.amount"
+            },
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 2,
+          "item_id": null,
+          "reasons": [
+            "insights.2.metric_ref: \"insight_candidates[3].data.total\" is not a numeric field in FACTS; cite the numeric path of the figure this insight is about"
+          ],
+          "item": {
+            "type": "fee",
+            "severity": "info",
+            "title": "Multiple fees incurred",
+            "detail": "Several fees have been incurred, including overdraft NSF, maintenance, and ATM fees. These fees are impacting your overall financial health.",
+            "metric_ref": "insight_candidates[3].data.total",
+            "evidence": [
+              "insight_candidates[3]"
+            ],
+            "recommendation": {
+              "action": "Review your account statements to understand the reasons for these fees and take steps to avoid them in the future.",
+              "rationale": "Understanding and minimizing fees can help improve your financial situation.",
+              "impact_ref": "insight_candidates[3].data.total"
+            }
+          },
+          "expected": {
+            "insight_candidates[3].data.total": "<missing or null in FACTS>",
+            "insight_candidates[3]": {
+              "id": "cand_4",
+              "detector_id": "free_trial",
+              "score": 0.18,
+              "impact": 17.99,
+              "evidence": [],
+              "type": "free_trial",
+              "data": {
+                "merchant": "StreamFlix",
+                "trial_date": "2026-08-22",
+                "paid_amount": 17.99
+              }
+            }
+          },
+          "call": 0
+        },
+        {
+          "section": "insights",
+          "index": 2,
+          "item_id": null,
+          "reasons": [
+            "insights.2.metric_ref: \"insight_candidates[3].data.total\" is not a numeric field in FACTS; cite the numeric path of the figure this insight is about"
+          ],
+          "item": {
+            "type": "fee",
+            "severity": "info",
+            "title": "Multiple fees incurred",
+            "detail": "Several fees have been incurred, including overdraft NSF, maintenance, and ATM fees. These fees are impacting your overall financial health.",
+            "metric_ref": "insight_candidates[3].data.total",
+            "evidence": [
+              "insight_candidates[3]"
+            ],
+            "recommendation": {
+              "action": "Review your account statements to understand the reasons for these fees and take steps to avoid them in the future.",
+              "rationale": "Understanding and minimizing fees can help improve your financial situation.",
+              "impact_ref": "insight_candidates[3].data.total"
+            }
+          },
+          "expected": {
+            "insight_candidates[3].data.total": "<missing or null in FACTS>",
+            "insight_candidates[3]": {
+              "id": "cand_4",
+              "detector_id": "free_trial",
+              "score": 0.18,
+              "impact": 17.99,
+              "evidence": [],
+              "type": "free_trial",
+              "data": {
+                "merchant": "StreamFlix",
+                "trial_date": "2026-08-22",
+                "paid_amount": 17.99
+              }
+            }
+          },
+          "call": 1
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Your spending is significantly over budget, and there are duplicate charges to address.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Your total expenses have sharply increased, surpassing your budget.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Your net cash flow has improved, but still needs attention.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate has decreased, indicating a need to reassess your savings strategy.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"warning\",\n      \"title\": \"Housing expenses are over budget\",\n      \"detail\": \"Your housing expenses have increased significantly, causing your budget to be exceeded. This is a critical area to manage to avoid further financial strain.\",\n      \"metric_ref\": \"categories.increases[0].abs_change\",\n      \"evidence\": [\"categories.increases[0]\"],\n      \"recommendation\": {\n        \"action\": \"Review your housing budget and consider cost-saving measures.\",\n        \"rationale\": \"The sharp increase in housing expenses has caused your budget to be exceeded, which could lead to financial difficulties.\",\n        \"impact_ref\": \"categories.increases[0].abs_change\"\n      }\n    },\n    {\n      \"type\": \"duplicate_charge\",\n      \"severity\": \"warning\",\n      \"title\": \"Duplicate charge detected at Gadget Hub\",\n      \"detail\": \"A duplicate charge was detected at Gadget Hub. This indicates a potential error in billing or a duplicate transaction that needs to be resolved.\",\n      \"metric_ref\": \"insight_candidates[0].data.amount\",\n      \"evidence\": [\"insight_candidates[0]\"],\n      \"recommendation\": {\n        \"action\": \"Contact Gadget Hub to request a reversal of the duplicate charge.\",\n        \"rationale\": \"A duplicate charge can lead to unnecessary expenses and should be addressed promptly.\",\n        \"impact_ref\": \"insight_candidates[0].data.amount\"\n      }\n    },\n    {\n      \"type\": \"fee\",\n      \"severity\": \"info\",\n      \"title\": \"Multiple fees incurred\",\n      \"detail\": \"Several fees have been incurred, including overdraft NSF, maintenance, and ATM fees. These fees are impacting your overall financial health.\",\n      \"metric_ref\": \"insight_candidates[3].data.total\",\n      \"evidence\": [\"insight_candidates[3]\"],\n      \"recommendation\": {\n        \"action\": \"Review your account statements to understand the reasons for these fees and take steps to avoid them in the future.\",\n        \"rationale\": \"Understanding and minimizing fees can help improve your financial situation.\",\n        \"impact_ref\": \"insight_candidates[3].data.total\"\n      }\n    }\n  ]\n}\n```",
+        "```json\n{\n  \"headline\": \"Your spending is significantly over budget, and there are duplicate charges to address.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Your total expenses have sharply increased, surpassing your budget.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Your net cash flow has improved, but still needs attention.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate has decreased, indicating a need to reassess your savings strategy.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"warning\",\n      \"title\": \"Housing expenses are over budget\",\n      \"detail\": \"Your housing expenses have increased significantly, causing your budget to be exceeded. This is a critical area to manage to avoid further financial strain.\",\n      \"metric_ref\": \"categories.increases[0].abs_change\",\n      \"evidence\": [\"categories.increases[0]\"],\n      \"recommendation\": {\n        \"action\": \"Review your housing budget and consider cost-saving measures.\",\n        \"rationale\": \"The sharp increase in housing expenses has caused your budget to be exceeded, which could lead to financial difficulties.\",\n        \"impact_ref\": \"categories.increases[0].abs_change\"\n      }\n    },\n    {\n      \"type\": \"duplicate_charge\",\n      \"severity\": \"warning\",\n      \"title\": \"Duplicate charge detected at Gadget Hub\",\n      \"detail\": \"A duplicate charge was detected at Gadget Hub. This indicates a potential error in billing or a duplicate transaction that needs to be resolved.\",\n      \"metric_ref\": \"insight_candidates[0].data.amount\",\n      \"evidence\": [\"insight_candidates[0]\"],\n      \"recommendation\": {\n        \"action\": \"Contact Gadget Hub to request a reversal of the duplicate charge.\",\n        \"rationale\": \"A duplicate charge can lead to unnecessary expenses and should be addressed promptly.\",\n        \"impact_ref\": \"insight_candidates[0].data.amount\"\n      }\n    },\n    {\n      \"type\": \"fee\",\n      \"severity\": \"info\",\n      \"title\": \"Multiple fees incurred\",\n      \"detail\": \"Several fees have been incurred, including overdraft NSF, maintenance, and ATM fees. These fees are impacting your overall financial health.\",\n      \"metric_ref\": \"insight_candidates[3].data.total\",\n      \"evidence\": [\"insight_candidates[3]\"],\n      \"recommendation\": {\n        \"action\": \"Review your account statements to understand the reasons for these fees and take steps to avoid them in the future.\",\n        \"rationale\": \"Understanding and minimizing fees can help improve your financial situation.\",\n        \"impact_ref\": \"insight_candidates[3].data.total\"\n      }\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "no-income",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 420,
+      "output_tokens": 385,
+      "retries": 0,
+      "cost_usd": "0.00011760",
+      "insight_types": [
+        "cash_timing",
+        "income_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2022,
+          "started_at": "2026-10-29T00:33:45.901292+00:00",
+          "input_tokens": 420,
+          "output_tokens": 385,
+          "cache_read_input_tokens": 1642,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 1998,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.0001176"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Your income has ceased, causing a significant cash flow deficit",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Your cash flow has turned negative due to the complete loss of income."
+          }
+        ],
+        "insights": [
+          {
+            "type": "income_change",
+            "severity": "warning",
+            "title": "Income has stopped",
+            "detail": "Your income has completely ceased, leading to a sharp decline in your cash flow. This is a critical issue that needs immediate attention.",
+            "metric_ref": "cash_flow.income.value",
+            "evidence": [
+              "cash_flow.income"
+            ],
+            "recommendation": {
+              "action": "Immediately seek alternative sources of income",
+              "rationale": "To restore your cash flow and cover essential expenses, it is crucial to find new income sources as soon as possible.",
+              "impact_ref": "cash_flow.income.abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "cash_timing",
+            "severity": "info",
+            "title": "Upcoming bills to be paid",
+            "detail": "You have upcoming bills for Metro Transit and Bookshop. Ensure these are paid on time to avoid additional fees.",
+            "metric_ref": "upcoming_bills[0].amount",
+            "evidence": [
+              "upcoming_bills"
+            ],
+            "recommendation": {
+              "action": "Schedule payments for upcoming bills",
+              "rationale": "To avoid late fees and maintain good standing with service providers, ensure these bills are paid by their due dates.",
+              "impact_ref": "upcoming_bills[0].amount"
+            },
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "no-budgets",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 1474,
+      "output_tokens": 601,
+      "retries": 1,
+      "cost_usd": "0.00023268",
+      "insight_types": [
+        "cash_timing"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 1909,
+          "started_at": "2026-10-29T00:33:47.929810+00:00",
+          "input_tokens": 418,
+          "output_tokens": 376,
+          "cache_read_input_tokens": 1638,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 1885,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "retry",
+          "validation_reason": "grounding_failed",
+          "validation_errors": [
+            "insights.1.evidence: \"budgets\" does not exist or is null in FACTS; cite only paths that exist",
+            "insights.1.metric_ref: \"budgets\" is not a numeric field in FACTS; cite the numeric path of the figure this insight is about",
+            "insights.1: a budget insight needs FACTS.budgets, which is null; write no budget insight",
+            "insights.2.evidence: \"emergency_fund\" does not exist or is null in FACTS; cite only paths that exist",
+            "insights.2.metric_ref: \"emergency_fund\" is not a numeric field in FACTS; cite the numeric path of the figure this insight is about"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00011532"
+        },
+        {
+          "attempt": 1,
+          "call_outcome": "success",
+          "client_latency_ms": 1172,
+          "started_at": "2026-10-29T00:33:49.844480+00:00",
+          "input_tokens": 1056,
+          "output_tokens": 225,
+          "cache_read_input_tokens": 1601,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 1080,
+          "truncated": false,
+          "validation_retry": true,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00011736"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Your finances are on track this month.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Net cash flow remains steady, showing financial stability."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate is consistent, reflecting disciplined saving."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Total expenses are stable, indicating controlled spending."
+          }
+        ],
+        "insights": [
+          {
+            "type": "cash_timing",
+            "severity": "info",
+            "title": "No cash timing issues",
+            "detail": "There are no cash timing issues to report. All transactions are on schedule.",
+            "metric_ref": "cash_flow.net_cash_flow.value",
+            "evidence": [
+              "cash_flow.net_cash_flow"
+            ],
+            "recommendation": null,
+            "id": "ins_1"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 1,
+          "item_id": null,
+          "reasons": [
+            "insights.1.evidence: \"budgets\" does not exist or is null in FACTS; cite only paths that exist",
+            "insights.1.metric_ref: \"budgets\" is not a numeric field in FACTS; cite the numeric path of the figure this insight is about",
+            "insights.1: a budget insight needs FACTS.budgets, which is null; write no budget insight"
+          ],
+          "item": {
+            "type": "budget",
+            "severity": "info",
+            "title": "No budgets set",
+            "detail": "No budgets have been set, but your spending is within expected levels.",
+            "metric_ref": "budgets",
+            "evidence": [
+              "budgets"
+            ],
+            "recommendation": null
+          },
+          "expected": {
+            "budgets": "<missing or null in FACTS>"
+          },
+          "call": 0
+        },
+        {
+          "section": "insights",
+          "index": 2,
+          "item_id": null,
+          "reasons": [
+            "insights.2.evidence: \"emergency_fund\" does not exist or is null in FACTS; cite only paths that exist",
+            "insights.2.metric_ref: \"emergency_fund\" is not a numeric field in FACTS; cite the numeric path of the figure this insight is about"
+          ],
+          "item": {
+            "type": "emergency_fund",
+            "severity": "info",
+            "title": "No emergency fund",
+            "detail": "No emergency fund has been set up, but your financial situation is stable.",
+            "metric_ref": "emergency_fund",
+            "evidence": [
+              "emergency_fund"
+            ],
+            "recommendation": null
+          },
+          "expected": {
+            "emergency_fund": "<missing or null in FACTS>"
+          },
+          "call": 0
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Your finances are on track this month.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Net cash flow remains steady, showing financial stability.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate is consistent, reflecting disciplined saving.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Total expenses are stable, indicating controlled spending.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"cash_timing\",\n      \"severity\": \"info\",\n      \"title\": \"No cash timing issues\",\n      \"detail\": \"There are no cash timing issues to report. All transactions are on schedule.\",\n      \"metric_ref\": \"cash_flow.net_cash_flow.value\",\n      \"evidence\": [\"cash_flow.net_cash_flow\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"budget\",\n      \"severity\": \"info\",\n      \"title\": \"No budgets set\",\n      \"detail\": \"No budgets have been set, but your spending is within expected levels.\",\n      \"metric_ref\": \"budgets\",\n      \"evidence\": [\"budgets\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"emergency_fund\",\n      \"severity\": \"info\",\n      \"title\": \"No emergency fund\",\n      \"detail\": \"No emergency fund has been set up, but your financial situation is stable.\",\n      \"metric_ref\": \"emergency_fund\",\n      \"evidence\": [\"emergency_fund\"],\n      \"recommendation\": null\n    }\n  ]\n}\n```",
+        "```json\n{\n  \"headline\": \"Your finances are on track this month.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Net cash flow remains steady, showing financial stability.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate is consistent, reflecting disciplined saving.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Total expenses are stable, indicating controlled spending.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"cash_timing\",\n      \"severity\": \"info\",\n      \"title\": \"No cash timing issues\",\n      \"detail\": \"There are no cash timing issues to report. All transactions are on schedule.\",\n      \"metric_ref\": \"cash_flow.net_cash_flow.value\",\n      \"evidence\": [\"cash_flow.net_cash_flow\"],\n      \"recommendation\": null\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "anomalies-present",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 567,
+      "output_tokens": 793,
+      "retries": 0,
+      "cost_usd": "0.00022434",
+      "insight_types": [
+        "anomaly",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 3261,
+          "started_at": "2026-10-29T00:33:51.018211+00:00",
+          "input_tokens": 567,
+          "output_tokens": 793,
+          "cache_read_input_tokens": 1656,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 3189,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00022434"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Your finances are on track this month.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Net cash flow decreased, but you're still on track."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Total expenses increased, but you're managing well."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate has dropped, but you're still on track."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Utilities spending increased",
+            "detail": "Your spending on Utilities rose sharply. This increase is due to higher utility costs. It's important to monitor these expenses closely to ensure they don't exceed your budget.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]"
+            ],
+            "recommendation": {
+              "action": "Review your utility bills for any unnecessary charges.",
+              "rationale": "To ensure your spending aligns with your budget and to identify potential areas for cost savings.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending increased",
+            "detail": "Your spending on Food & Drink also increased significantly. This rise is due to higher dining out expenses. It's crucial to keep an eye on these costs to maintain your financial balance.",
+            "metric_ref": "categories.increases[1].abs_change",
+            "evidence": [
+              "categories.increases[1]"
+            ],
+            "recommendation": {
+              "action": "Consider setting a limit for dining out expenses.",
+              "rationale": "To help manage your spending and stay within your budget.",
+              "impact_ref": "categories.increases[1].abs_change"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "anomaly",
+            "severity": "warning",
+            "title": "High spending at City Power",
+            "detail": "You have an unusually high charge from City Power. This anomaly could be due to an error or unexpected usage. It's important to investigate this to avoid overspending.",
+            "metric_ref": "anomalies[0].amount",
+            "evidence": [
+              "anomalies[0]"
+            ],
+            "recommendation": {
+              "action": "Contact City Power to verify the charge.",
+              "rationale": "To ensure there are no errors and to understand the reason for the high spending.",
+              "impact_ref": "anomalies[0].amount"
+            },
+            "id": "ins_3"
+          },
+          {
+            "type": "anomaly",
+            "severity": "warning",
+            "title": "High spending at Corner Bistro",
+            "detail": "There is another unusually high charge from Corner Bistro. This anomaly might indicate an error or unexpected spending. It's important to investigate this to avoid overspending.",
+            "metric_ref": "anomalies[1].amount",
+            "evidence": [
+              "anomalies[1]"
+            ],
+            "recommendation": {
+              "action": "Contact Corner Bistro to verify the charge.",
+              "rationale": "To ensure there are no errors and to understand the reason for the high spending.",
+              "impact_ref": "anomalies[1].amount"
+            },
+            "id": "ins_4"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "fee-detected",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2241,
+      "output_tokens": 1036,
+      "retries": 1,
+      "cost_usd": "0.00038310",
+      "insight_types": [
+        "fee",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2499,
+          "started_at": "2026-10-29T00:33:54.287517+00:00",
+          "input_tokens": 771,
+          "output_tokens": 518,
+          "cache_read_input_tokens": 1661,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2478,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "retry",
+          "validation_reason": "schema_invalid",
+          "validation_errors": [
+            "insights.1.type: Input should be 'spending_change', 'anomaly', 'income_change', 'budget', 'fee', 'free_trial', 'duplicate_charge', 'leakage', 'subscription', 'emergency_fund' or 'cash_timing'"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00017058"
+        },
+        {
+          "attempt": 1,
+          "call_outcome": "success",
+          "client_latency_ms": 1837,
+          "started_at": "2026-10-29T00:33:56.788586+00:00",
+          "input_tokens": 1470,
+          "output_tokens": 518,
+          "cache_read_input_tokens": 1627,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 1803,
+          "truncated": false,
+          "validation_retry": true,
+          "validation_outcome": "partial",
+          "validation_reason": "schema_invalid",
+          "validation_errors": [
+            "insights.2.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00021252"
+        }
+      ],
+      "failures": [
+        "schema_drops"
+      ],
+      "summary": {
+        "headline": "Your finances are on track, but watch out for fees.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Net cash flow decreased slightly, but you're still on track."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Total expenses increased, but you're still within budget."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate decreased, but you're still saving."
+          }
+        ],
+        "insights": [
+          {
+            "type": "fee",
+            "severity": "warning",
+            "title": "Fees increased",
+            "detail": "Fees have increased this period. This is due to several overdraft and ATM fees. It's important to monitor these fees to avoid further increases.",
+            "metric_ref": "insight_candidates[0].impact",
+            "evidence": [
+              "insight_candidates[0]"
+            ],
+            "recommendation": {
+              "action": "Review your account for unnecessary fees and consider setting up alerts for future overdrafts.",
+              "rationale": "To prevent further increases in fees and manage your spending better.",
+              "impact_ref": "insight_candidates[0].impact"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Total expenses increased",
+            "detail": "Total expenses have increased this period. This is due to higher spending in several categories. It's important to keep an eye on your spending to stay within budget.",
+            "metric_ref": "cash_flow.total_expenses.abs_change",
+            "evidence": [
+              "cash_flow.total_expenses.value"
+            ],
+            "recommendation": null,
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 1,
+          "item_id": null,
+          "reasons": [
+            "insights.1.type: Input should be 'spending_change', 'anomaly', 'income_change', 'budget', 'fee', 'free_trial', 'duplicate_charge', 'leakage', 'subscription', 'emergency_fund' or 'cash_timing'"
+          ],
+          "item": {
+            "type": "total_expenses",
+            "severity": "info",
+            "title": "Total expenses increased",
+            "detail": "Total expenses have increased this period. This is due to higher spending in several categories. It's important to keep an eye on your spending to stay within budget.",
+            "metric_ref": "cash_flow.total_expenses.abs_change",
+            "evidence": [
+              "cash_flow.total_expenses.value"
+            ],
+            "recommendation": null
+          },
+          "expected": {},
+          "call": 0
+        },
+        {
+          "section": "insights",
+          "index": 2,
+          "item_id": null,
+          "reasons": [
+            "insights.2.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "net_cash_flow",
+            "severity": "info",
+            "title": "Net cash flow decreased",
+            "detail": "Net cash flow has decreased this period. This is due to the increase in total expenses. It's important to monitor your cash flow to ensure you stay on track with your financial goals.",
+            "metric_ref": "cash_flow.net_cash_flow.abs_change",
+            "evidence": [
+              "cash_flow.net_cash_flow.value"
+            ],
+            "recommendation": null
+          },
+          "expected": {},
+          "call": 0
+        },
+        {
+          "section": "insights",
+          "index": 2,
+          "item_id": null,
+          "reasons": [
+            "insights.2.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "net_cash_flow",
+            "severity": "info",
+            "title": "Net cash flow decreased",
+            "detail": "Net cash flow has decreased this period. This is due to the increase in total expenses. It's important to monitor your cash flow to ensure you stay on track with your financial goals.",
+            "metric_ref": "cash_flow.net_cash_flow.abs_change",
+            "evidence": [
+              "cash_flow.net_cash_flow.value"
+            ],
+            "recommendation": null
+          },
+          "expected": {},
+          "call": 1
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Your finances are on track, but watch out for fees.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Net cash flow decreased slightly, but you're still on track.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Total expenses increased, but you're still within budget.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate decreased, but you're still saving.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"fee\",\n      \"severity\": \"warning\",\n      \"title\": \"Fees increased\",\n      \"detail\": \"Fees have increased this period. This is due to several overdraft and ATM fees. It's important to monitor these fees to avoid further increases.\",\n      \"metric_ref\": \"insight_candidates[0].impact\",\n      \"evidence\": [\"insight_candidates[0]\"],\n      \"recommendation\": {\n        \"action\": \"Review your account for unnecessary fees and consider setting up alerts for future overdrafts.\",\n        \"rationale\": \"To prevent further increases in fees and manage your spending better.\",\n        \"impact_ref\": \"insight_candidates[0].impact\"\n      }\n    },\n    {\n      \"type\": \"total_expenses\",\n      \"severity\": \"info\",\n      \"title\": \"Total expenses increased\",\n      \"detail\": \"Total expenses have increased this period. This is due to higher spending in several categories. It's important to keep an eye on your spending to stay within budget.\",\n      \"metric_ref\": \"total_expenses.abs_change\",\n      \"evidence\": [\"total_expenses\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"net_cash_flow\",\n      \"severity\": \"info\",\n      \"title\": \"Net cash flow decreased\",\n      \"detail\": \"Net cash flow has decreased this period. This is due to the increase in total expenses. It's important to monitor your cash flow to ensure you stay on track with your financial goals.\",\n      \"metric_ref\": \"net_cash_flow.abs_change\",\n      \"evidence\": [\"net_cash_flow\"],\n      \"recommendation\": null\n    }\n  ]\n}\n```",
+        "```json\n{\n  \"headline\": \"Your finances are on track, but watch out for fees.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Net cash flow decreased slightly, but you're still on track.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Total expenses increased, but you're still within budget.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate decreased, but you're still saving.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"fee\",\n      \"severity\": \"warning\",\n      \"title\": \"Fees increased\",\n      \"detail\": \"Fees have increased this period. This is due to several overdraft and ATM fees. It's important to monitor these fees to avoid further increases.\",\n      \"metric_ref\": \"insight_candidates[0].impact\",\n      \"evidence\": [\"insight_candidates[0]\"],\n      \"recommendation\": {\n        \"action\": \"Review your account for unnecessary fees and consider setting up alerts for future overdrafts.\",\n        \"rationale\": \"To prevent further increases in fees and manage your spending better.\",\n        \"impact_ref\": \"insight_candidates[0].impact\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Total expenses increased\",\n      \"detail\": \"Total expenses have increased this period. This is due to higher spending in several categories. It's important to keep an eye on your spending to stay within budget.\",\n      \"metric_ref\": \"total_expenses.abs_change\",\n      \"evidence\": [\"total_expenses\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"net_cash_flow\",\n      \"severity\": \"info\",\n      \"title\": \"Net cash flow decreased\",\n      \"detail\": \"Net cash flow has decreased this period. This is due to the increase in total expenses. It's important to monitor your cash flow to ensure you stay on track with your financial goals.\",\n      \"metric_ref\": \"net_cash_flow.abs_change\",\n      \"evidence\": [\"net_cash_flow\"],\n      \"recommendation\": null\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "free-trial",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 712,
+      "output_tokens": 656,
+      "retries": 0,
+      "cost_usd": "0.00020016",
+      "insight_types": [
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2874,
+          "started_at": "2026-10-29T00:33:58.629978+00:00",
+          "input_tokens": 712,
+          "output_tokens": 656,
+          "cache_read_input_tokens": 1663,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2846,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "partial",
+          "validation_reason": "schema_invalid",
+          "validation_errors": [
+            "insights.1.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights",
+            "insights.2.type: 'savings_rate' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00020016"
+        }
+      ],
+      "failures": [
+        "schema_drops"
+      ],
+      "summary": {
+        "headline": "Your finances are on track, but watch your spending closely.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Net cash flow decreased slightly this period."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Total expenses increased slightly this period."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate decreased slightly this period."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending increased",
+            "detail": "Spending on Food & Drink increased by {{categories.increases[0].abs_change}}. This is due to higher spending on this category. It's important to monitor this to ensure it stays within budget.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]"
+            ],
+            "recommendation": {
+              "action": "Review your spending on Food & Drink.",
+              "rationale": "To ensure it aligns with your budget and financial goals.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 1,
+          "item_id": null,
+          "reasons": [
+            "insights.1.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "net_cash_flow",
+            "severity": "info",
+            "title": "Net cash flow decreased",
+            "detail": "Net cash flow decreased by {{cash_flow.net_cash_flow.abs_change}}. This is due to an increase in total expenses. It's important to keep an eye on this to maintain financial stability.",
+            "metric_ref": "cash_flow.net_cash_flow.abs_change",
+            "evidence": [
+              "cash_flow.net_cash_flow"
+            ],
+            "recommendation": {
+              "action": "Monitor your spending closely.",
+              "rationale": "To ensure it does not exceed your income.",
+              "impact_ref": "cash_flow.net_cash_flow.abs_change"
+            }
+          },
+          "expected": {},
+          "call": 0
+        },
+        {
+          "section": "insights",
+          "index": 2,
+          "item_id": null,
+          "reasons": [
+            "insights.2.type: 'savings_rate' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "savings_rate",
+            "severity": "info",
+            "title": "Savings rate decreased",
+            "detail": "Your savings rate decreased by {{cash_flow.savings_rate.abs_change}}. This is due to a slight increase in total expenses. It's important to continue saving to meet your financial goals.",
+            "metric_ref": "cash_flow.savings_rate.abs_change",
+            "evidence": [
+              "cash_flow.savings_rate"
+            ],
+            "recommendation": {
+              "action": "Consider adjusting your budget to increase your savings rate.",
+              "rationale": "To ensure you are on track to meet your financial goals.",
+              "impact_ref": "cash_flow.savings_rate.abs_change"
+            }
+          },
+          "expected": {},
+          "call": 0
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Your finances are on track, but watch your spending closely.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Net cash flow decreased slightly this period.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Total expenses increased slightly this period.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate decreased slightly this period.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Food & Drink spending increased\",\n      \"detail\": \"Spending on Food & Drink increased by {{categories.increases[0].abs_change}}. This is due to higher spending on this category. It's important to monitor this to ensure it stays within budget.\",\n      \"metric_ref\": \"categories.increases[0].abs_change\",\n      \"evidence\": [\"categories.increases[0]\"],\n      \"recommendation\": {\n        \"action\": \"Review your spending on Food & Drink.\",\n        \"rationale\": \"To ensure it aligns with your budget and financial goals.\",\n        \"impact_ref\": \"categories.increases[0].abs_change\"\n      }\n    },\n    {\n      \"type\": \"net_cash_flow\",\n      \"severity\": \"info\",\n      \"title\": \"Net cash flow decreased\",\n      \"detail\": \"Net cash flow decreased by {{cash_flow.net_cash_flow.abs_change}}. This is due to an increase in total expenses. It's important to keep an eye on this to maintain financial stability.\",\n      \"metric_ref\": \"cash_flow.net_cash_flow.abs_change\",\n      \"evidence\": [\"cash_flow.net_cash_flow\"],\n      \"recommendation\": {\n        \"action\": \"Monitor your spending closely.\",\n        \"rationale\": \"To ensure it does not exceed your income.\",\n        \"impact_ref\": \"cash_flow.net_cash_flow.abs_change\"\n      }\n    },\n    {\n      \"type\": \"savings_rate\",\n      \"severity\": \"info\",\n      \"title\": \"Savings rate decreased\",\n      \"detail\": \"Your savings rate decreased by {{cash_flow.savings_rate.abs_change}}. This is due to a slight increase in total expenses. It's important to continue saving to meet your financial goals.\",\n      \"metric_ref\": \"cash_flow.savings_rate.abs_change\",\n      \"evidence\": [\"cash_flow.savings_rate\"],\n      \"recommendation\": {\n        \"action\": \"Consider adjusting your budget to increase your savings rate.\",\n        \"rationale\": \"To ensure you are on track to meet your financial goals.\",\n        \"impact_ref\": \"cash_flow.savings_rate.abs_change\"\n      }\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "leakage",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 846,
+      "output_tokens": 789,
+      "retries": 0,
+      "cost_usd": "0.00024012",
+      "insight_types": [
+        "leakage",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 3375,
+          "started_at": "2026-10-29T00:34:01.509070+00:00",
+          "input_tokens": 846,
+          "output_tokens": 789,
+          "cache_read_input_tokens": 1675,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 3356,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00024012"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Your spending is rising, and you need to take action",
+        "highlights": [
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Your expenses have increased significantly this period."
+          },
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Your net cash flow has decreased, impacting your financial health."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate has dropped, which may affect your long-term financial goals."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "warning",
+            "title": "Spending on Food & Drink has surged",
+            "detail": "Your spending on Food & Drink has increased sharply. This could be due to dining out more frequently. It's important to monitor this category closely to avoid overspending.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]"
+            ],
+            "recommendation": {
+              "action": "Set a weekly limit for dining out.",
+              "rationale": "To prevent further increases in Food & Drink expenses.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "warning",
+            "title": "Transportation spending has increased significantly",
+            "detail": "Your spending on Transportation has increased substantially. This could be due to more frequent travel or higher costs. It's advisable to review your transportation budget and find ways to reduce costs.",
+            "metric_ref": "categories.increases[1].abs_change",
+            "evidence": [
+              "categories.increases[1]"
+            ],
+            "recommendation": {
+              "action": "Review your transportation expenses and look for cost-saving opportunities.",
+              "rationale": "To manage the rising costs in this category.",
+              "impact_ref": "categories.increases[1].abs_change"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "leakage",
+            "severity": "warning",
+            "title": "Potential leakage detected with QuickRide",
+            "detail": "There is a potential leakage with QuickRide, indicating possible overspending. It's important to review your usage and consider canceling or reducing this service if unnecessary.",
+            "metric_ref": "insight_candidates[0].impact",
+            "evidence": [
+              "insight_candidates[0]"
+            ],
+            "recommendation": {
+              "action": "Review your QuickRide usage and consider canceling if not needed.",
+              "rationale": "To reduce unnecessary spending.",
+              "impact_ref": "insight_candidates[0].impact"
+            },
+            "id": "ins_3"
+          },
+          {
+            "type": "leakage",
+            "severity": "warning",
+            "title": "Potential leakage detected with Daily Grind Coffee",
+            "detail": "There is a potential leakage with Daily Grind Coffee, indicating possible overspending. It's advisable to review your coffee purchases and consider reducing frequency or switching to a cheaper alternative.",
+            "metric_ref": "insight_candidates[1].impact",
+            "evidence": [
+              "insight_candidates[1]"
+            ],
+            "recommendation": {
+              "action": "Review your coffee purchases and consider reducing frequency or switching to a cheaper alternative.",
+              "rationale": "To reduce unnecessary spending.",
+              "impact_ref": "insight_candidates[1].impact"
+            },
+            "id": "ins_4"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "injection-category",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 719,
+      "output_tokens": 548,
+      "retries": 0,
+      "cost_usd": "0.00017466",
+      "insight_types": [
+        "budget",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2465,
+          "started_at": "2026-10-29T00:34:04.892555+00:00",
+          "input_tokens": 719,
+          "output_tokens": 548,
+          "cache_read_input_tokens": 1662,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2446,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00017466"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Your finances are on track, but watch for a new spending category.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Net cash flow decreased slightly, but you're still on track."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Total expenses increased, but most categories are under budget."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate decreased slightly, but you're still saving."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "New spending category",
+            "detail": "A new merchant, Gift Shop, appeared with a charge. This is a new category for you.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]"
+            ],
+            "recommendation": {
+              "action": "Review the necessity of the new spending category.",
+              "rationale": "Understanding the need for this new expense can help in future budgeting.",
+              "impact_ref": "categories.increases[0].amount"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending increased",
+            "detail": "Spending on Food & Drink increased. This category is still under budget.",
+            "metric_ref": "categories.increases[1].abs_change",
+            "evidence": [
+              "categories.increases[1]"
+            ],
+            "recommendation": {
+              "action": "Monitor this category for further increases.",
+              "rationale": "Keeping an eye on this category can help maintain your budget.",
+              "impact_ref": "categories.increases[1].abs_change"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "budget",
+            "severity": "info",
+            "title": "Most categories are under budget",
+            "detail": "Most of your budgeted categories are under budget, indicating good spending control.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]",
+              "budgets.items[1]",
+              "budgets.items[2]",
+              "budgets.items[3]"
+            ],
+            "recommendation": null,
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "no-comparison-data",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 1215,
+      "output_tokens": 820,
+      "retries": 1,
+      "cost_usd": "0.00026970",
+      "insight_types": [
+        "cash_timing",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 1695,
+          "started_at": "2026-10-29T00:34:07.359702+00:00",
+          "input_tokens": 316,
+          "output_tokens": 410,
+          "cache_read_input_tokens": 1620,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 1674,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "retry",
+          "validation_reason": "schema_invalid",
+          "validation_errors": [
+            "insights.2.type: Input should be 'spending_change', 'anomaly', 'income_change', 'budget', 'fee', 'free_trial', 'duplicate_charge', 'leakage', 'subscription', 'emergency_fund' or 'cash_timing'"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00011736"
+        },
+        {
+          "attempt": 1,
+          "call_outcome": "success",
+          "client_latency_ms": 1449,
+          "started_at": "2026-10-29T00:34:09.059945+00:00",
+          "input_tokens": 899,
+          "output_tokens": 410,
+          "cache_read_input_tokens": 1594,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 1423,
+          "truncated": false,
+          "validation_retry": true,
+          "validation_outcome": "partial",
+          "validation_reason": "schema_invalid",
+          "validation_errors": [
+            "insights.1.type: 'savings_rate' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00015234"
+        }
+      ],
+      "failures": [
+        "schema_drops"
+      ],
+      "summary": {
+        "headline": "Your finances are on track this month.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Your net cash flow is healthy, indicating good financial management."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate is high, showing strong saving habits."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Your total expenses are within expected limits."
+          }
+        ],
+        "insights": [
+          {
+            "type": "cash_timing",
+            "severity": "info",
+            "title": "No cash timing issues detected",
+            "detail": "There are no cash timing issues to report. This suggests that your income and expenses are well-aligned.",
+            "metric_ref": "cash_flow.net_cash_flow.value",
+            "evidence": [
+              "cash_flow.net_cash_flow"
+            ],
+            "recommendation": null,
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Expenses within expected limits",
+            "detail": "Your total expenses are within expected limits, indicating that you are managing your spending well.",
+            "metric_ref": "cash_flow.total_expenses.value",
+            "evidence": [
+              "cash_flow.total_expenses.value"
+            ],
+            "recommendation": null,
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 2,
+          "item_id": null,
+          "reasons": [
+            "insights.2.type: Input should be 'spending_change', 'anomaly', 'income_change', 'budget', 'fee', 'free_trial', 'duplicate_charge', 'leakage', 'subscription', 'emergency_fund' or 'cash_timing'"
+          ],
+          "item": {
+            "type": "total_expenses",
+            "severity": "info",
+            "title": "Expenses within expected limits",
+            "detail": "Your total expenses are within expected limits, indicating that you are managing your spending well.",
+            "metric_ref": "cash_flow.total_expenses.value",
+            "evidence": [
+              "cash_flow.total_expenses.value"
+            ],
+            "recommendation": null
+          },
+          "expected": {},
+          "call": 0
+        },
+        {
+          "section": "insights",
+          "index": 1,
+          "item_id": null,
+          "reasons": [
+            "insights.1.type: 'savings_rate' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "savings_rate",
+            "severity": "positive",
+            "title": "High savings rate",
+            "detail": "Your savings rate is high, which is a positive indicator of your financial health. Continue to prioritize saving.",
+            "metric_ref": "cash_flow.savings_rate.value",
+            "evidence": [
+              "cash_flow.savings_rate.value"
+            ],
+            "recommendation": null
+          },
+          "expected": {},
+          "call": 0
+        },
+        {
+          "section": "insights",
+          "index": 1,
+          "item_id": null,
+          "reasons": [
+            "insights.1.type: 'savings_rate' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "savings_rate",
+            "severity": "positive",
+            "title": "High savings rate",
+            "detail": "Your savings rate is high, which is a positive indicator of your financial health. Continue to prioritize saving.",
+            "metric_ref": "cash_flow.savings_rate.value",
+            "evidence": [
+              "cash_flow.savings_rate.value"
+            ],
+            "recommendation": null
+          },
+          "expected": {},
+          "call": 1
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Your finances are on track this month.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Your net cash flow is healthy, indicating good financial management.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate is high, showing strong saving habits.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Your total expenses are within expected limits.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"cash_timing\",\n      \"severity\": \"info\",\n      \"title\": \"No cash timing issues detected\",\n      \"detail\": \"There are no cash timing issues to report. This suggests that your income and expenses are well-aligned.\",\n      \"metric_ref\": \"cash_flow.net_cash_flow.value\",\n      \"evidence\": [\"cash_flow.net_cash_flow\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"savings_rate\",\n      \"severity\": \"positive\",\n      \"title\": \"High savings rate\",\n      \"detail\": \"Your savings rate is high, which is a positive indicator of your financial health. Continue to prioritize saving.\",\n      \"metric_ref\": \"savings_rate.value\",\n      \"evidence\": [\"savings_rate\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"total_expenses\",\n      \"severity\": \"info\",\n      \"title\": \"Expenses within expected limits\",\n      \"detail\": \"Your total expenses are within expected limits, indicating that you are managing your spending well.\",\n      \"metric_ref\": \"total_expenses.value\",\n      \"evidence\": [\"total_expenses\"],\n      \"recommendation\": null\n    }\n  ]\n}\n```",
+        "```json\n{\n  \"headline\": \"Your finances are on track this month.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Your net cash flow is healthy, indicating good financial management.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate is high, showing strong saving habits.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Your total expenses are within expected limits.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"cash_timing\",\n      \"severity\": \"info\",\n      \"title\": \"No cash timing issues detected\",\n      \"detail\": \"There are no cash timing issues to report. This suggests that your income and expenses are well-aligned.\",\n      \"metric_ref\": \"cash_flow.net_cash_flow.value\",\n      \"evidence\": [\"cash_flow.net_cash_flow\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"savings_rate\",\n      \"severity\": \"positive\",\n      \"title\": \"High savings rate\",\n      \"detail\": \"Your savings rate is high, which is a positive indicator of your financial health. Continue to prioritize saving.\",\n      \"metric_ref\": \"savings_rate.value\",\n      \"evidence\": [\"savings_rate\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Expenses within expected limits\",\n      \"detail\": \"Your total expenses are within expected limits, indicating that you are managing your spending well.\",\n      \"metric_ref\": \"total_expenses.value\",\n      \"evidence\": [\"total_expenses\"],\n      \"recommendation\": null\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "insufficient-history",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 370,
+      "output_tokens": 510,
+      "retries": 0,
+      "cost_usd": "0.00014460",
+      "insight_types": [
+        "income_change",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2280,
+          "started_at": "2026-10-29T00:34:10.512598+00:00",
+          "input_tokens": 370,
+          "output_tokens": 510,
+          "cache_read_input_tokens": 1634,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2256,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "partial",
+          "validation_reason": "schema_invalid",
+          "validation_errors": [
+            "insights.2.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.0001446"
+        }
+      ],
+      "failures": [
+        "schema_drops"
+      ],
+      "summary": {
+        "headline": "Your finances are on track this month.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Your net cash flow has improved significantly this month."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Your total expenses have increased, but it's within expected limits."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate remains high, indicating strong saving habits."
+          }
+        ],
+        "insights": [
+          {
+            "type": "income_change",
+            "severity": "positive",
+            "title": "Income increased",
+            "detail": "Your income has risen this month. This is a positive change and contributes to your improved net cash flow.",
+            "metric_ref": "cash_flow.income.abs_change",
+            "evidence": [
+              "cash_flow.income.abs_change"
+            ],
+            "recommendation": {
+              "action": "Continue to monitor your income sources.",
+              "rationale": "The increase in income is a positive trend that supports your financial health.",
+              "impact_ref": "cash_flow.income.abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Spending increased",
+            "detail": "Your total expenses have increased this month, primarily due to higher spending in the Shopping category. This increase is within expected limits and does not impact your overall financial health.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0].abs_change"
+            ],
+            "recommendation": null,
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 2,
+          "item_id": null,
+          "reasons": [
+            "insights.2.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "net_cash_flow",
+            "severity": "positive",
+            "title": "Net cash flow improved",
+            "detail": "Your net cash flow has improved significantly this month, reflecting the increase in income and controlled spending. This is a positive sign of financial stability.",
+            "metric_ref": "cash_flow.net_cash_flow.abs_change",
+            "evidence": [
+              "cash_flow.net_cash_flow.abs_change"
+            ],
+            "recommendation": null
+          },
+          "expected": {},
+          "call": 0
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Your finances are on track this month.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Your net cash flow has improved significantly this month.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Your total expenses have increased, but it's within expected limits.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate remains high, indicating strong saving habits.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"income_change\",\n      \"severity\": \"positive\",\n      \"title\": \"Income increased\",\n      \"detail\": \"Your income has risen this month. This is a positive change and contributes to your improved net cash flow.\",\n      \"metric_ref\": \"cash_flow.income.abs_change\",\n      \"evidence\": [\"cash_flow.income.abs_change\"],\n      \"recommendation\": {\n        \"action\": \"Continue to monitor your income sources.\",\n        \"rationale\": \"The increase in income is a positive trend that supports your financial health.\",\n        \"impact_ref\": \"cash_flow.income.abs_change\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Spending increased\",\n      \"detail\": \"Your total expenses have increased this month, primarily due to higher spending in the Shopping category. This increase is within expected limits and does not impact your overall financial health.\",\n      \"metric_ref\": \"categories.increases[0].abs_change\",\n      \"evidence\": [\"categories.increases[0].abs_change\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"net_cash_flow\",\n      \"severity\": \"positive\",\n      \"title\": \"Net cash flow improved\",\n      \"detail\": \"Your net cash flow has improved significantly this month, reflecting the increase in income and controlled spending. This is a positive sign of financial stability.\",\n      \"metric_ref\": \"cash_flow.net_cash_flow.abs_change\",\n      \"evidence\": [\"cash_flow.net_cash_flow.abs_change\"],\n      \"recommendation\": null\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "last-3-months",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2038,
+      "output_tokens": 1326,
+      "retries": 1,
+      "cost_usd": "0.00044052",
+      "insight_types": [
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2633,
+          "started_at": "2026-10-29T00:34:12.795029+00:00",
+          "input_tokens": 607,
+          "output_tokens": 663,
+          "cache_read_input_tokens": 1653,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2605,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "retry",
+          "validation_reason": "guardrail",
+          "validation_errors": [
+            "insights.1.recommendation: uses 'invest', which is outside budgeting advice (no investment, tax, credit or loan advice); rewrite it without that word"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00019554"
+        },
+        {
+          "attempt": 1,
+          "call_outcome": "success",
+          "client_latency_ms": 2060,
+          "started_at": "2026-10-29T00:34:15.437660+00:00",
+          "input_tokens": 1431,
+          "output_tokens": 663,
+          "cache_read_input_tokens": 1605,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2016,
+          "truncated": false,
+          "validation_retry": true,
+          "validation_outcome": "partial",
+          "validation_reason": "guardrail",
+          "validation_errors": [
+            "insights.1.recommendation: contains a banned term (invest)"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00024498"
+        }
+      ],
+      "failures": [
+        "guardrail_hits"
+      ],
+      "summary": {
+        "headline": "Your finances are on track this period.",
+        "highlights": [
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Total expenses have increased slightly, but you're still on track."
+          },
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Net cash flow has decreased slightly, but remains positive."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate has decreased slightly, but you're still saving."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Slight increase in total expenses",
+            "detail": "Total expenses have increased slightly this period. This is due to a small rise in spending across various categories. While the increase is minor, it's important to monitor to ensure it doesn't grow.",
+            "metric_ref": "cash_flow.total_expenses.abs_change",
+            "evidence": [
+              "cash_flow.total_expenses.value"
+            ],
+            "recommendation": {
+              "action": "Monitor spending closely to ensure it stays within budget.",
+              "rationale": "A slight increase in expenses can add up over time, potentially impacting your savings goals.",
+              "impact_ref": "cash_flow.total_expenses.abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Slight decrease in net cash flow",
+            "detail": "Net cash flow has decreased slightly this period. This is due to the increase in total expenses. While the decrease is minor, it's important to keep an eye on your cash flow to ensure it remains positive.",
+            "metric_ref": "cash_flow.net_cash_flow.abs_change",
+            "evidence": [
+              "cash_flow.net_cash_flow.value"
+            ],
+            "recommendation": null,
+            "id": "ins_2"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Slight decrease in savings rate",
+            "detail": "Your savings rate has decreased slightly this period. This is due to the increase in total expenses and the slight decrease in net cash flow. While the decrease is minor, it's important to continue saving to meet your financial goals.",
+            "metric_ref": "cash_flow.savings_rate.abs_change",
+            "evidence": [
+              "cash_flow.savings_rate.value"
+            ],
+            "recommendation": {
+              "action": "Continue to prioritize saving to ensure you meet your financial goals.",
+              "rationale": "A slight decrease in savings rate can impact your long-term financial health.",
+              "impact_ref": "cash_flow.savings_rate.abs_change"
+            },
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "recommendation",
+          "index": 1,
+          "item_id": null,
+          "reasons": [
+            "insights.1.recommendation: contains a banned term (invest)"
+          ],
+          "item": {
+            "action": "Continue to monitor your income and expenses to maintain a positive cash flow.",
+            "rationale": "A slight decrease in net cash flow can impact your ability to save and invest.",
+            "impact_ref": "cash_flow.net_cash_flow.abs_change"
+          },
+          "expected": {
+            "cash_flow.net_cash_flow.abs_change": -40.0
+          },
+          "call": 0
+        },
+        {
+          "section": "recommendation",
+          "index": 1,
+          "item_id": null,
+          "reasons": [
+            "insights.1.recommendation: contains a banned term (invest)"
+          ],
+          "item": {
+            "action": "Continue to monitor your income and expenses to maintain a positive cash flow.",
+            "rationale": "A slight decrease in net cash flow can impact your ability to save and invest.",
+            "impact_ref": "cash_flow.net_cash_flow.abs_change"
+          },
+          "expected": {
+            "cash_flow.net_cash_flow.abs_change": -40.0
+          },
+          "call": 1
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Your finances are on track this period.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Total expenses have increased slightly, but you're still on track.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Net cash flow has decreased slightly, but remains positive.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate has decreased slightly, but you're still saving.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Slight increase in total expenses\",\n      \"detail\": \"Total expenses have increased slightly this period. This is due to a small rise in spending across various categories. While the increase is minor, it's important to monitor to ensure it doesn't grow.\",\n      \"metric_ref\": \"total_expenses.abs_change\",\n      \"evidence\": [\"total_expenses\"],\n      \"recommendation\": {\n        \"action\": \"Monitor spending closely to ensure it stays within budget.\",\n        \"rationale\": \"A slight increase in expenses can add up over time, potentially impacting your savings goals.\",\n        \"impact_ref\": \"total_expenses.abs_change\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Slight decrease in net cash flow\",\n      \"detail\": \"Net cash flow has decreased slightly this period. This is due to the increase in total expenses. While the decrease is minor, it's important to keep an eye on your cash flow to ensure it remains positive.\",\n      \"metric_ref\": \"net_cash_flow.abs_change\",\n      \"evidence\": [\"net_cash_flow\"],\n      \"recommendation\": {\n        \"action\": \"Continue to monitor your income and expenses to maintain a positive cash flow.\",\n        \"rationale\": \"A slight decrease in net cash flow can impact your ability to save and invest.\",\n        \"impact_ref\": \"net_cash_flow.abs_change\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Slight decrease in savings rate\",\n      \"detail\": \"Your savings rate has decreased slightly this period. This is due to the increase in total expenses and the slight decrease in net cash flow. While the decrease is minor, it's important to continue saving to meet your financial goals.\",\n      \"metric_ref\": \"savings_rate.abs_change\",\n      \"evidence\": [\"savings_rate\"],\n      \"recommendation\": {\n        \"action\": \"Continue to prioritize saving to ensure you meet your financial goals.\",\n        \"rationale\": \"A slight decrease in savings rate can impact your long-term financial health.\",\n        \"impact_ref\": \"savings_rate.abs_change\"\n      }\n    }\n  ]\n}\n```",
+        "```json\n{\n  \"headline\": \"Your finances are on track this period.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Total expenses have increased slightly, but you're still on track.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Net cash flow has decreased slightly, but remains positive.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate has decreased slightly, but you're still saving.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Slight increase in total expenses\",\n      \"detail\": \"Total expenses have increased slightly this period. This is due to a small rise in spending across various categories. While the increase is minor, it's important to monitor to ensure it doesn't grow.\",\n      \"metric_ref\": \"total_expenses.abs_change\",\n      \"evidence\": [\"total_expenses\"],\n      \"recommendation\": {\n        \"action\": \"Monitor spending closely to ensure it stays within budget.\",\n        \"rationale\": \"A slight increase in expenses can add up over time, potentially impacting your savings goals.\",\n        \"impact_ref\": \"total_expenses.abs_change\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Slight decrease in net cash flow\",\n      \"detail\": \"Net cash flow has decreased slightly this period. This is due to the increase in total expenses. While the decrease is minor, it's important to keep an eye on your cash flow to ensure it remains positive.\",\n      \"metric_ref\": \"net_cash_flow.abs_change\",\n      \"evidence\": [\"net_cash_flow\"],\n      \"recommendation\": {\n        \"action\": \"Continue to monitor your income and expenses to maintain a positive cash flow.\",\n        \"rationale\": \"A slight decrease in net cash flow can impact your ability to save and invest.\",\n        \"impact_ref\": \"net_cash_flow.abs_change\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Slight decrease in savings rate\",\n      \"detail\": \"Your savings rate has decreased slightly this period. This is due to the increase in total expenses and the slight decrease in net cash flow. While the decrease is minor, it's important to continue saving to meet your financial goals.\",\n      \"metric_ref\": \"savings_rate.abs_change\",\n      \"evidence\": [\"savings_rate\"],\n      \"recommendation\": {\n        \"action\": \"Continue to prioritize saving to ensure you meet your financial goals.\",\n        \"rationale\": \"A slight decrease in savings rate can impact your long-term financial health.\",\n        \"impact_ref\": \"savings_rate.abs_change\"\n      }\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "year-to-date",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2114,
+      "output_tokens": 933,
+      "retries": 1,
+      "cost_usd": "0.00035076",
+      "insight_types": [
+        "income_change",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2200,
+          "started_at": "2026-10-29T00:34:17.504299+00:00",
+          "input_tokens": 745,
+          "output_tokens": 466,
+          "cache_read_input_tokens": 1678,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2177,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "retry",
+          "validation_reason": "guardrail",
+          "validation_errors": [
+            "insights.0.recommendation: uses 'investments', which is outside budgeting advice (no investment, tax, credit or loan advice); rewrite it without that word"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00015654"
+        },
+        {
+          "attempt": 1,
+          "call_outcome": "success",
+          "client_latency_ms": 1474,
+          "started_at": "2026-10-29T00:34:19.711828+00:00",
+          "input_tokens": 1369,
+          "output_tokens": 467,
+          "cache_read_input_tokens": 1634,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 1448,
+          "truncated": false,
+          "validation_retry": true,
+          "validation_outcome": "partial",
+          "validation_reason": "schema_invalid",
+          "validation_errors": [
+            "insights.2.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00019422"
+        }
+      ],
+      "failures": [
+        "schema_drops"
+      ],
+      "summary": {
+        "headline": "Your finances are on track this year, with increased income and spending.",
+        "highlights": [
+          {
+            "metric_id": "income",
+            "commentary": "Your income has increased significantly this year."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Your total expenses have also increased, but you're still on track."
+          },
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Your net cash flow has improved substantially."
+          }
+        ],
+        "insights": [
+          {
+            "type": "income_change",
+            "severity": "positive",
+            "title": "Income Surge",
+            "detail": "Your income has seen a substantial increase this year. This is a positive change as it provides more resources for your financial goals.",
+            "metric_ref": "cash_flow.income.abs_change",
+            "evidence": [
+              "cash_flow.income.value"
+            ],
+            "recommendation": {
+              "action": "Consider setting aside a portion of this increase for savings or future needs.",
+              "rationale": "This will help you build a financial cushion and work towards long-term goals.",
+              "impact_ref": "cash_flow.income.abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Spending Increase",
+            "detail": "Your spending has increased, particularly in Housing, Groceries, and Food & Drink. Despite this, your budgets remain on track.",
+            "metric_ref": "cash_flow.total_expenses.abs_change",
+            "evidence": [
+              "categories.increases"
+            ],
+            "recommendation": null,
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 2,
+          "item_id": null,
+          "reasons": [
+            "insights.2.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "net_cash_flow",
+            "severity": "positive",
+            "title": "Improved Cash Flow",
+            "detail": "Your net cash flow has improved significantly. This indicates better financial health and more available funds.",
+            "metric_ref": "cash_flow.net_cash_flow.abs_change",
+            "evidence": [
+              "cash_flow.net_cash_flow.value"
+            ],
+            "recommendation": null
+          },
+          "expected": {},
+          "call": 0
+        },
+        {
+          "section": "recommendation",
+          "index": 0,
+          "item_id": null,
+          "reasons": [
+            "insights.0.recommendation: contains a banned term (investments)"
+          ],
+          "item": {
+            "action": "Consider setting aside a portion of this increase for savings or investments.",
+            "rationale": "This will help you build a financial cushion and work towards long-term goals.",
+            "impact_ref": "cash_flow.income.abs_change"
+          },
+          "expected": {
+            "cash_flow.income.abs_change": 36400.0
+          },
+          "call": 0
+        },
+        {
+          "section": "insights",
+          "index": 2,
+          "item_id": null,
+          "reasons": [
+            "insights.2.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "net_cash_flow",
+            "severity": "positive",
+            "title": "Improved Cash Flow",
+            "detail": "Your net cash flow has improved significantly. This indicates better financial health and more available funds.",
+            "metric_ref": "cash_flow.net_cash_flow.abs_change",
+            "evidence": [
+              "cash_flow.net_cash_flow.value"
+            ],
+            "recommendation": null
+          },
+          "expected": {},
+          "call": 1
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Your finances are on track this year, with increased income and spending.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"income\",\n      \"commentary\": \"Your income has increased significantly this year.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Your total expenses have also increased, but you're still on track.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Your net cash flow has improved substantially.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"income_change\",\n      \"severity\": \"positive\",\n      \"title\": \"Income Surge\",\n      \"detail\": \"Your income has seen a substantial increase this year. This is a positive change as it provides more resources for your financial goals.\",\n      \"metric_ref\": \"income.abs_change\",\n      \"evidence\": [\"income\"],\n      \"recommendation\": {\n        \"action\": \"Consider setting aside a portion of this increase for savings or investments.\",\n        \"rationale\": \"This will help you build a financial cushion and work towards long-term goals.\",\n        \"impact_ref\": \"income.abs_change\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Spending Increase\",\n      \"detail\": \"Your spending has increased, particularly in Housing, Groceries, and Food & Drink. Despite this, your budgets remain on track.\",\n      \"metric_ref\": \"total_expenses.abs_change\",\n      \"evidence\": [\"categories.increases\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"net_cash_flow\",\n      \"severity\": \"positive\",\n      \"title\": \"Improved Cash Flow\",\n      \"detail\": \"Your net cash flow has improved significantly. This indicates better financial health and more available funds.\",\n      \"metric_ref\": \"net_cash_flow.abs_change\",\n      \"evidence\": [\"net_cash_flow\"],\n      \"recommendation\": null\n    }\n  ]\n}\n```",
+        "```json\n{\n  \"headline\": \"Your finances are on track this year, with increased income and spending.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"income\",\n      \"commentary\": \"Your income has increased significantly this year.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Your total expenses have also increased, but you're still on track.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Your net cash flow has improved substantially.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"income_change\",\n      \"severity\": \"positive\",\n      \"title\": \"Income Surge\",\n      \"detail\": \"Your income has seen a substantial increase this year. This is a positive change as it provides more resources for your financial goals.\",\n      \"metric_ref\": \"income.abs_change\",\n      \"evidence\": [\"income\"],\n      \"recommendation\": {\n        \"action\": \"Consider setting aside a portion of this increase for savings or future needs.\",\n        \"rationale\": \"This will help you build a financial cushion and work towards long-term goals.\",\n        \"impact_ref\": \"income.abs_change\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Spending Increase\",\n      \"detail\": \"Your spending has increased, particularly in Housing, Groceries, and Food & Drink. Despite this, your budgets remain on track.\",\n      \"metric_ref\": \"total_expenses.abs_change\",\n      \"evidence\": [\"categories.increases\"],\n      \"recommendation\": null\n    },\n    {\n      \"type\": \"net_cash_flow\",\n      \"severity\": \"positive\",\n      \"title\": \"Improved Cash Flow\",\n      \"detail\": \"Your net cash flow has improved significantly. This indicates better financial health and more available funds.\",\n      \"metric_ref\": \"net_cash_flow.abs_change\",\n      \"evidence\": [\"net_cash_flow\"],\n      \"recommendation\": null\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "negative-cash-flow",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 752,
+      "output_tokens": 645,
+      "retries": 0,
+      "cost_usd": "0.00019992",
+      "insight_types": [
+        "anomaly",
+        "cash_timing",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 3028,
+          "started_at": "2026-10-29T00:34:21.190739+00:00",
+          "input_tokens": 752,
+          "output_tokens": 645,
+          "cache_read_input_tokens": 1669,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 3002,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00019992"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Your spending surged last month, requiring immediate attention",
+        "highlights": [
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Your expenses have risen sharply, impacting your cash flow negatively."
+          },
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Your net cash flow has turned negative, indicating a potential liquidity issue."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate has dropped significantly, affecting your financial health."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "warning",
+            "title": "Unexpected spike in spending",
+            "detail": "Your total expenses increased sharply, primarily due to a significant rise in Transportation costs. This change has led to a negative net cash flow, which could impact your financial stability.",
+            "metric_ref": "cash_flow.total_expenses.abs_change",
+            "evidence": [
+              "categories.increases[0]"
+            ],
+            "recommendation": {
+              "action": "Review and adjust your budget to accommodate the increased spending.",
+              "rationale": "The unexpected rise in expenses, particularly in Transportation, needs to be addressed to prevent further financial strain.",
+              "impact_ref": "cash_flow.total_expenses.abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "anomaly",
+            "severity": "warning",
+            "title": "Large anomaly in Transportation",
+            "detail": "There was a substantial anomaly in your Transportation spending, with a charge that was 43 times higher than usual. This anomaly could be due to an unexpected expense or error.",
+            "metric_ref": "anomalies[0].amount",
+            "evidence": [
+              "anomalies[0]"
+            ],
+            "recommendation": {
+              "action": "Investigate the anomaly to understand its cause and take corrective action if necessary.",
+              "rationale": "An anomaly of this magnitude can significantly impact your financial planning and should be reviewed to ensure accuracy.",
+              "impact_ref": "anomalies[0].amount"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "cash_timing",
+            "severity": "info",
+            "title": "Upcoming bills to consider",
+            "detail": "You have upcoming bills for Metro Transit and Bookshop. While these are expected, they should be factored into your cash flow planning.",
+            "metric_ref": "upcoming_bills[0].amount",
+            "evidence": [
+              "upcoming_bills[0]"
+            ],
+            "recommendation": {
+              "action": "Ensure these bills are accounted for in your budget to avoid any cash flow issues.",
+              "rationale": "Being aware of upcoming bills helps in maintaining a smooth cash flow and avoiding unexpected financial strain.",
+              "impact_ref": "upcoming_bills[0].amount"
+            },
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "refunds-exceed-spend",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2130,
+      "output_tokens": 1130,
+      "retries": 1,
+      "cost_usd": "0.00039900",
+      "insight_types": [
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2172,
+          "started_at": "2026-10-29T00:34:24.227504+00:00",
+          "input_tokens": 687,
+          "output_tokens": 565,
+          "cache_read_input_tokens": 1664,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2151,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "retry",
+          "validation_reason": "schema_invalid",
+          "validation_errors": [
+            "insights.2.type: Input should be 'spending_change', 'anomaly', 'income_change', 'budget', 'fee', 'free_trial', 'duplicate_charge', 'leakage', 'subscription', 'emergency_fund' or 'cash_timing'"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00017682"
+        },
+        {
+          "attempt": 1,
+          "call_outcome": "success",
+          "client_latency_ms": 2119,
+          "started_at": "2026-10-29T00:34:26.404307+00:00",
+          "input_tokens": 1443,
+          "output_tokens": 565,
+          "cache_read_input_tokens": 1620,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2051,
+          "truncated": false,
+          "validation_retry": true,
+          "validation_outcome": "partial",
+          "validation_reason": "schema_invalid",
+          "validation_errors": [
+            "insights.0.type: 'savings_rate' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights",
+            "insights.1.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights",
+            "insights.2.recommendation: contains a banned term (investments)"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00022218"
+        }
+      ],
+      "failures": [
+        "schema_drops",
+        "guardrail_hits"
+      ],
+      "summary": {
+        "headline": "Your finances are on track this month.",
+        "highlights": [
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate has increased significantly this month."
+          },
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Your net cash flow has improved substantially."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Your total expenses have decreased notably."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "positive",
+            "title": "Total expenses decreased",
+            "detail": "Your total expenses have decreased compared to the previous period. This is a positive change in your spending habits.",
+            "metric_ref": "cash_flow.total_expenses.value",
+            "evidence": [
+              "cash_flow.total_expenses"
+            ],
+            "recommendation": null,
+            "id": "ins_1"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 2,
+          "item_id": null,
+          "reasons": [
+            "insights.2.type: Input should be 'spending_change', 'anomaly', 'income_change', 'budget', 'fee', 'free_trial', 'duplicate_charge', 'leakage', 'subscription', 'emergency_fund' or 'cash_timing'"
+          ],
+          "item": {
+            "type": "total_expenses",
+            "severity": "positive",
+            "title": "Total expenses decreased",
+            "detail": "Your total expenses have decreased compared to the previous period. This is a positive change in your spending habits.",
+            "metric_ref": "cash_flow.total_expenses.value",
+            "evidence": [
+              "cash_flow.total_expenses"
+            ],
+            "recommendation": {
+              "action": "Review your spending to identify areas for further savings.",
+              "rationale": "Lower expenses can be redirected towards savings or investments.",
+              "impact_ref": "cash_flow.total_expenses.abs_change"
+            }
+          },
+          "expected": {},
+          "call": 0
+        },
+        {
+          "section": "insights",
+          "index": 0,
+          "item_id": null,
+          "reasons": [
+            "insights.0.type: 'savings_rate' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "savings_rate",
+            "severity": "positive",
+            "title": "Savings rate increased",
+            "detail": "Your savings rate has risen from the previous period. This is a positive sign of your financial health.",
+            "metric_ref": "cash_flow.savings_rate.value",
+            "evidence": [
+              "cash_flow.savings_rate"
+            ],
+            "recommendation": {
+              "action": "Continue saving at this rate.",
+              "rationale": "Maintaining a high savings rate is beneficial for your financial goals.",
+              "impact_ref": "cash_flow.savings_rate.abs_change"
+            }
+          },
+          "expected": {},
+          "call": 0
+        },
+        {
+          "section": "insights",
+          "index": 1,
+          "item_id": null,
+          "reasons": [
+            "insights.1.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "net_cash_flow",
+            "severity": "positive",
+            "title": "Net cash flow improved",
+            "detail": "Your net cash flow has increased significantly this month. This indicates a healthier financial position.",
+            "metric_ref": "cash_flow.net_cash_flow.value",
+            "evidence": [
+              "cash_flow.net_cash_flow"
+            ],
+            "recommendation": {
+              "action": "Keep monitoring your cash flow.",
+              "rationale": "A positive net cash flow is a good indicator of financial stability.",
+              "impact_ref": "cash_flow.net_cash_flow.abs_change"
+            }
+          },
+          "expected": {},
+          "call": 0
+        },
+        {
+          "section": "insights",
+          "index": 0,
+          "item_id": null,
+          "reasons": [
+            "insights.0.type: 'savings_rate' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "savings_rate",
+            "severity": "positive",
+            "title": "Savings rate increased",
+            "detail": "Your savings rate has risen from the previous period. This is a positive sign of your financial health.",
+            "metric_ref": "cash_flow.savings_rate.value",
+            "evidence": [
+              "cash_flow.savings_rate"
+            ],
+            "recommendation": {
+              "action": "Continue saving at this rate.",
+              "rationale": "Maintaining a high savings rate is beneficial for your financial goals.",
+              "impact_ref": "cash_flow.savings_rate.abs_change"
+            }
+          },
+          "expected": {},
+          "call": 1
+        },
+        {
+          "section": "insights",
+          "index": 1,
+          "item_id": null,
+          "reasons": [
+            "insights.1.type: 'net_cash_flow' is a highlight metric, not an insight type; net cash flow and savings rate belong in highlights"
+          ],
+          "item": {
+            "type": "net_cash_flow",
+            "severity": "positive",
+            "title": "Net cash flow improved",
+            "detail": "Your net cash flow has increased significantly this month. This indicates a healthier financial position.",
+            "metric_ref": "cash_flow.net_cash_flow.value",
+            "evidence": [
+              "cash_flow.net_cash_flow"
+            ],
+            "recommendation": {
+              "action": "Keep monitoring your cash flow.",
+              "rationale": "A positive net cash flow is a good indicator of financial stability.",
+              "impact_ref": "cash_flow.net_cash_flow.abs_change"
+            }
+          },
+          "expected": {},
+          "call": 1
+        },
+        {
+          "section": "recommendation",
+          "index": 2,
+          "item_id": null,
+          "reasons": [
+            "insights.2.recommendation: contains a banned term (investments)"
+          ],
+          "item": {
+            "action": "Review your spending to identify areas for further savings.",
+            "rationale": "Lower expenses can be redirected towards savings or investments.",
+            "impact_ref": "cash_flow.total_expenses.abs_change"
+          },
+          "expected": {
+            "cash_flow.total_expenses.abs_change": -1760.0
+          },
+          "call": 1
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Your finances are on track this month.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate has increased significantly this month.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Your net cash flow has improved substantially.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Your total expenses have decreased notably.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"savings_rate\",\n      \"severity\": \"positive\",\n      \"title\": \"Savings rate increased\",\n      \"detail\": \"Your savings rate has risen from the previous period. This is a positive sign of your financial health.\",\n      \"metric_ref\": \"savings_rate.value\",\n      \"evidence\": [\"cash_flow.savings_rate\"],\n      \"recommendation\": {\n        \"action\": \"Continue saving at this rate.\",\n        \"rationale\": \"Maintaining a high savings rate is beneficial for your financial goals.\",\n        \"impact_ref\": \"savings_rate.abs_change\"\n      }\n    },\n    {\n      \"type\": \"net_cash_flow\",\n      \"severity\": \"positive\",\n      \"title\": \"Net cash flow improved\",\n      \"detail\": \"Your net cash flow has increased significantly this month. This indicates a healthier financial position.\",\n      \"metric_ref\": \"cash_flow.net_cash_flow.value\",\n      \"evidence\": [\"cash_flow.net_cash_flow\"],\n      \"recommendation\": {\n        \"action\": \"Keep monitoring your cash flow.\",\n        \"rationale\": \"A positive net cash flow is a good indicator of financial stability.\",\n        \"impact_ref\": \"cash_flow.net_cash_flow.abs_change\"\n      }\n    },\n    {\n      \"type\": \"total_expenses\",\n      \"severity\": \"positive\",\n      \"title\": \"Total expenses decreased\",\n      \"detail\": \"Your total expenses have decreased compared to the previous period. This is a positive change in your spending habits.\",\n      \"metric_ref\": \"cash_flow.total_expenses.value\",\n      \"evidence\": [\"cash_flow.total_expenses\"],\n      \"recommendation\": {\n        \"action\": \"Review your spending to identify areas for further savings.\",\n        \"rationale\": \"Lower expenses can be redirected towards savings or investments.\",\n        \"impact_ref\": \"cash_flow.total_expenses.abs_change\"\n      }\n    }\n  ]\n}\n```",
+        "```json\n{\n  \"headline\": \"Your finances are on track this month.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Your savings rate has increased significantly this month.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Your net cash flow has improved substantially.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Your total expenses have decreased notably.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"savings_rate\",\n      \"severity\": \"positive\",\n      \"title\": \"Savings rate increased\",\n      \"detail\": \"Your savings rate has risen from the previous period. This is a positive sign of your financial health.\",\n      \"metric_ref\": \"savings_rate.value\",\n      \"evidence\": [\"cash_flow.savings_rate\"],\n      \"recommendation\": {\n        \"action\": \"Continue saving at this rate.\",\n        \"rationale\": \"Maintaining a high savings rate is beneficial for your financial goals.\",\n        \"impact_ref\": \"savings_rate.abs_change\"\n      }\n    },\n    {\n      \"type\": \"net_cash_flow\",\n      \"severity\": \"positive\",\n      \"title\": \"Net cash flow improved\",\n      \"detail\": \"Your net cash flow has increased significantly this month. This indicates a healthier financial position.\",\n      \"metric_ref\": \"cash_flow.net_cash_flow.value\",\n      \"evidence\": [\"cash_flow.net_cash_flow\"],\n      \"recommendation\": {\n        \"action\": \"Keep monitoring your cash flow.\",\n        \"rationale\": \"A positive net cash flow is a good indicator of financial stability.\",\n        \"impact_ref\": \"cash_flow.net_cash_flow.abs_change\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"positive\",\n      \"title\": \"Total expenses decreased\",\n      \"detail\": \"Your total expenses have decreased compared to the previous period. This is a positive change in your spending habits.\",\n      \"metric_ref\": \"cash_flow.total_expenses.value\",\n      \"evidence\": [\"cash_flow.total_expenses\"],\n      \"recommendation\": {\n        \"action\": \"Review your spending to identify areas for further savings.\",\n        \"rationale\": \"Lower expenses can be redirected towards savings or investments.\",\n        \"impact_ref\": \"cash_flow.total_expenses.abs_change\"\n      }\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "stale-and-incomplete-accounts",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 653,
+      "output_tokens": 614,
+      "retries": 0,
+      "cost_usd": "0.00018654",
+      "insight_types": [
+        "budget",
+        "cash_timing",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2762,
+          "started_at": "2026-10-29T00:34:28.528059+00:00",
+          "input_tokens": 653,
+          "output_tokens": 614,
+          "cache_read_input_tokens": 1656,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2736,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00018654"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Your finances are on track, but watch your spending closely.",
+        "highlights": [
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Your total expenses have increased slightly, but you're still on track."
+          },
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Your net cash flow has decreased slightly, but remains positive."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate has decreased slightly, but is still healthy."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending increased",
+            "detail": "Your spending on Food & Drink has increased by {{categories.increases[0].abs_change}}. This is due to higher spending in this category. It's important to monitor this to ensure it doesn't exceed your budget.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]"
+            ],
+            "recommendation": {
+              "action": "Review your spending on Food & Drink and adjust your budget if necessary.",
+              "rationale": "To prevent exceeding your budget for this category.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "budget",
+            "severity": "info",
+            "title": "Most budgets are on track",
+            "detail": "Most of your budgets are on track, with only a few dollars remaining in each. Continue to monitor these to ensure you stay within your planned spending limits.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]",
+              "budgets.items[1]",
+              "budgets.items[2]",
+              "budgets.items[3]"
+            ],
+            "recommendation": null,
+            "id": "ins_2"
+          },
+          {
+            "type": "cash_timing",
+            "severity": "info",
+            "title": "Upcoming bills to watch",
+            "detail": "You have upcoming bills for Metro Transit and Bookshop. Ensure you have enough funds to cover these to avoid any disruptions in service.",
+            "metric_ref": "upcoming_bills[0].amount",
+            "evidence": [
+              "upcoming_bills[0]",
+              "upcoming_bills[1]"
+            ],
+            "recommendation": {
+              "action": "Ensure you have enough funds to cover the upcoming bills.",
+              "rationale": "To avoid any disruptions in service.",
+              "impact_ref": "upcoming_bills[0].amount"
+            },
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "mixed-currency",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 650,
+      "output_tokens": 470,
+      "retries": 0,
+      "cost_usd": "0.00015180",
+      "insight_types": [
+        "cash_timing",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2044,
+          "started_at": "2026-10-29T00:34:31.297859+00:00",
+          "input_tokens": 650,
+          "output_tokens": 470,
+          "cache_read_input_tokens": 1656,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2018,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.0001518"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Your finances are on track this month.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Net cash flow decreased slightly this month."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Total expenses increased slightly this month."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate decreased slightly this month."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending increased",
+            "detail": "Spending on Food & Drink increased by {{categories.increases[0].abs_change}}. This is due to higher spending in this category. It's important to monitor this to ensure it stays within budget.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]"
+            ],
+            "recommendation": {
+              "action": "Monitor Food & Drink spending closely.",
+              "rationale": "While the increase is within budget, it's important to keep an eye on this category to prevent overspending.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "cash_timing",
+            "severity": "info",
+            "title": "Upcoming bills to watch",
+            "detail": "There are upcoming bills for Metro Transit and Bookshop. Keeping an eye on these will help manage cash flow effectively.",
+            "metric_ref": "upcoming_bills[0].amount",
+            "evidence": [
+              "upcoming_bills[0]",
+              "upcoming_bills[1]"
+            ],
+            "recommendation": {
+              "action": "Prepare for upcoming bills.",
+              "rationale": "Ensuring funds are available for these bills will help maintain a positive cash flow.",
+              "impact_ref": "upcoming_bills[0].amount"
+            },
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "uncategorized-heavy",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 820,
+      "output_tokens": 646,
+      "retries": 0,
+      "cost_usd": "0.00020424",
+      "insight_types": [
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2810,
+          "started_at": "2026-10-29T00:34:33.348126+00:00",
+          "input_tokens": 820,
+          "output_tokens": 646,
+          "cache_read_input_tokens": 1684,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2787,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00020424"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Your finances are on track this month.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Net cash flow has decreased, but you're still on track."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Total expenses have increased, but you're still within budget."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate has decreased slightly."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Increase in total expenses",
+            "detail": "Total expenses have increased this month. This is due to higher spending in the 'Uncategorized' category. While this is a change, it does not impact your overall budget status.",
+            "metric_ref": "cash_flow.total_expenses.abs_change",
+            "evidence": [
+              "categories.increases[0]"
+            ],
+            "recommendation": {
+              "action": "Monitor your spending in the 'Uncategorized' category.",
+              "rationale": "While the increase is within budget, keeping an eye on this category can help maintain your financial plan.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Decrease in net cash flow",
+            "detail": "Net cash flow has decreased this month. This is due to the increase in total expenses. Despite the decrease, your financial plan remains on track.",
+            "metric_ref": "cash_flow.net_cash_flow.abs_change",
+            "evidence": [
+              "cash_flow.net_cash_flow"
+            ],
+            "recommendation": {
+              "action": "Continue to monitor your cash flow regularly.",
+              "rationale": "Regular monitoring will help you stay aware of any significant changes in your financial situation.",
+              "impact_ref": "cash_flow.net_cash_flow.abs_change"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Decrease in savings rate",
+            "detail": "Your savings rate has decreased slightly this month. This is due to the increase in total expenses and unchanged income. While the decrease is minor, it's important to keep an eye on your savings rate.",
+            "metric_ref": "cash_flow.savings_rate.abs_change",
+            "evidence": [
+              "cash_flow.savings_rate"
+            ],
+            "recommendation": {
+              "action": "Consider adjusting your savings goals if necessary.",
+              "rationale": "A slight decrease in savings rate might require a review of your savings targets to ensure you stay on track with your financial goals.",
+              "impact_ref": "cash_flow.savings_rate.abs_change"
+            },
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "all-candidates",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 1305,
+      "output_tokens": 686,
+      "retries": 0,
+      "cost_usd": "0.00024294",
+      "insight_types": [
+        "anomaly",
+        "fee",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 3288,
+          "started_at": "2026-10-29T00:34:36.161566+00:00",
+          "input_tokens": 1305,
+          "output_tokens": 686,
+          "cache_read_input_tokens": 1704,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 3252,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00024294"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Your spending is higher than expected, requiring immediate attention.",
+        "highlights": [
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Your total expenses have increased significantly this period."
+          },
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Your net cash flow has decreased sharply, indicating a potential cash flow issue."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Your savings rate has dropped, which may affect your long-term financial goals."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "warning",
+            "title": "Unexpected spending increase",
+            "detail": "Your total expenses have increased by {{cash_flow.total_expenses.abs_change}}. This is due to higher spending in several categories, particularly Shopping and Food & Drink. It's important to review these expenses to understand the cause and adjust your budget accordingly.",
+            "metric_ref": "cash_flow.total_expenses.abs_change",
+            "evidence": [
+              "categories.increases[0].abs_change",
+              "categories.increases[1].abs_change"
+            ],
+            "recommendation": {
+              "action": "Review and adjust your budget for the categories with the highest increases.",
+              "rationale": "To ensure you stay within your financial limits and avoid overspending.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "anomaly",
+            "severity": "warning",
+            "title": "Duplicate charges detected",
+            "detail": "There are duplicate charges from Gadget Hub and Pet Supplies. These charges should be investigated and potentially reversed to avoid unnecessary spending.",
+            "metric_ref": "insight_candidates[0].data.amount",
+            "evidence": [
+              "insight_candidates[0]",
+              "insight_candidates[3]"
+            ],
+            "recommendation": {
+              "action": "Contact the merchants to resolve the duplicate charges.",
+              "rationale": "To recover the duplicated amounts and prevent future occurrences.",
+              "impact_ref": "insight_candidates[0].data.amount"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "fee",
+            "severity": "warning",
+            "title": "Unusual fees incurred",
+            "detail": "You have incurred fees totaling {{insight_candidates[4].data.total}}. These include overdraft and ATM fees. It's important to review your account to understand the cause and take steps to avoid these fees in the future.",
+            "metric_ref": "insight_candidates[4].data.total",
+            "evidence": [
+              "insight_candidates[4]"
+            ],
+            "recommendation": {
+              "action": "Review your banking activity to understand the cause of these fees and take steps to avoid them.",
+              "rationale": "To prevent unnecessary fees and maintain a healthy bank balance.",
+              "impact_ref": "insight_candidates[4].data.total"
+            },
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    }
+  ],
+  "finished_at": "2026-10-29T00:34:39+00:00",
+  "status": "completed",
+  "passed": false
+}

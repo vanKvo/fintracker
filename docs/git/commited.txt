@@ -354,3 +354,2373 @@ docs/fintracker-ledger-doc/TXT-transaction-types-spec.md
 docs/fintracker-ledger-doc/TXT-transaction-types-tests.md
 docs/fintracker-ledger-doc/ledger-api-endpoints
 docs/fintracker-data-pipelines/DPTXT-data-pipeline-transactions-type-category-spec.md
+------------------------
+### October 20, 2026 ###
+------------------------
+
+# ============================================================================================
+# FS Financial Summary MVP (2026-10-09). Spec: docs/fintracker-analytics/FS-financial-summary-updated.md
+# Read "FS: files with earlier uncommitted work" in pending_commits.md before running.
+# ============================================================================================
+
+# --- fintracker-ledger: FS-23 last_synced_at -------------------------------------------------
+
+[commit]
+repo: services/fintracker-ledger
+message: FS-23: Added failing tests for a nullable last_synced_at column on accounts, needed to flag automatically synced accounts that have gone stale.
+src/test/java/com/fintracker/ledger/account/AccountLastSyncedAtMigrationIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: FS-23: Added a nullable last_synced_at column to accounts so the Financial Summary can flag automatically synced accounts not synced in 72 hours.
+src/main/resources/db/migration/V24__Add_Account_Last_Synced_At.sql
+
+# --- fintracker-user-profile: internal settings route ----------------------------------------
+
+[commit]
+repo: services/fintracker-user-profile
+message: FS-02: Added failing tests for an IAM-authenticated internal route that returns a user's timezone and currency to allowlisted services only.
+tests/unit/identity/test_internal_settings.py
+
+[commit]
+repo: services/fintracker-user-profile
+message: FS-02: Added an IAM-authenticated internal settings route so Analytics can read a user's timezone and primary currency for summary periods.
+app/identity/service.py
+app/identity/internal_handlers.py
+
+# --- fintracker-analytics: FS-02 identity from the authorizer --------------------------------
+# 2026-10-18 AI refactor (D4): the MCP tools, legacy Bedrock insights and every LLM part of the
+# summary moved to services/fintracker-ai-assistant (blocks further down), so they are no longer here.
+
+[commit]
+repo: services/fintracker-analytics
+message: FS-02: Added failing tests requiring every Analytics route to take the user only from the authorizer context and to sign service calls with IAM.
+tests/conftest.py
+tests/http_api_event.py
+tests/core/__init__.py
+tests/core/test_identity.py
+tests/core/test_routes_auth.py
+
+[commit]
+repo: services/fintracker-analytics
+message: FS-02: Analytics routes now take the user from the Lambda authorizer context only, ignore client-sent user IDs and sign service calls with SigV4.
+src/core/identity.py
+src/core/problems.py
+src/core/sigv4.py
+src/main.py <= snapshots/fintracker-analytics/main_fs02.py
+src/dashboard/router.py <= snapshots/fintracker-analytics/dashboard_router_fs02.py
+src/reports/router.py <= snapshots/fintracker-analytics/reports_router_fs02.py
+
+# --- fintracker-analytics: facts engine and detectors (FS-01, FS-03 … FS-09, FS-23 … FS-30) ---
+
+[commit]
+repo: services/fintracker-analytics
+message: FS-03: Added failing tests for the facts payload, periods, cash flow, categories, anomalies, budgets, data quality flags, section registry and insight detectors.
+tests/summary/__init__.py
+tests/summary/builders.py
+tests/summary/test_periods.py
+tests/summary/test_cash_flow_and_categories.py
+tests/summary/test_anomalies_and_budgets.py
+tests/summary/test_data_quality_and_payload.py
+tests/summary/test_profile_client.py
+tests/summary/detectors/__init__.py
+tests/summary/detectors/test_detectors.py
+tests/summary/detectors/test_framework.py
+tests/integration/conftest.py
+tests/integration/test_summary_repository.py
+
+[commit]
+repo: services/fintracker-analytics
+message: FS-03: Added the facts engine and insight detectors, which compute every number in the Financial Summary from the user's own transactions and budgets.
+src/summary/__init__.py
+src/summary/periods.py
+src/summary/models.py
+src/summary/inclusion.py
+src/summary/schema.py
+src/summary/registry.py
+src/summary/payload.py
+src/summary/repository.py
+src/summary/profile_client.py
+src/summary/sections
+src/summary/detectors
+
+# --- fintracker-analytics: evaluation fixtures (FS-20) -----------------------------------------
+# Test data only: the builder and the facts payload fixtures. The AI assistant keeps a copy.
+
+[commit]
+repo: services/fintracker-analytics
+message: FS-20: Added the fixture builder and 24 synthetic-user facts payloads for the evaluation set, with tests that keep them current and schema-valid.
+scripts/__init__.py
+scripts/build_fs_fixtures.py
+tests/fixtures/fs
+tests/summary/test_fixtures.py
+
+# --- fintracker-analytics: facts API and internal routes for the AI assistant (D4, 2026-10-18) --
+
+[commit]
+repo: services/fintracker-analytics
+message: ARCH-D4: Added failing tests for the facts-only summary API and IAM-authenticated internal routes that serve facts and aggregates to the AI assistant only.
+tests/summary/test_service.py
+tests/summary/test_router.py
+tests/core/test_internal_routes.py
+
+[commit]
+repo: services/fintracker-analytics
+message: ARCH-D4: Analytics now serves the summary periods and facts payload plus internal routes for the AI assistant, and no longer calls an LLM or stores summary data.
+src/core/internal_auth.py
+src/summary/service.py
+src/summary/router.py
+src/dashboard/router.py
+src/reports/router.py
+src/insights/router.py
+src/main.py
+.github/workflows/ci.yml
+pyproject.toml
+poetry.lock
+README.md
+
+# --- fintracker-ai-assistant: new service (D4, 2026-10-18) --------------------------------------
+# New local repo (git init, no commits, no remote yet). Holds the LLM code moved from Analytics:
+# FS-10/FS-21/FS-22 land here directly instead of in Analytics.
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: ARCH-D4: Added failing tests for the AI assistant's facts client and MCP tools, which must read Analytics, Ledger and User Profile data only through signed service calls.
+tests/__init__.py
+tests/conftest.py
+tests/http_api_event.py
+tests/summary/__init__.py
+tests/summary/test_facts_client.py
+tests/tools
+tests/insights
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: ARCH-D4: Created the AI assistant service with the MCP tools and legacy insights moved from Analytics, reading all data through signed calls to the owning services.
+.gitignore
+pyproject.toml
+poetry.lock
+README.md
+src/__init__.py
+src/core
+src/tools
+src/insights
+src/summary/__init__.py
+src/summary/contract.py
+src/summary/facts_client.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: FS-10: Added failing tests for prompt building, Bedrock calls, the shared retry and deadline, output schema, grounding, advice guardrails and the facts-only fallback.
+tests/summary/samples.py
+tests/fixtures/samples
+tests/summary/test_validation.py
+tests/summary/test_prompt_and_projection.py
+tests/summary/test_generation.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: FS-10: Added summary generation on Bedrock with schema, grounding and banned-term checks, so only grounded, in-scope text reaches users and anything else falls back.
+src/summary/config.py
+src/summary/projection.py
+src/summary/prompt
+src/summary/llm.py
+src/summary/validation.py
+src/summary/fallback.py
+src/summary/generation.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: FS-21: Added failing tests for the summary cache, refresh limit, cost guard, audit trail, account deletion, log redaction and the summary API.
+tests/summary/test_store_guard_audit.py
+tests/summary/test_log_redaction.py
+tests/summary/test_service.py
+tests/summary/test_router.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: FS-21: Added the summary API with caching, per-user and daily LLM limits that fail closed, audit records and a CI log redaction check.
+src/summary/store.py
+src/summary/cost_guard.py
+src/summary/audit.py
+src/summary/deletion.py
+src/summary/service.py
+src/summary/router.py
+src/main.py
+scripts/__init__.py
+scripts/check_log_redaction.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: FS-20: Added failing tests and the 24-fixture evaluation set for run modes, cost cap, tier order, replay tests and the eval-required check.
+tests/fixtures/fs
+tests/summary/test_eval.py
+tests/summary/test_replay.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: FS-22: Added the evaluation runner, dry run, S3 results and eval-required check, with CI and an owner-approved workflow as the only way to start a paid run.
+src/summary/eval
+.github/workflows/ci.yml
+.github/workflows/llm-eval.yml
+
+# --- fintracker-ui: Financial Summary panel (FS-01, FS-13 … FS-15) -----------------------------
+
+[commit]
+repo: fintracker-ui
+message: FS-13: Added failing tests for the Financial Summary panel, its service and the fact formatting used to render AI text.
+src/app/core/services/financial-summary.service.spec.ts
+src/app/features/reports/financial-summary/financial-summary.spec.ts
+src/app/features/reports/financial-summary/summary-format.spec.ts
+
+[commit]
+repo: fintracker-ui
+message: FS-13: Replaced the mocked AI narrative and insights on the Reports page with the live Financial Summary panel, rendering every number from computed facts.
+src/app/core/services/financial-summary.service.ts
+src/app/features/reports/financial-summary/financial-summary.ts
+src/app/features/reports/financial-summary/financial-summary.html
+src/app/features/reports/financial-summary/financial-summary.scss
+src/app/features/reports/financial-summary/summary-format.ts
+src/app/features/reports/reports.html
+src/app/features/reports/reports.ts
+src/app/features/reports/reports.scss
+src/app/core/services/reports.service.ts
+proxy.conf.json
+
+# --- root: docs ------------------------------------------------------------------------------
+
+[commit]
+repo: .
+message: FS-01: Added the FS test inventory, implementation plan and run instructions.
+docs/fintracker-analytics/FS-tests.md
+docs/instructions/run_financial_summary.md
+docs/implementation_plans/2026-10-08_fs_financial_summary.md
+
+# ============================================================================================
+# Architecture doc review (2026-10-15)
+# ============================================================================================
+
+[commit]
+repo: .
+message: ARCH-DOC: Updated the architecture doc to match the implemented User profile, Data pipeline and Ledger flows and to move all LLM work from Analytics into the AI assistant service.
+docs/fintracker-architecture/fintracker-architectural-doc.md
+
+# ============================================================================================
+# AI refactor (2026-10-18): architecture doc notes
+# CLAUDE.md was also updated, but it is gitignored, so there is nothing to commit for it.
+# ============================================================================================
+
+[commit]
+repo: .
+message: ARCH-D4: Added notes on moving all LLM code from Analytics into the new AI assistant service, with the architecture doc review findings and proposed spec updates.
+docs/fintracker-architecture/2026-10-18_ai-assistant-extraction-notes.md
+
+# ============================================================================================
+# DP-Ledger Categories, Phase 2: Ledger ingest and review (T4–T7), 2026-10-20
+# Commit after the FS-23 blocks above: V24 is theirs, these add V25–V27.
+# ============================================================================================
+
+# --- Bug found while running the suite: RLS policies fail after the user context is reset ---
+
+[commit]
+repo: services/fintracker-ledger
+message: REQ-1.1: Added a failing test showing queries without a user context fail on a pooled connection whose user setting was reset, and made a category test query as a user.
+src/test/java/com/fintracker/ledger/config/RlsResetConnectionIT.java
+src/test/java/com/fintracker/ledger/category/CategoryCodeMigrationIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: REQ-1.1: Made every RLS policy treat a reset user setting as no user, so context-free queries such as the month-end budget job no longer fail on reused connections.
+src/main/resources/db/migration/V25__Rls_Treat_Reset_User_As_No_User.sql
+
+[commit]
+repo: .
+message: REQ-1.1: Documented why RLS policies failed on connections whose user context was reset and how V25 fixes it.
+docs/bugs/2026-10-20_bug_rls_policies_fail_after_user_context_reset.md
+
+# --- T4: source_category and merchant_key on transactions ---
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Added failing tests for storing a transaction's category id, the bank's original label and the merchant key.
+src/test/java/com/fintracker/ledger/testsupport/LedgerFixtures.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-columns/LedgerFixtures.java
+src/test/java/com/fintracker/ledger/transaction/repository/TransactionCategoryColumnsIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Stored each transaction's category id, the bank's original label and the merchant key, so the user can see why a row got its category and merchant rules have a key to match.
+src/main/resources/db/migration/V26__Add_Transaction_Source_Category_And_Merchant_Key.sql
+src/main/java/com/fintracker/ledger/transaction/model/Transaction.java
+src/main/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepository.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-columns/JooqTransactionRepository.java
+
+# --- T5: statement package v2 with per-row results ---
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-05: Added failing tests for the statement package carrying category ids, storing unusable categories as uncategorized with a reason, and per-row results.
+src/test/java/com/fintracker/ledger/transaction/controller/StatementIngestCategoryIT.java
+src/test/java/com/fintracker/ledger/transaction/service/TestCategories.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/TestCategories.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionServiceTest.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/TransactionServiceTest.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionTypeServiceTest.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/TransactionTypeServiceTest.java
+src/test/java/com/fintracker/ledger/transaction/service/BulkCreateAmountValidationTest.java
+src/test/java/com/fintracker/ledger/transaction/controller/InternalTransactionControllerTest.java
+src/test/java/com/fintracker/ledger/InternalApiSecurityIT.java
+src/test/java/com/fintracker/ledger/config/InternalEndpointSecurityIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-05: Validated each imported row's category id against the Ledger's categories, stored unusable ones as uncategorized with a reason, and reported a result per row so retries and stale pipeline categories never fail an import.
+src/main/java/com/fintracker/ledger/transaction/dto/BulkCreateTransactionsRequest.java
+src/main/java/com/fintracker/ledger/transaction/dto/BulkCreateTransactionsResponse.java
+src/main/java/com/fintracker/ledger/transaction/service/IngestCatalog.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionCategoryResolver.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/TransactionCategoryResolver.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionService.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/TransactionService.java
+src/main/java/com/fintracker/ledger/transaction/service/impl/TransactionServiceImpl.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/TransactionServiceImpl.java
+src/main/java/com/fintracker/ledger/transaction/controller/InternalTransactionController.java
+src/main/java/com/fintracker/ledger/transaction/repository/TransactionRepository.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/TransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepository.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-05/JooqTransactionRepository.java
+
+# --- T6: recategorize by category id (fixes custom categories saved as Uncategorized) ---
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Added failing tests for recategorizing by category id, resolving category names against the database and a picker list that includes custom categories.
+src/test/java/com/fintracker/ledger/transaction/controller/TransactionRecategorizeIT.java
+src/test/java/com/fintracker/ledger/testsupport/LedgerFixtures.java
+src/test/java/com/fintracker/ledger/transaction/service/TestCategories.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionServiceTest.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-recategorize/TransactionServiceTest.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionTypeServiceTest.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Recategorized transactions by category id from the user's active categories, so custom categories are no longer saved as Uncategorized and the id and text always agree.
+src/main/java/com/fintracker/ledger/category/repository/CategoryRepository.java
+src/main/java/com/fintracker/ledger/category/repository/JooqCategoryRepository.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionCategoryResolver.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionService.java
+src/main/java/com/fintracker/ledger/transaction/service/impl/TransactionServiceImpl.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-recategorize/TransactionServiceImpl.java
+src/main/java/com/fintracker/ledger/transaction/dto/UpdateTransactionRequest.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-recategorize/UpdateTransactionRequest.java
+src/main/java/com/fintracker/ledger/transaction/controller/TransactionController.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-recategorize/TransactionController.java
+src/main/java/com/fintracker/ledger/transaction/repository/TransactionRepository.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-recategorize/TransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepository.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-04-recategorize/JooqTransactionRepository.java
+
+[commit]
+repo: .
+message: DP-LEDGER-CATEGORIES-04: Documented why recategorizing to a custom category saved it as Uncategorized and how resolving categories against the database fixes it.
+docs/bugs/2026-10-20_bug_custom_category_saved_as_uncategorized.md
+
+# --- T7: per-user merchant rules ---
+
+[commit]
+repo: services/fintracker-ledger
+message: REQ-DP-09: Added failing tests for per-user merchant rules saved by "Always use this", filling other pending uncategorized rows, bulk categorize and serving rules to the pipeline.
+src/test/java/com/fintracker/ledger/merchantrule/MerchantRuleIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: REQ-DP-09: Added per-user merchant rules that "Always use this for <merchant>" saves and the pipeline applies first, so one user's choice never changes another user's categories.
+src/main/resources/db/migration/V27__Add_User_Merchant_Rules.sql
+src/main/java/com/fintracker/ledger/merchantrule/model/MerchantRule.java
+src/main/java/com/fintracker/ledger/merchantrule/repository/MerchantRuleRepository.java
+src/main/java/com/fintracker/ledger/merchantrule/repository/JooqMerchantRuleRepository.java
+src/main/java/com/fintracker/ledger/merchantrule/service/MerchantRuleService.java
+src/main/java/com/fintracker/ledger/transaction/repository/TransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/dto/UpdateTransactionRequest.java
+src/main/java/com/fintracker/ledger/transaction/dto/BulkActionRequest.java
+src/main/java/com/fintracker/ledger/transaction/controller/TransactionController.java
+src/main/java/com/fintracker/ledger/category/dto/InternalUserCategoriesResponse.java
+src/main/java/com/fintracker/ledger/category/controller/InternalCategoryController.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Added a one-time script that fills in category ids on existing transactions from their category text.
+scripts/one-time/2026-10-20_DP-LEDGER-CATEGORIES-04_backfill_transaction_category_id.sql
+
+# --- Follow-ups after review (2026-10-20): 404 for another user, obsolete code, manual category id ---
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-02: Changed the internal user categories test to expect 404 for another user's categories, as cross-tenant requests must never answer 403.
+src/test/java/com/fintracker/ledger/category/InternalCategoryControllerIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-02: Answered 404 instead of 403 when an internal caller asks for another user's categories, so the endpoint never confirms another tenant exists.
+src/main/java/com/fintracker/ledger/config/GlobalExceptionHandler.java <= snapshots/fintracker-ledger/DP-LEDGER-CATEGORIES-02-404/GlobalExceptionHandler.java
+src/main/java/com/fintracker/ledger/category/service/CategoryCatalogService.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Removed the TransactionCategory enum and the unused CategoryInUseException now that categories come only from the database and deleting deactivates.
+src/main/java/com/fintracker/ledger/transaction/model/TransactionCategory.java
+src/test/java/com/fintracker/ledger/transaction/model/TransactionCategoryTest.java
+src/main/java/com/fintracker/ledger/category/exception/CategoryInUseException.java
+src/main/java/com/fintracker/ledger/config/GlobalExceptionHandler.java
+src/test/java/com/fintracker/ledger/category/service/CategoryServiceTest.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Added failing tests for storing the category id on manually added transactions and rejecting unknown category names.
+src/test/java/com/fintracker/ledger/transaction/controller/ManualTransactionCategoryIT.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionServiceTest.java
+
+[commit]
+repo: services/fintracker-ledger
+message: DP-LEDGER-CATEGORIES-04: Stored the category id on manually added transactions, resolved from the user's active categories, so manual and imported rows are categorized the same way.
+src/main/java/com/fintracker/ledger/transaction/service/impl/TransactionServiceImpl.java
+
+# ============================================================================================
+# DP-Ledger Categories, Phase 3: Data Pipeline (T8–T13), 2026-10-20
+# ============================================================================================
+
+# --- T8: MerchantCategoryMap ---
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-06: Added failing tests for the MerchantCategoryMap seed, pattern matching by priority and the cached DynamoDB lookup.
+tests/test_merchant_category_map.py
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-06: Moved merchant patterns from hard-coded regex into a seeded MerchantCategoryMap DynamoDB table so PDF rows are categorized by reviewed data instead of code.
+infrastructure/seed/merchant_category_map_seed.sql
+infrastructure/seed/merchant_category_map.json
+scripts/__init__.py
+scripts/build_merchant_category_map.py
+src/categorizer/merchant_map.py
+infrastructure/terraform/environments/dev/main.tf <= snapshots/fintracker-data-pipeline/DP-LEDGER-CATEGORIES-06/main.tf
+infrastructure/terraform/environments/dev/variables.tf <= snapshots/fintracker-data-pipeline/DP-LEDGER-CATEGORIES-06/variables.tf
+infrastructure/terraform/environments/dev/terraform.tfvars.example <= snapshots/fintracker-data-pipeline/DP-LEDGER-CATEGORIES-06/terraform.tfvars.example
+
+# --- T9: categories client and cache ---
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-02: Added failing tests for caching the Ledger's SYSTEM categories with ETag refresh, keeping a stale copy on failure and fetching a user's categories per upload.
+tests/test_categories_client.py
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-02: Added a read-only copy of the Ledger's categories, refreshed every 5 minutes with If-None-Match, so the pipeline maps rows to valid Ledger categories without owning any.
+src/categories/__init__.py
+src/categories/models.py
+src/categories/client.py
+src/shared/exceptions.py
+
+# --- T10: resolver ---
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-03: Added failing tests for resolving every row to a Ledger category id through merchant rules, bank labels, the merchant map and uncategorized.
+tests/__init__.py
+tests/category_fixtures.py
+tests/test_category_resolver.py
+tests/test_categorizer.py
+tests/test_normalizer.py
+tests/test_normalizer_handler.py
+tests/test_data_pipeline_spec_acceptance.py <= snapshots/fintracker-data-pipeline/DP-LEDGER-CATEGORIES-03/test_data_pipeline_spec_acceptance.py
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-03: Resolved every row to a Ledger category id (user rule, bank label, merchant map, then uncategorized) and kept the bank's label and a merchant key, so the user reviews exactly what the Ledger stores.
+src/categorizer/bank_categories.py
+src/categorizer/merchant_key.py
+src/categorizer/schemas.py
+src/categorizer/service.py
+src/normalizer/handler.py
+src/normalizer/schemas.py
+src/normalizer/service.py
+
+# --- T11: dispatcher package v2 ---
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-04: Added failing tests for sending one package per statement with category ids, bank labels and merchant keys, and logging rows the Ledger stored as uncategorized.
+tests/test_data_dispatcher_ledger_push.py
+tests/test_data_dispatcher_security.py
+tests/test_data_pipeline_spec_acceptance.py
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-04: Sent the Ledger one package per statement with category ids, bank labels and merchant keys, and logged the rows it stored as uncategorized.
+src/data_dispatcher/service.py
+
+# --- T12: infrastructure ---
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-02: Gave the Normalizer the Ledger URL, alarmed on failed category refreshes and output the role ARNs the Ledger must allow.
+infrastructure/terraform/environments/dev/main.tf <= snapshots/fintracker-data-pipeline/DP-LEDGER-CATEGORIES-02-infra/main.tf
+infrastructure/terraform/environments/dev/variables.tf <= snapshots/fintracker-data-pipeline/DP-LEDGER-CATEGORIES-02-infra/variables.tf
+infrastructure/terraform/environments/dev/outputs.tf
+infrastructure/terraform/modules/lambda_function/outputs.tf
+
+# --- T13: HTTP API identity and job ownership ---
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: REQ-DP-06: Added failing tests requiring the job status and column-mapping routes to act only for the authorizer's internal user and only on that user's own job.
+tests/test_http_api_identity.py
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: REQ-DP-06: Switched the pipeline API to the User Profile identity authorizer and checked job ownership before resuming an upload, so users see their own jobs and cannot resume anyone else's.
+src/shared/identity.py
+src/statement_ingestion/status_handler.py
+src/gatekeeper/csv_col_mapping_confirmation_handler.py
+infrastructure/terraform/modules/http_api/main.tf
+infrastructure/terraform/modules/http_api/variables.tf
+infrastructure/terraform/environments/dev/main.tf
+infrastructure/terraform/environments/dev/variables.tf
+infrastructure/terraform/environments/dev/terraform.tfvars.example
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-LEDGER-CATEGORIES-06: Documented the MerchantCategoryMap table, its seed regeneration and the User Profile authorizer in the Terraform README.
+infrastructure/terraform/README.md
+
+[commit]
+repo: .
+message: REQ-DP-06: Documented why the pipeline API matched no user's jobs and let anyone resume an upload, and how the identity authorizer and ownership check fix it.
+docs/bugs/2026-10-20_bug_data_pipeline_api_uses_cognito_sub_and_skips_job_ownership.md
+
+# ============================================================================================
+# DP-Ledger Categories, Phase 4: UI (T14–T15), 2026-10-20
+# ============================================================================================
+
+[commit]
+repo: fintracker-ui
+message: DP-LEDGER-CATEGORIES-04: Added failing tests for showing the bank label, highlighting uncategorized rows, recategorizing by id with "Always use this" and bulk categorize.
+src/app/core/services/transaction.service.spec.ts
+src/app/features/transactions/transaction-detail-panel/transaction-detail-panel.spec.ts
+src/app/features/transactions/transactions.spec.ts
+
+[commit]
+repo: fintracker-ui
+message: DP-LEDGER-CATEGORIES-04: Showed the bank's label and highlighted uncategorized rows in the Pending tab, recategorized by category id with "Always use this for <merchant>" on by default, and made bulk Categorize work.
+src/app/core/services/category.service.ts
+src/app/core/services/transaction.service.ts
+src/app/features/transactions/transactions.ts
+src/app/features/transactions/transactions.html
+src/app/features/transactions/transactions.scss
+src/app/features/transactions/transaction-detail-panel/transaction-detail-panel.ts
+src/app/features/transactions/transaction-detail-panel/transaction-detail-panel.html
+src/app/features/transactions/transaction-detail-panel/transaction-detail-panel.scss
+
+[commit]
+repo: fintracker-ui
+message: DP-LEDGER-CATEGORIES-02: Added failing tests for deleting an in-use category without moving its transactions.
+src/app/features/settings/delete-category-dialog/delete-category-dialog.spec.ts
+
+[commit]
+repo: fintracker-ui
+message: DP-LEDGER-CATEGORIES-02: Made moving a deleted category's transactions optional, since deleting now deactivates the category and its transactions keep it.
+src/app/features/settings/delete-category-dialog/delete-category-dialog.ts
+src/app/features/settings/delete-category-dialog/delete-category-dialog.html
+src/app/features/settings/delete-category-dialog/delete-category-dialog.scss
+src/app/features/settings/manage-categories/manage-categories.ts
+
+# ============================================================================================
+# DP-Ledger Categories, Phase 5: deploy readiness and docs (T16), 2026-10-20
+# ============================================================================================
+
+[commit]
+repo: .
+message: DP-LEDGER-CATEGORIES-05: Added the Phase 2–4 test inventory, implementation notes with proposed spec changes, and the deploy runbook, and updated the Phase 1 inventory for the 404 change and the removed enum tests.
+docs/fintracker-cross-services/dp-ledger-categories-tests-02.md
+docs/fintracker-cross-services/dp-ledger-categories-tests.md
+docs/fintracker-cross-services/2026-10-20_dp_ledger_categories_implementation_notes.md
+docs/instructions/deploy_dp_ledger_categories.md
+
+
+# LG-BUD-05 (was LG-CAT-01 #8): budgets match categories by categoryId (2026-10-21)
+# Note: the four transaction/* main files below also hold earlier uncommitted DP-LEDGER-CATEGORIES-04 edits.
+[commit]
+repo: services/fintracker-ledger
+message: LG-BUD-05: Added failing tests for budget lines and templates matching transaction categories by categoryId instead of by name.
+src/test/java/com/fintracker/ledger/budget/BudgetCategoryIdMatchingIT.java
+src/test/java/com/fintracker/ledger/budget/AbstractBudgetIT.java
+src/test/java/com/fintracker/ledger/budget/AbstractBudgetTemplateIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetCapacityAndUniquenessIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetControllerIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetInvariantsIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetLineBoundaryAndTenancyIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetLineControllerIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetLineServiceIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetMonetaryConstraintIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetQuickStartIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetSpendEnrichmentIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetTemplateCreationIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: LG-BUD-05: Made budget lines and templates reference a category by categoryId and sum spend from transactions by categoryId, so renamed categories keep their budget and spend.
+src/main/resources/db/migration/V28__Add_Category_Id_To_Budget_Lines.sql
+scripts/one-time/2026-10-21_LG-CAT-01_backfill_budget_category_id.sql
+src/main/java/com/fintracker/ledger/budget/service/BudgetCategoryResolver.java
+src/main/java/com/fintracker/ledger/budget/controller/BudgetController.java
+src/main/java/com/fintracker/ledger/budget/controller/BudgetLineController.java
+src/main/java/com/fintracker/ledger/budget/controller/BudgetTemplateController.java
+src/main/java/com/fintracker/ledger/budget/dto/AddLineItemRequest.java
+src/main/java/com/fintracker/ledger/budget/dto/BudgetLineInput.java
+src/main/java/com/fintracker/ledger/budget/dto/CreateBudgetTemplateRequest.java
+src/main/java/com/fintracker/ledger/budget/dto/QuickStartBudgetRequest.java
+src/main/java/com/fintracker/ledger/budget/dto/UpsertBudgetRequest.java
+src/main/java/com/fintracker/ledger/budget/model/BudgetLine.java
+src/main/java/com/fintracker/ledger/budget/model/BudgetTemplateLine.java
+src/main/java/com/fintracker/ledger/budget/repository/BudgetRepository.java
+src/main/java/com/fintracker/ledger/budget/repository/JooqBudgetRepository.java
+src/main/java/com/fintracker/ledger/budget/repository/JooqBudgetTemplateRepository.java
+src/main/java/com/fintracker/ledger/budget/service/BudgetSpendCalculator.java
+src/main/java/com/fintracker/ledger/budget/service/impl/BudgetLineServiceImpl.java
+src/main/java/com/fintracker/ledger/budget/service/impl/BudgetServiceImpl.java
+src/main/java/com/fintracker/ledger/budget/service/impl/BudgetTemplateServiceImpl.java
+src/main/java/com/fintracker/ledger/category/dto/CustomCategoryResponse.java
+src/main/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/repository/TransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionService.java
+src/main/java/com/fintracker/ledger/transaction/service/impl/TransactionServiceImpl.java
+
+[commit]
+repo: .
+message: LG-BUD-05: Moved the budget categoryId requirement from LG-CAT-01 into the budgets spec and merged the budget tests into one inventory.
+docs/fintracker-ledger-doc/specs/LG-BUD-budgets-spec.md
+docs/fintracker-ledger-doc/specs/LG-BUD-budgets-tests.md
+docs/fintracker-ledger-doc/specs/LG-CAT-custom-categories-spec.md
+docs/fintracker-ledger-doc/specs/LG-CAT-custom-categories-tests.md
+
+[commit]
+repo: .
+message: LG-BUD-05: Removed the three numbered budget test files now merged into LG-BUD-budgets-tests.md.
+docs/fintracker-ledger-doc/specs/LG-BUD-budgets-tests-01.md
+docs/fintracker-ledger-doc/specs/LG-BUD-budgets-tests-02.md
+docs/fintracker-ledger-doc/specs/LG-BUD-budgets-tests-03.md
+
+[commit]
+repo: .
+message: LG-STMT: Merged the three statement upload specs and the two statement upload test inventories into one spec and one test document.
+docs/fintracker-ledger-doc/specs/LG-STMT-statement-upload-spec.md
+docs/fintracker-ledger-doc/specs/LG-STMT-statement-upload-tests.md
+docs/fintracker-ledger-doc/flows/uploading-csv-statement-flow.md
+docs/fintracker-ledger-doc/architecture/decision_records/SDR-001-import-idempotency.md
+docs/fintracker-ledger-doc/architecture/ledger-architecture.md
+
+[commit]
+repo: .
+message: LG-STMT: Removed the numbered statement upload spec and test files now merged into the single spec and test documents.
+docs/fintracker-ledger-doc/specs/LG-STMT-statement-upload-spec-01.md
+docs/fintracker-ledger-doc/specs/LG-STMT-statement-upload-spec-02.md
+docs/fintracker-ledger-doc/specs/LG-STMT-statement-upload-spec-03.md
+docs/fintracker-ledger-doc/specs/LG-STMT-statement-upload-tests-02-v1.md
+docs/fintracker-ledger-doc/specs/LG-STMT-statement-upload-tests-02-v2.md
+
+
+# XS-CTX: settings in the verified user context (2026-10-21)
+# Note: several files below (user-profile handlers/models/repository/service, ledger GlobalExceptionHandler, ui settings and
+# profile files, analytics/ai-assistant router and service files) also hold earlier uncommitted edits from other phases.
+[commit]
+repo: services/fintracker-user-profile
+message: XS-CTX-01: Added failing tests for the timezone and currency settings route, the one-query authorizer context and the backfill script.
+tests/unit/identity/test_settings_validation.py
+tests/unit/identity/test_settings_service.py
+tests/unit/identity/test_settings_handlers.py
+tests/integration/__init__.py
+tests/integration/test_settings_repository.py
+tests/integration/test_backfill_user_settings.py
+tests/unit/test_settings_route_config.py
+tests/unit/identity/test_authorizer.py
+tests/unit/identity/test_identity_service.py
+
+[commit]
+repo: services/fintracker-user-profile
+message: XS-CTX-01: Added PUT /profile/settings, stored new users with USD and no timezone, put timezone and currency in the authorizer context and fixed user registration calling a non-existent DynamoDB method.
+app/shared/exceptions.py
+app/shared/responses.py
+app/identity/models.py
+app/identity/settings_validation.py
+app/identity/repository.py
+app/identity/service.py
+app/identity/handlers.py
+template.yaml
+scripts/__init__.py
+scripts/one_time/__init__.py
+scripts/one_time/backfill_user_settings.py
+README.md
+
+[commit]
+repo: services/fintracker-analytics
+message: XS-CTX-05: Added failing tests for reading timezone and currency from the verified context, failing closed on missing values and rejecting unlisted internal callers with 403.
+tests/http_api_event.py
+tests/core/test_user_context.py
+tests/core/test_internal_routes.py
+tests/summary/test_periods.py
+tests/summary/test_service.py
+tests/summary/test_router.py
+
+[commit]
+repo: services/fintracker-analytics
+message: XS-CTX-05: Made the Financial Summary read timezone and currency from the verified user context instead of calling User profile, with 409 and 500 errors instead of defaults.
+src/core/user_context.py
+src/core/problems.py
+src/core/internal_auth.py
+src/summary/periods.py
+src/summary/service.py
+src/summary/router.py
+tests/conftest.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: XS-CTX-04: Added failing tests for forwarding the verified user context on internal calls and rejecting context arguments in tool calls.
+tests/http_api_event.py
+tests/core/test_user_context.py
+tests/tools/test_execute_tool.py
+tests/tools/test_clients.py
+tests/tools/test_tools.py
+tests/summary/test_facts_client.py
+tests/summary/test_router.py
+tests/summary/test_service.py
+tests/insights/test_router.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: XS-CTX-04: Forwarded the user, timezone and currency from the authorizer context on Analytics and Ledger calls and added execute_tool to reject context arguments.
+src/core/user_context.py
+src/core/identity.py
+src/core/problems.py
+src/tools/execute.py
+src/tools/clients.py
+src/tools/tools.py
+src/tools/server.py
+src/summary/facts_client.py
+src/summary/service.py
+src/summary/router.py
+src/insights/router.py
+README.md
+
+[commit]
+repo: services/fintracker-ledger
+message: XS-CTX-05: Added failing tests for the Dashboard choosing its month by the user's timezone and failing closed on a missing or invalid timezone or currency.
+src/test/java/com/fintracker/ledger/shared/UserSettingsTest.java
+src/test/java/com/fintracker/ledger/dashboard/DashboardUserContextIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: XS-CTX-05: Made the Dashboard summary use the user's local month from the verified timezone header and answer 409 or 500 instead of guessing.
+src/main/java/com/fintracker/ledger/shared/UserSettings.java
+src/main/java/com/fintracker/ledger/shared/exception/UserSettingsIncompleteException.java
+src/main/java/com/fintracker/ledger/shared/exception/UserContextInvalidException.java
+src/main/java/com/fintracker/ledger/config/UserSettingsArgumentResolver.java
+src/main/java/com/fintracker/ledger/config/WebMvcConfig.java
+src/main/java/com/fintracker/ledger/config/GlobalExceptionHandler.java
+src/main/java/com/fintracker/ledger/dashboard/controller/DashboardController.java
+src/main/java/com/fintracker/ledger/dashboard/service/DashboardService.java
+src/main/java/com/fintracker/ledger/dashboard/service/impl/DashboardServiceImpl.java
+
+[commit]
+repo: fintracker-ui
+message: XS-CTX-01: Added failing tests for saving the browser timezone on first load, the timezone picker, the Settings timezone field and the 409 retry.
+src/app/core/util/timezone.spec.ts
+src/app/core/services/profile.service.spec.ts
+src/app/core/services/timezone-setup.service.spec.ts
+src/app/core/interceptors/settings-incomplete.interceptor.spec.ts
+src/app/core/interceptors/auth.interceptor.spec.ts
+src/app/features/settings/settings.spec.ts
+
+[commit]
+repo: fintracker-ui
+message: XS-CTX-01: Saved the browser timezone on first load, added the timezone picker and Settings timezone field and retried requests after a 409 user_settings_incomplete.
+src/app/core/util/timezone.ts
+src/app/core/services/profile.service.ts
+src/app/core/services/timezone-setup.service.ts
+src/app/core/interceptors/settings-incomplete.interceptor.ts
+src/app/core/interceptors/auth.interceptor.ts
+src/app/core/guards/timezone-ready.guard.ts
+src/app/app.routes.ts
+src/app/app.config.ts
+src/app/features/settings/settings.ts
+src/app/features/settings/settings.html
+src/app/features/settings/timezone-picker-dialog/timezone-picker-dialog.ts
+src/app/features/settings/timezone-picker-dialog/timezone-picker-dialog.html
+
+[commit]
+repo: .
+message: XS-CTX-01: Added the XS-CTX test inventory, implementation notes, the user registration bug report, updated the run instructions and set the Requirements Index statuses.
+docs/fintracker-cross-services/specs/XS-CTX-verified-user-context-tests.md
+docs/fintracker-cross-services/specs/XS-CTX-verified-user-context-spec.md
+docs/fintracker-cross-services/2026-10-21_xs_ctx_implementation_notes.md
+docs/bugs/2026-10-21_bug_user_profile_create_user_calls_nonexistent_transact_write.md
+docs/instructions/run_financial_summary.md
+
+# KN-VS: Vector store, new fintracker-knowledge service (2026-10-21)
+# Note: services/fintracker-knowledge is a new local git repo (git init, no commits, not in .gitmodules yet).
+[commit]
+repo: services/fintracker-knowledge
+message: KN-VS-01: Added failing tests for the Knowledge vector store schema, roles and grants, Row-Level Security, HNSW filtered-search recall and the cross-user isolation suite.
+pyproject.toml
+.gitignore
+.github/workflows/ci.yml
+src/__init__.py
+tests/__init__.py
+tests/conftest.py
+tests/support/__init__.py
+tests/support/db.py
+tests/support/migrate.py
+tests/vector_store/__init__.py
+tests/vector_store/test_schema.py
+tests/vector_store/test_roles.py
+tests/vector_store/test_rls.py
+tests/vector_store/test_vector_index.py
+tests/vector_store/test_isolation.py
+
+[commit]
+repo: services/fintracker-knowledge
+message: KN-VS-01: Added the knowledge database migrations and session SQL so documents and chunks are isolated per user by roles, forced Row-Level Security and a filtered-search-safe HNSW index.
+db/migration/V1__create_documents_and_chunks.sql
+db/migration/V2__create_embedding_index.sql
+db/migration/V3__create_roles_and_grants.sql
+db/migration/V4__enable_row_level_security.sql
+src/vector_store/__init__.py
+src/vector_store/session.py
+poetry.lock
+README.md
+
+[commit]
+repo: .
+message: KN-VS-05: Added the KN-VS test inventory and set the KN-VS Requirements Index statuses to Implemented.
+docs/fintracker-knowledge/specs/KN-VS-vector-store-tests.md
+docs/fintracker-knowledge/specs/KN-VS-vector-store-spec.md
+
+# KN-CHUNK: chunking, embedding, model switch and quality gate (2026-10-21)
+[commit]
+repo: services/fintracker-knowledge
+message: KN-CHUNK-01: Added failing tests for heading-based chunking, the Bedrock embedder, the embedding model switch and the retrieval quality gate.
+tests/chunking/__init__.py
+tests/chunking/test_chunker.py
+tests/embedding/__init__.py
+tests/embedding/test_embedder.py
+tests/model_switch/__init__.py
+tests/model_switch/test_model_switch.py
+tests/retrieval_quality/__init__.py
+tests/retrieval_quality/test_quality_gate.py
+
+[commit]
+repo: services/fintracker-knowledge
+message: KN-CHUNK-01: Added the chunker, Bedrock embedder, model switch and recall@5 quality gate with the Appendix A config so help docs can be split, embedded and tuned safely.
+src/config/__init__.py
+src/config/knowledge_config.py
+src/chunking/__init__.py
+src/chunking/models.py
+src/chunking/service.py
+src/embedding/__init__.py
+src/embedding/models.py
+src/embedding/service.py
+src/model_switch/__init__.py
+src/model_switch/models.py
+src/model_switch/repository.py
+src/model_switch/service.py
+src/retrieval_quality/__init__.py
+src/retrieval_quality/models.py
+src/retrieval_quality/repository.py
+src/retrieval_quality/service.py
+pyproject.toml
+poetry.lock
+README.md
+
+[commit]
+repo: .
+message: KN-CHUNK-01: Added the KN-CHUNK test inventory and set the KN-CHUNK Requirements Index statuses.
+docs/fintracker-knowledge/specs/KN-CHUNK-chunking-embedding-tests.md
+docs/fintracker-knowledge/specs/KN-CHUNK-chunking-embedding-spec.md
+
+
+# KN-SDOC: system docs indexing (2026-10-22)
+[commit]
+repo: services/fintracker-knowledge
+message: KN-SDOC-01: Added failing tests for the CI help-doc upload, manifest trigger, change detection, atomic replace and delete, retries, full rebuild and run records.
+tests/conftest.py
+tests/system_docs/__init__.py
+tests/system_docs/fakes.py
+tests/system_docs/test_publisher.py
+tests/system_docs/test_trigger.py
+tests/system_docs/test_source.py
+tests/system_docs/test_indexing.py
+tests/system_docs/test_runs.py
+
+[commit]
+repo: services/fintracker-knowledge
+message: KN-SDOC-01: Added the system-docs publisher, manifest trigger, per-doc indexer with atomic replace, retries and rebuild, and the run record table so the help-doc index follows main.
+db/migration/V5__create_index_runs.sql
+src/system_docs/__init__.py
+src/system_docs/models.py
+src/system_docs/access.py
+src/system_docs/trigger.py
+src/system_docs/source.py
+src/system_docs/publisher.py
+src/system_docs/repository.py
+src/system_docs/status.py
+src/system_docs/service.py
+README.md
+
+[commit]
+repo: .
+message: KN-SDOC-01: Added the KN-SDOC test inventory and set the KN-SDOC Requirements Index statuses.
+docs/fintracker-knowledge/specs/KN-SDOC-system-docs-indexing-tests.md
+docs/fintracker-knowledge/specs/KN-SDOC-system-docs-indexing-spec.md
+
+
+# Reporting tab: LG-TXT-03, XS-RPTV, AN-RPT, AN-FS-01/03/07/08/19/21/29 (2026-10-21)
+# Notes: files that earlier phases also changed (for example TransactionServiceImpl.java, the Ledger transaction
+# tests, src/summary/* in Analytics, the root docs) are listed in the block that holds this work; commit those
+# files together with the earlier edits. TransactionServiceImpl.java carries both the LG-TXT-03 and the XS-RPTV-08
+# changes and is listed only in the LG-TXT-03 block. Directory entries (tests/fixtures/fs) mean every changed file in it.
+# Deleted files (velocity.py, test_dashboard_balance.py, two fixture JSONs) are listed so the deletion is committed.
+
+[commit]
+repo: services/fintracker-ledger
+message: LG-TXT-03: Added failing tests for storing every transaction amount as a positive number and converted the existing fixtures to the positive convention.
+src/test/java/com/fintracker/ledger/transaction/service/AmountSignConventionTest.java
+src/test/java/com/fintracker/ledger/transaction/repository/AmountSignConventionIT.java
+src/test/java/com/fintracker/ledger/transaction/service/BulkCreateAmountValidationTest.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionServiceTest.java
+src/test/java/com/fintracker/ledger/transaction/repository/TransactionTypeIT.java
+src/test/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepositoryIT.java
+src/test/java/com/fintracker/ledger/transaction/repository/BulkTransactionInsertIT.java
+src/test/java/com/fintracker/ledger/transaction/controller/InternalTransactionControllerTest.java
+src/test/java/com/fintracker/ledger/InternalApiSecurityIT.java
+src/test/java/com/fintracker/ledger/config/InternalEndpointSecurityIT.java
+src/test/java/com/fintracker/ledger/category/CategoryCodeMigrationIT.java
+src/test/java/com/fintracker/ledger/category/CategoryControllerIT.java
+src/test/java/com/fintracker/ledger/category/TransactionCategoryLinkIT.java
+src/test/java/com/fintracker/ledger/category/repository/JooqCategoryRepositoryIT.java
+src/test/java/com/fintracker/ledger/statement/service/StatementOverwriteIT.java
+src/test/java/com/fintracker/ledger/dashboard/DashboardUserContextIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetCategoryIdMatchingIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetLineServiceIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetPeriodNormalizationIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetRefundOffsetIT.java
+src/test/java/com/fintracker/ledger/budget/BudgetSpendEnrichmentIT.java
+src/test/java/com/fintracker/ledger/testsupport/LedgerFixtures.java
+
+[commit]
+repo: services/fintracker-ledger
+message: LG-TXT-03: Made manual entry, amount edits and splits store the absolute amount, rejected non-positive statement rows, and added the amount > 0 check with the one-time conversion script.
+src/main/resources/db/migration/V29__Add_Transaction_Amount_Positive_Check.sql
+scripts/one-time/2026-10-21_LG-TXT-03_make_transaction_amounts_positive.sql
+src/main/java/com/fintracker/ledger/transaction/service/impl/TransactionServiceImpl.java
+
+[commit]
+repo: services/fintracker-ledger
+message: XS-RPTV-01: Added failing tests for the Ledger reporting views, their grants and index, the Appendix C contract fixture and the Dashboard and budget totals reading the views.
+src/test/java/com/fintracker/ledger/reporting/ReportingViewsIT.java
+src/test/java/com/fintracker/ledger/reporting/ReportingTotalsIT.java
+src/test/resources/reporting-contract/fixture.sql
+src/test/java/com/fintracker/ledger/testsupport/AbstractIntegrationTest.java
+
+[commit]
+repo: services/fintracker-ledger
+message: XS-RPTV-01: Added the rpt_transactions, rpt_budget_limits and rpt_accounts views with a read-only grant and a per-user date index, and made the Dashboard and budget spend read them.
+src/main/resources/db/migration/V30__Add_Reporting_Views.sql
+src/main/java/com/fintracker/ledger/transaction/repository/TransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionService.java
+src/main/java/com/fintracker/ledger/dashboard/service/impl/DashboardServiceImpl.java
+src/main/java/com/fintracker/ledger/budget/service/BudgetSpendCalculator.java
+src/main/java/com/fintracker/ledger/budget/service/impl/BudgetServiceImpl.java
+
+[commit]
+repo: services/fintracker-analytics
+message: XS-RPTV-07: Added failing tests for reading the Ledger through the Data API in one transaction with the user context set, and for the Ledger contract fixture against real migrations.
+tests/core/test_reporting_db.py
+tests/integration/conftest.py
+tests/integration/test_reporting_contract.py
+tests/integration/test_summary_repository.py
+tests/integration/test_transaction_type_queries.py
+tests/reports/__init__.py
+tests/reports/fakes.py
+
+[commit]
+repo: services/fintracker-analytics
+message: XS-RPTV-07: Replaced the direct database session with a Data API backend (one transaction, user context set inside it, one retry on resume) and a local backend.
+src/core/database.py
+src/core/observability.py
+src/core/strict_args.py
+src/main.py
+.github/workflows/ci.yml
+
+[commit]
+repo: services/fintracker-analytics
+message: AN-RPT-01: Added failing tests for the spending pace, the one-request Reports sections, the internal section routes, failure handling and the removed Dashboard routes.
+tests/reports/test_sections.py
+tests/reports/test_reports_api.py
+tests/dashboard/__init__.py
+tests/dashboard/test_spending_pace.py
+tests/core/test_routes_auth.py
+tests/core/test_internal_routes.py
+
+[commit]
+repo: services/fintracker-analytics
+message: AN-RPT-01: Added the spending-pace route and the one-request Reports sections (cash flow, categories, trends, merchants) over the reporting views, with per-section failure isolation, and removed the old Dashboard and report routes.
+src/dashboard/models.py
+src/dashboard/repository.py
+src/dashboard/service.py
+src/dashboard/router.py
+src/reports/context.py
+src/reports/models.py
+src/reports/repository.py
+src/reports/sections.py
+src/reports/registry.py
+src/reports/service.py
+src/reports/router.py
+src/insights/repository.py
+src/insights/router.py
+README.md
+
+[commit]
+repo: services/fintracker-analytics
+message: AN-FS-03: Added failing tests for the four Reports periods, the month-to-date rule, facts rows with counts and flow, budget lines matched by category id and the removed pace rule.
+tests/summary/builders.py
+tests/summary/test_periods.py
+tests/summary/test_service.py
+tests/summary/test_anomalies_and_budgets.py
+tests/summary/test_data_quality_and_payload.py
+tests/summary/detectors/test_detectors.py
+tests/summary/detectors/test_framework.py
+
+[commit]
+repo: services/fintracker-analytics
+message: AN-FS-03: Removed This month from the Reports periods, read facts from the reporting views, matched budgets by category id and removed the spending-velocity detector and the Dashboard totals.
+src/summary/periods.py
+src/summary/models.py
+src/summary/inclusion.py
+src/summary/repository.py
+src/summary/service.py
+src/summary/router.py
+src/summary/sections/anomalies.py
+src/summary/sections/budgets.py
+src/summary/sections/categories.py
+src/summary/sections/data_quality.py
+src/summary/detectors/velocity.py
+tests/integration/test_dashboard_balance.py
+scripts/build_fs_fixtures.py
+tests/fixtures/fs
+
+[commit]
+repo: services/fintracker-analytics
+message: AN-FS-07: Added failing tests for recurring charges and upcoming bills, emergency fund coverage and the cash timing detector.
+tests/summary/test_recurring.py
+tests/summary/test_emergency_fund.py
+tests/summary/detectors/test_cash_timing.py
+
+[commit]
+repo: services/fintracker-analytics
+message: AN-FS-07: Added recurring charge and upcoming bill detection, emergency fund coverage and the cash timing detector to the facts payload, with balances and user-entered bills left as unwired inputs.
+src/summary/sections/recurring.py
+src/summary/sections/emergency_fund.py
+src/summary/sections/status.py
+src/summary/detectors/cash_timing.py
+src/summary/detectors/base.py
+src/summary/registry.py
+src/summary/schema.py
+src/summary/payload.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-21: Added Terraform tests for the Bedrock budget alerts, the deny-at-100% action, cost anomaly detection and the separate app and evaluation roles.
+infrastructure/terraform/modules/bedrock_cost_guard/tests/cost_guard.tftest.hcl
+infrastructure/terraform/modules/bedrock_invoke_roles/tests/roles.tftest.hcl
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-21: Added the account-level LLM cost guard in Terraform (Budgets at 50/80/100%, a deny policy attached at 100%, Cost Anomaly Detection) and separate Bedrock roles for the app and evaluation.
+infrastructure/terraform/.gitignore
+infrastructure/terraform/README.md
+infrastructure/terraform/modules/bedrock_cost_guard/main.tf
+infrastructure/terraform/modules/bedrock_cost_guard/variables.tf
+infrastructure/terraform/modules/bedrock_cost_guard/outputs.tf
+infrastructure/terraform/modules/bedrock_invoke_roles/main.tf
+infrastructure/terraform/modules/bedrock_invoke_roles/variables.tf
+infrastructure/terraform/modules/bedrock_invoke_roles/outputs.tf
+infrastructure/terraform/environments/dev/main.tf
+infrastructure/terraform/environments/dev/variables.tf
+infrastructure/terraform/environments/dev/providers.tf
+infrastructure/terraform/environments/dev/outputs.tf
+infrastructure/terraform/environments/dev/terraform.tfvars.example
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-RPT-09: Added failing tests for the tools calling Analytics' new section routes and for the new insight types and metrics.
+tests/tools/test_clients.py
+tests/tools/test_tools.py
+tests/tools/test_execute_tool.py
+tests/summary/test_validation.py
+tests/summary/test_router.py
+tests/summary/test_service.py
+tests/summary/test_prompt_and_projection.py
+tests/summary/test_eval.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-RPT-09: Pointed the tools at Analytics' spending-pace, category and cash-flow routes, extended the facts contract and output schema for recurring, emergency fund and cash timing (prompt fs-v2) and refreshed the evaluation fixtures.
+src/tools/clients.py
+src/tools/tools.py
+src/tools/mcp_instance.py
+src/summary/contract.py
+src/summary/validation.py
+src/summary/prompt/v1.py
+tests/fixtures/fs
+
+[commit]
+repo: fintracker-ui
+message: AN-RPT-01: Added failing specs for the Reports page period selector and charts, the spending-pace card and the input-driven Financial Summary panel.
+src/app/features/reports/reports.spec.ts
+src/app/core/services/reports.service.spec.ts
+src/app/features/dashboard/spending-pace-card/spending-pace-card.spec.ts
+src/app/features/reports/financial-summary/financial-summary.spec.ts
+src/app/core/services/financial-summary.service.spec.ts
+
+[commit]
+repo: fintracker-ui
+message: AN-RPT-01: Moved the period selector to the top of the Reports page, replaced the mocked charts with the cash-flow and category-trend charts, added the spending-pace card to the Dashboard and removed This month.
+src/app/core/services/reports.service.ts
+src/app/core/services/dashboard.service.ts
+src/app/core/services/financial-summary.service.ts
+src/app/features/reports/reports.ts
+src/app/features/reports/reports.html
+src/app/features/reports/reports.scss
+src/app/features/reports/financial-summary/financial-summary.ts
+src/app/features/reports/financial-summary/financial-summary.html
+src/app/features/reports/financial-summary/summary-format.ts
+src/app/features/dashboard/dashboard.ts
+src/app/features/dashboard/dashboard.html
+src/app/features/dashboard/spending-pace-card/spending-pace-card.ts
+src/app/features/dashboard/spending-pace-card/spending-pace-card.html
+src/app/features/dashboard/spending-pace-card/spending-pace-card.scss
+
+[commit]
+repo: fintracker-ui
+message: LG-TXT-03: Added a failing spec for showing a stored positive amount as negative when the money went out.
+src/app/core/services/transaction.service.spec.ts
+
+[commit]
+repo: fintracker-ui
+message: LG-TXT-03: Derived the displayed sign of a transaction amount from its direction now that the Ledger stores amounts positive.
+src/app/core/services/transaction.service.ts
+
+[commit]
+repo: .
+message: AN-RPT-01: Added the AN-RPT and XS-RPTV test inventories, extended the AN-FS and LG-TXT inventories, set the implemented Requirements Index statuses and added the Bedrock budget row to the profile table with the implementation notes.
+docs/fintracker-analytics/specs/AN-RPT-dashboard-reports-widgets-tests.md
+docs/fintracker-analytics/specs/AN-RPT-dashboard-reports-widgets-spec.md
+docs/fintracker-analytics/specs/AN-FS-financial-summary-tests.md
+docs/fintracker-analytics/specs/AN-FS-financial-summary-spec.md
+docs/fintracker-cross-services/specs/XS-RPTV-ledger-reporting-views-tests.md
+docs/fintracker-cross-services/specs/XS-RPTV-ledger-reporting-views-spec.md
+docs/fintracker-ledger-doc/specs/LG-TXT-transaction-types-tests.md
+docs/fintracker-ledger-doc/specs/LG-TXT-transaction-types-spec.md
+docs/fintracker-architecture/fintracker-architectural-doc.md
+docs/implemented-features-&-follow-ups/2026-10-21_reporting-tab-implementation-notes.md
+
+[commit]
+repo: services/fintracker-knowledge
+message: KN-RET-01: Added failing tests for retrieval validation, caller and user-context checks, scoped search, ownership re-check, response contract, errors and metrics.
+tests/retrieval/__init__.py
+tests/retrieval/fakes.py
+tests/retrieval/test_validation.py
+tests/retrieval/test_router.py
+tests/retrieval/test_search.py
+tests/retrieval/test_service.py
+
+[commit]
+repo: services/fintracker-knowledge
+message: KN-RET-01: Added the retrieval feature so the AI assistant gets scope-checked, ownership-verified help-doc chunks with sources from POST /internal/retrieve.
+src/retrieval/__init__.py
+src/retrieval/models.py
+src/retrieval/metrics.py
+src/retrieval/repository.py
+src/retrieval/service.py
+src/retrieval/router.py
+README.md
+
+[commit]
+repo: .
+message: KN-RET-01: Added the KN-RET test inventory and set the implemented Requirements Index statuses.
+docs/fintracker-knowledge/specs/KN-RET-retrieval-tests.md
+docs/fintracker-knowledge/specs/KN-RET-retrieval-spec.md
+
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: ARCH-4.8: Added failing tests for RFC 9457 problem+json errors with code and trace_id, both IDs on every log line, redacted 5xx tracebacks, typed schemas at every boundary, and removed the legacy insights tests.
+tests/conftest.py
+tests/core/test_error_handlers.py
+tests/core/test_user_context.py
+tests/fixtures/samples/service-extra.json
+tests/fixtures/samples/service-few.json
+tests/fixtures/samples/service-sentinel.json
+tests/fixtures/samples/service.json
+tests/insights/__init__.py
+tests/insights/test_router.py
+tests/insights/test_service.py
+tests/summary/samples.py
+tests/summary/test_facts_client.py
+tests/summary/test_router.py
+tests/summary/test_service.py
+tests/summary/test_store_guard_audit.py
+tests/summary/test_validation.py
+tests/tools/test_clients.py
+tests/tools/test_execute_tool.py
+tests/tools/test_tools.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: ARCH-4.8: Replaced core/problems.py with one generic error handler so every error is problem+json with a stable code and a trace_id the user can quote, and split each feature into exceptions.py, schemas.py and models.py (app doc 9.1).
+src/core/error_handlers.py
+src/core/exceptions.py
+src/core/identity.py
+src/core/problems.py
+src/core/request_context.py
+src/core/schemas.py
+src/core/user_context.py
+src/insights/__init__.py
+src/insights/models.py
+src/insights/router.py
+src/insights/service.py
+src/main.py
+src/summary/audit.py
+src/summary/contract.py
+src/summary/cost_guard.py
+src/summary/deletion.py
+src/summary/exceptions.py
+src/summary/facts_client.py
+src/summary/fallback.py
+src/summary/llm.py
+src/summary/local_store.py
+src/summary/models.py
+src/summary/projection.py
+src/summary/router.py
+src/summary/schemas.py
+src/summary/service.py
+src/summary/store.py
+src/summary/validation.py
+src/tools/clients.py
+src/tools/exceptions.py
+src/tools/execute.py
+src/tools/mcp_instance.py
+src/tools/schemas.py
+src/tools/tools.py
+README.md
+.github/workflows/ci.yml
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-22: Added failing tests for loading the prompt from a versioned file pinned by prompts.lock, so editing the prompt without a version bump fails CI.
+tests/summary/test_eval.py
+tests/summary/test_generation.py
+tests/summary/test_prompt_and_projection.py
+tests/summary/test_replay.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-22: Moved the system prompt to prompt/versions/fs-v1/system.md with a hash lock, so the prompt version in the cache key and audit always matches the text sent.
+src/summary/config.py
+src/summary/generation.py
+src/summary/eval/__main__.py
+src/summary/eval/required_check.py
+src/summary/eval/runner.py
+src/summary/prompt/loader.py
+src/summary/prompt/prompts.lock
+src/summary/prompt/v1.py
+src/summary/prompt/versions/fs-v1/system.md
+
+[commit]
+repo: services/fintracker-analytics
+message: ARCH-4.8: Updated tests for problem+json errors with code and trace_id, 400 invalid_argument for bad query values, 401 user_context_missing, a bug as a non-retryable 500, valid response models from fake services, and removed the insights and profile-client tests.
+tests/core/test_internal_routes.py
+tests/core/test_reporting_db.py
+tests/core/test_routes_auth.py
+tests/core/test_user_context.py
+tests/dashboard/test_spending_pace.py
+tests/insights/__init__.py
+tests/integration/conftest.py
+tests/integration/test_reporting_contract.py
+tests/integration/test_summary_repository.py
+tests/integration/test_transaction_type_queries.py
+tests/reports/test_reports_api.py
+tests/reports/test_sections.py
+tests/responses.py
+tests/summary/builders.py
+tests/summary/detectors/test_cash_timing.py
+tests/summary/detectors/test_detectors.py
+tests/summary/detectors/test_framework.py
+tests/summary/test_anomalies_and_budgets.py
+tests/summary/test_data_quality_and_payload.py
+tests/summary/test_emergency_fund.py
+tests/summary/test_periods.py
+tests/summary/test_profile_client.py
+tests/summary/test_recurring.py
+tests/summary/test_router.py
+tests/summary/test_service.py
+
+[commit]
+repo: services/fintracker-analytics
+message: ARCH-4.8: Ported the AI assistant's error handling (one generic handler, problem+json with trace_id, no temporarily_unavailable catch-alls), declared response_models on every route, split features into exceptions.py, schemas.py and models.py, and removed the dead insights feature and profile client.
+src/core/database.py
+src/core/error_handlers.py
+src/core/exceptions.py
+src/core/identity.py
+src/core/internal_auth.py
+src/core/observability.py
+src/core/problems.py
+src/core/request_context.py
+src/core/schemas.py
+src/core/strict_args.py
+src/core/user_context.py
+src/dashboard/models.py
+src/dashboard/repository.py
+src/dashboard/router.py
+src/dashboard/schemas.py
+src/dashboard/service.py
+src/insights/__init__.py
+src/insights/repository.py
+src/insights/router.py
+src/main.py
+src/reports/context.py
+src/reports/formatting.py
+src/reports/models.py
+src/reports/registry.py
+src/reports/repository.py
+src/reports/router.py
+src/reports/schemas.py
+src/reports/sections.py
+src/reports/service.py
+src/summary/detectors/base.py
+src/summary/detectors/cash_timing.py
+src/summary/detectors/duplicates.py
+src/summary/detectors/fees.py
+src/summary/detectors/free_trial.py
+src/summary/detectors/leakage.py
+src/summary/exceptions.py
+src/summary/models.py
+src/summary/payload.py
+src/summary/periods.py
+src/summary/profile_client.py
+src/summary/registry.py
+src/summary/repository.py
+src/summary/router.py
+src/summary/schema.py
+src/summary/schemas.py
+src/summary/sections/anomalies.py
+src/summary/sections/budgets.py
+src/summary/sections/cash_flow.py
+src/summary/sections/categories.py
+src/summary/sections/data_quality.py
+src/summary/sections/emergency_fund.py
+src/summary/sections/recurring.py
+src/summary/service.py
+scripts/build_fs_fixtures.py
+README.md
+
+[commit]
+repo: services/fintracker-knowledge
+message: KN-RET-07: Updated tests for problem+json errors with code and trace_id (no request_id in the body), the trace ID taken from traceparent, both IDs logged, and the shared error types.
+tests/embedding/test_embedder.py
+tests/model_switch/test_model_switch.py
+tests/retrieval/fakes.py
+tests/retrieval/test_router.py
+tests/retrieval/test_search.py
+tests/retrieval/test_service.py
+tests/retrieval/test_validation.py
+tests/retrieval_quality/test_quality_gate.py
+tests/system_docs/fakes.py
+tests/system_docs/test_indexing.py
+tests/system_docs/test_runs.py
+tests/system_docs/test_source.py
+tests/system_docs/test_trigger.py
+
+[commit]
+repo: services/fintracker-knowledge
+message: KN-RET-07: Replaced RetrievalError with the shared AppError contract and one handle_error, so retrieval errors are problem+json with a trace_id like every service, and split features into exceptions.py, schemas.py and models.py (app doc 9.1).
+src/chunking/models.py
+src/chunking/schemas.py
+src/chunking/service.py
+src/core/__init__.py
+src/core/error_handlers.py
+src/core/exceptions.py
+src/core/request_context.py
+src/embedding/exceptions.py
+src/embedding/models.py
+src/embedding/schemas.py
+src/embedding/service.py
+src/model_switch/exceptions.py
+src/model_switch/models.py
+src/model_switch/service.py
+src/retrieval/models.py
+src/retrieval/repository.py
+src/retrieval/router.py
+src/retrieval/schemas.py
+src/retrieval/service.py
+src/retrieval_quality/exceptions.py
+src/retrieval_quality/models.py
+src/retrieval_quality/repository.py
+src/retrieval_quality/schemas.py
+src/retrieval_quality/service.py
+src/system_docs/access.py
+src/system_docs/exceptions.py
+src/system_docs/models.py
+src/system_docs/repository.py
+src/system_docs/schemas.py
+src/system_docs/service.py
+src/system_docs/source.py
+src/system_docs/status.py
+src/system_docs/trigger.py
+README.md
+
+[commit]
+repo: .
+message: ARCH-4.8: Added the error catalog and app doc 4.8 (problem+json with code and trace_id, one generic handler), the 9.1 Python service layout, invariant 13, and moved KN-RET and XS-CTX Appendix C to problem+json.
+docs/fintracker-architecture/fintracker-architectural-doc.md
+docs/fintracker-architecture/error-catalog.md
+docs/fintracker-ai-assistant/architecture/ai-assistant-architecture.md
+docs/fintracker-knowledge/specs/KN-RET-retrieval-spec.md
+docs/fintracker-cross-services/specs/XS-CTX-verified-user-context-spec.md
+docs/git/pending_commits.md
+
+[commit]
+repo: .
+message: AN-FS-22: Noted that the prompt version comes from the versioned prompt file and its lock.
+docs/fintracker-analytics/specs/AN-FS-financial-summary-spec.md
+
+# ---- ARCH-9.1 interfaces.py (2026-10-24). Refactor only, no behavior change: the Protocols move out
+# of schemas.py, and SummaryStorePort is split by consumer. Several of these files are also listed in
+# the 2026-10-23 blocks above; commit those first, then this one.
+[commit]
+repo: services/fintracker-ai-assistant
+message: ARCH-9.1: Moved the Financial Summary Protocols to interfaces.py and split the store interface by consumer, so each module depends only on the store methods it calls.
+src/summary/interfaces.py
+src/summary/schemas.py
+src/summary/service.py
+src/summary/cost_guard.py
+src/summary/audit.py
+src/summary/deletion.py
+src/summary/generation.py
+src/summary/eval/runner.py
+src/summary/router.py
+src/summary/store.py
+src/summary/local_store.py
+
+[commit]
+repo: .
+message: ARCH-9.1: Added interfaces.py to the Python service layout for injected-dependency Protocols, split by consumer.
+docs/fintracker-architecture/fintracker-architectural-doc.md
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-21: Added failing tests for UTC-anchored quota and spend TTLs, the refresh count returned by the counter increment, one reused facts HTTP client and Bedrock errors logged by type only.
+tests/summary/test_store_guard_audit.py
+tests/summary/test_service.py
+tests/summary/test_facts_client.py
+tests/summary/test_llm.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-21: Anchored quota and spend TTLs to UTC midnight, returned the new count from the counter increment so refresh needs no second read, reused one facts HTTP client per event loop and logged Bedrock errors by type only.
+src/summary/store.py
+src/summary/interfaces.py
+src/summary/local_store.py
+src/summary/cost_guard.py
+src/summary/service.py
+src/summary/facts_client.py
+src/summary/llm.py
+
+[commit]
+repo: .
+message: AN-FS-21: Documented the quota and spend TTL bug that read the UTC day key as host-local midnight and added the review-fix tests to the AN-FS test inventory.
+docs/bugs/2026-10-24_bug_quota_and_spend_ttl_read_as_host_local_midnight.md
+docs/fintracker-analytics/specs/AN-FS-financial-summary-tests.md
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-21: Added failing tests for socket-level call timeouts and provider retries, the Bedrock failure breaker, reserve-then-settle spend with once-per-day alerts, cache-first refreshes with slot give-back, per-call latency percentiles and flagging of replies cut off by max_tokens.
+tests/summary/test_llm.py
+tests/summary/test_generation.py
+tests/summary/test_generation_retries.py
+tests/summary/test_breaker.py
+tests/summary/test_spend_reservation.py
+tests/summary/test_store_guard_audit.py
+tests/summary/test_service.py
+tests/summary/test_service_resilience.py
+tests/summary/test_eval.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-21: Moved the Bedrock timeout to the socket with our own deadline-aware retries, added the failure breaker and reserve-then-settle spend so timed-out calls are counted and concurrent requests can't pass the daily budget, made refresh check the cache first and give back unused slots, logged llm_latency_ms on every call, flagged replies cut off by max_tokens (truncated flag, warning log and SummaryLlmTruncated metric), and made live evaluation runs enforce their cost cap per call with timed-out calls counted at worst case.
+src/summary/breaker.py
+src/summary/config.py
+src/summary/cost_guard.py
+src/summary/eval/runner.py
+src/summary/eval/__main__.py
+src/summary/exceptions.py
+src/summary/generation.py
+src/summary/interfaces.py
+src/summary/llm.py <= snapshots/fintracker-ai-assistant/AI-CHAT/llm.py
+src/summary/local_store.py
+src/summary/models.py
+src/summary/schemas.py
+src/summary/service.py
+src/summary/store.py
+infrastructure/terraform/environments/dev/main.tf
+infrastructure/terraform/environments/dev/outputs.tf
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: UP-ARCH-S3: Added a failing test that the goals tool calls the IAM-authorized goals route with the forwarded user and no API key.
+tests/tools/test_clients.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: UP-ARCH-S3: Switched the goals tool to GET /profile/internal/goals with the user in the forwarded context and removed the static User Profile API key.
+src/tools/clients.py <= snapshots/fintracker-ai-assistant/AI-CHAT/clients.py
+README.md <= snapshots/fintracker-ai-assistant/AI-CHAT/README.md
+
+[commit]
+repo: services/fintracker-user-profile
+message: UP-ARCH-S3: Added failing tests for IAM caller allow-list authorization on the internal goals route with the user taken from X-Internal-User-Id.
+tests/unit/goals/test_internal_handler.py
+
+[commit]
+repo: services/fintracker-user-profile
+message: UP-ARCH-S3: Moved the internal goals route to IAM authorization plus the caller allow-list with the user from X-Internal-User-Id, removing the static API key and the path user ID.
+app/shared/internal_auth.py
+app/identity/internal_handlers.py
+app/goals/handlers.py
+
+[commit]
+repo: services/fintracker-user-profile
+message: UP-ARCH-DEL: Added failing tests that account deletion removes every page of the user's items and the IDENTITY# mapping.
+tests/integration/test_delete_user.py
+tests/unit/identity/test_identity_service.py
+
+[commit]
+repo: services/fintracker-user-profile
+message: UP-ARCH-DEL: Made account deletion page through all of the user's items and delete the IDENTITY# mapping last so a retry can still finish.
+app/identity/repository.py
+app/identity/service.py
+
+[commit]
+repo: .
+message: AN-FS-21: Documented the 2026-10-25 bugs, extended the AN-FS test inventory, set the AN-FS-14/15/20/21 statuses and updated the User Profile architecture for the goals route and account deletion.
+docs/bugs/2026-10-25_bug_bedrock_timed_out_calls_billed_but_not_counted.md
+docs/bugs/2026-10-25_bug_daily_llm_budget_overshoot_under_concurrency.md
+docs/bugs/2026-10-25_bug_refresh_slot_used_by_failed_summaries.md
+docs/bugs/2026-10-25_bug_internal_goals_route_trusted_static_key_and_path_user.md
+docs/bugs/2026-10-25_bug_account_deletion_left_identity_mapping_and_later_pages.md
+docs/fintracker-analytics/specs/AN-FS-financial-summary-tests.md
+docs/fintracker-analytics/specs/AN-FS-financial-summary-spec.md
+docs/fintracker-user-profile-doc/architecture/user-profile-architecture.md
+
+# ---- AN-FS-22 eval cost cap and latency (2026-10-25). Its tests and code are in the AN-FS-21 blocks above
+# (same files: test_eval.py, eval/runner.py), plus eval/__main__.py. The call-record tests and code
+# (test_llm.py, test_generation_retries.py, test_eval.py; llm.py, generation.py, schemas.py, runner.py) are there too.
+
+[commit]
+repo: .
+message: AN-FS-22: Rewrote the Financial Summary run guide around the AI assistant and the evaluation steps, documented the eval cost-cap bug (the test inventory lines go in with the earlier AN-FS-21 docs block).
+docs/fintracker-ai-assistant/run_financial_summary.md
+docs/instructions/run_financial_summary.md
+docs/fintracker-ai-assistant/run_financial_summary.md
+docs/bugs/2026-10-25_bug_eval_run_cap_missed_timed_out_calls_and_retries.md
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-22: Added the private, encrypted, TLS-only evaluation results bucket and the eval role's get/put access so live evaluation runs can store their reports.
+infrastructure/terraform/modules/eval_results/main.tf
+infrastructure/terraform/modules/eval_results/variables.tf
+infrastructure/terraform/modules/eval_results/outputs.tf
+infrastructure/terraform/modules/bedrock_invoke_roles/outputs.tf
+infrastructure/terraform/environments/dev/main.tf
+infrastructure/terraform/environments/dev/outputs.tf
+infrastructure/terraform/environments/dev/.terraform.lock.hcl
+
+# ---- AN-FS-22 full-once evaluation tier: all 22 fixtures, one run each (2026-10-25). Its tests
+# (tests/summary/test_eval.py) and code (src/summary/eval/runner.py) are already in the AN-FS-21 blocks
+# above, which commit those files whole; only the files not listed above get their own block here.
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-22: Added the full-once evaluation tier (all 22 fixtures, one run each) to the manual LLM evaluation workflow.
+.github/workflows/llm-eval.yml
+
+# ---- AI-CHAT-01 to AI-CHAT-15 in-app chat (2026-10-25). Tests first, then code, then docs. Three files are
+# also in the earlier AN-FS-21 and UP-ARCH-S3 blocks (src/summary/llm.py, src/tools/clients.py, README.md):
+# those blocks commit a snapshot without the chat changes (docs/git/snapshots/fintracker-ai-assistant/AI-CHAT/),
+# and the code block below commits the current files.
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AI-CHAT-01 to AI-CHAT-15: Added failing tests for the in-app chat: stream events, per-tier daily token allowance, conversations, the tool allowlist and strict schemas, data and help-doc tools, tool loop and deadlines, grounded figures, scope guardrails, prompt-injection handling, validate-retry-fallback, the unanswered-question log, audit and log hygiene, account deletion and shared cost controls.
+tests/conftest.py
+tests/core/test_chat_entry.py
+tests/core/test_chat_entry_middleware.py
+tests/tools/test_chat_clients.py
+tests/chat/__init__.py
+tests/chat/helpers.py
+tests/chat/test_audit_and_logs.py
+tests/chat/test_config.py
+tests/chat/test_deletion.py
+tests/chat/test_docs_and_guardrails.py
+tests/chat/test_execute_tool.py
+tests/chat/test_grounding.py
+tests/chat/test_limits.py
+tests/chat/test_router.py
+tests/chat/test_sanitize_prompt_llm.py
+tests/chat/test_service.py
+tests/chat/test_store.py
+tests/chat/test_unanswered.py
+tests/chat/test_validation.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AI-CHAT-01 to AI-CHAT-15: Added the in-app chat (POST /chat/messages streaming NDJSON): per-tier daily token allowance, conversations kept 30 days, a Bedrock tool loop over the eight-tool allowlist with strict schemas, help-doc answers with sources, a post-check for grounded figures, scope and banned terms with one retry and fixed fallbacks, the unanswered-question log, audit records and trace propagation, and the shared daily budget.
+src/chat/__init__.py
+src/chat/audit.py
+src/chat/config.py
+src/chat/execute.py
+src/chat/fallback.py
+src/chat/grounding.py
+src/chat/interfaces.py
+src/chat/limits.py
+src/chat/llm.py
+src/chat/local_store.py
+src/chat/models.py
+src/chat/prompt/__init__.py
+src/chat/prompt/versions/chat-v1/system.md
+src/chat/router.py
+src/chat/sanitize.py
+src/chat/schemas.py
+src/chat/service.py
+src/chat/store.py
+src/chat/tools.py
+src/chat/unanswered.py
+src/chat/validation.py
+src/core/identity.py
+src/core/request_context.py
+src/core/error_handlers.py
+src/core/observability.py
+src/main.py
+src/summary/llm.py
+src/summary/validation.py
+src/tools/clients.py
+src/tools/schemas.py
+src/tools/exceptions.py
+scripts/check_log_redaction.py
+.github/workflows/ci.yml
+README.md
+
+[commit]
+repo: .
+message: AI-CHAT-01 to AI-CHAT-15: Added the AI-CHAT test inventory and implementation notes (with proposed spec changes), set the Requirements Index statuses and updated the error catalog for the chat stream.
+docs/fintracker-ai-assistant/specs/AI-CHAT-open-chat-spec.md
+docs/fintracker-ai-assistant/specs/AI-CHAT-open-chat-tests.md
+docs/fintracker-ai-assistant/AI-CHAT-implementation-notes.md
+docs/fintracker-architecture/error-catalog.md
+
+# ---- Import reliability: DP-ING-09/10/11, XS-IMP-01 to -04, XS-DPCAT v3, LG-STMT-04/08, DP-MAP (2026-10-25).
+# Tests first, then code, per repo. The requirements share files (the Gatekeeper service, the Ledger client,
+# the job repository, the Ledger's statement and transaction services), so each repo gets one red and one green
+# commit rather than one pair per requirement, like the AN-FS blocks above. Several files also carry the earlier,
+# still-uncommitted DP-LEDGER-CATEGORIES v2 work, which goes in with them. Waiting on your OK to delete (see the
+# implementation notes): services/fintracker-data-pipeline src/categories/, tests/test_categories_client.py,
+# src/gatekeeper/bank_mapping_baseline.py, src/gatekeeper/bank_mappings.json.
+
+[commit]
+repo: services/fintracker-ledger
+message: XS-IMP-02: Added failing tests for the import-failure route, ignoring and replacing failed statements on re-upload, category codes resolved against the user's rules and categories, the review reason, and the approval category re-check.
+src/test/java/com/fintracker/ledger/testsupport/LedgerFixtures.java
+src/test/java/com/fintracker/ledger/category/service/LabelNormalizerTest.java
+src/test/java/com/fintracker/ledger/transaction/service/IngestCatalogTest.java
+src/test/java/com/fintracker/ledger/transaction/service/TransactionServiceImportTest.java
+src/test/java/com/fintracker/ledger/statement/service/StatementImportFailureTest.java
+src/test/java/com/fintracker/ledger/statement/service/FailedStatementReuploadTest.java
+src/test/java/com/fintracker/ledger/statement/controller/InternalStatementImportFailureControllerTest.java
+src/test/java/com/fintracker/ledger/statement/StatementImportFailureIT.java
+src/test/java/com/fintracker/ledger/statement/FailedStatementReuploadIT.java
+src/test/java/com/fintracker/ledger/transaction/controller/ApprovalCategoryRecheckIT.java
+src/test/java/com/fintracker/ledger/transaction/controller/StatementIngestCategoryIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: XS-IMP-02: Added the import-failure route and failure reason, made duplicate checks ignore and uploads replace failed statements with no transactions, resolved SYSTEM category codes after the user's rules and own categories while recording the source, stored the review reason, and re-checked the category on approval.
+src/main/java/com/fintracker/ledger/category/service/LabelNormalizer.java
+src/main/java/com/fintracker/ledger/statement/dto/RecordImportFailureRequest.java
+src/main/java/com/fintracker/ledger/statement/exception/StatementHasTransactionsException.java
+src/main/java/com/fintracker/ledger/transaction/exception/CategoryUnavailableException.java
+src/main/java/com/fintracker/ledger/transaction/service/IngestCatalog.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionCategoryResolver.java
+src/main/java/com/fintracker/ledger/config/GlobalExceptionHandler.java
+src/main/java/com/fintracker/ledger/statement/controller/InternalStatementController.java
+src/main/java/com/fintracker/ledger/statement/model/Statement.java
+src/main/java/com/fintracker/ledger/statement/repository/JooqStatementRepository.java
+src/main/java/com/fintracker/ledger/statement/repository/StatementRepository.java
+src/main/java/com/fintracker/ledger/statement/service/StatementService.java
+src/main/java/com/fintracker/ledger/statement/service/impl/StatementServiceImpl.java
+src/main/java/com/fintracker/ledger/transaction/controller/TransactionController.java
+src/main/java/com/fintracker/ledger/transaction/dto/BulkCreateTransactionsRequest.java
+src/main/java/com/fintracker/ledger/transaction/dto/BulkCreateTransactionsResponse.java
+src/main/java/com/fintracker/ledger/transaction/model/Transaction.java
+src/main/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/repository/TransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionService.java
+src/main/java/com/fintracker/ledger/transaction/service/impl/TransactionServiceImpl.java
+src/main/resources/db/migration/V31__Add_Import_Failure_And_Category_Source.sql
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-ING-09: Added failing tests for the 30-minute pause timeout with cancel and one RecordFailure path, reason-code-only job errors, the Ledger failure notice, unstored Textract pages, the server-side hash recheck and duplicate pause, column mappings by header signature with votes and promotion, and category codes with the review flag.
+tests/conftest.py
+tests/test_reason_codes.py
+tests/test_import_failure.py
+tests/test_extractor_textract_pages.py
+tests/test_one_time_scripts.py
+tests/test_column_mapping.py
+tests/test_duplicate_checks.py
+tests/test_normalizer.py
+tests/test_normalizer_handler.py
+tests/test_categorizer.py
+tests/test_category_resolver.py
+tests/category_fixtures.py
+tests/test_data_dispatcher.py
+tests/test_data_dispatcher_ledger_push.py
+tests/test_data_dispatcher_security.py
+tests/test_data_pipeline_spec_acceptance.py
+tests/test_extractor.py
+tests/test_gatekeeper.py
+tests/test_gatekeeper_handler.py
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-ING-09: Added the RecordFailure path with a 30-minute pause timeout and cancel, reason-code-only job errors and status, the Ledger failure notice, Textract pages sent as bytes, the server-side hash recheck and duplicate check, column mappings by header signature with votes and promotion, and SYSTEM category codes with the review flag.
+src/shared/reasons.py
+src/shared/exceptions.py
+src/shared/schemas.py
+src/statement_ingestion/repository.py
+src/statement_ingestion/service.py
+src/statement_ingestion/ledger_client.py
+src/statement_ingestion/status_handler.py
+src/statement_ingestion/record_failure_handler.py
+src/gatekeeper/handler.py
+src/gatekeeper/service.py
+src/gatekeeper/schemas.py
+src/gatekeeper/mapping_repository.py
+src/gatekeeper/header_signature.py
+src/gatekeeper/proposal.py
+src/gatekeeper/promotion.py
+src/gatekeeper/mapping_metrics.py
+src/gatekeeper/account_deletion_handler.py
+src/gatekeeper/csv_col_mapping_cancel_handler.py
+src/gatekeeper/csv_col_mapping_confirmation_handler.py
+src/extractor/handler.py
+src/extractor/schemas.py
+src/extractor/service.py
+src/duplicate_check/__init__.py
+src/duplicate_check/service.py
+src/duplicate_check/handler.py
+src/duplicate_check/pause_handler.py
+src/normalizer/handler.py
+src/normalizer/schemas.py
+src/normalizer/service.py
+src/categorizer/bank_categories.py
+src/categorizer/schemas.py
+src/categorizer/service.py
+src/categorizer/code_check.py
+src/data_dispatcher/handler.py
+src/data_dispatcher/service.py
+infrastructure/seed/bank_mapping_baseline.json
+infrastructure/terraform/modules/step_functions_pipeline/statemachine.asl.json.tpl
+infrastructure/terraform/modules/step_functions_pipeline/main.tf
+infrastructure/terraform/modules/step_functions_pipeline/variables.tf
+infrastructure/terraform/modules/http_api/main.tf
+infrastructure/terraform/modules/http_api/variables.tf
+infrastructure/terraform/modules/dynamodb_table/variables.tf
+infrastructure/terraform/environments/dev/main.tf
+infrastructure/terraform/environments/dev/outputs.tf
+infrastructure/terraform/environments/dev/variables.tf
+infrastructure/terraform/README.md
+README.md
+scripts/check_category_codes.py
+scripts/promote_bank_mapping.py
+scripts/header_signature.py
+scripts/one-time/2026-10-25_DP-ING-11_remove_textract_page_images.py
+
+[commit]
+repo: fintracker-ui
+message: DP-ING-09: Added failing tests for the job status reason code and counts and for cancelling the paused import when the column dialog is closed.
+src/app/core/services/statement.service.spec.ts
+src/app/features/statements/upload-statement-modal/upload-statement-modal.spec.ts
+
+[commit]
+repo: fintracker-ui
+message: DP-ING-09: Switched the job status to reason codes and counts and cancelled the paused import when the column dialog is closed.
+src/app/core/services/statement.service.ts
+src/app/features/statements/upload-statement-modal/upload-statement-modal.ts
+
+[commit]
+repo: .
+message: DP-ING-09: Added the import reliability implementation notes (with proposed spec changes), the deploy runbook, the XS-IMP and DP-MAP test inventories, extended the DP-ING, XS-DPCAT and LG-STMT inventories and set the implemented statuses.
+docs/fintracker-cross-services/2026-10-25_xs_imp_import_reliability_implementation_notes.md
+docs/bugs/2026-10-25_bug_column_mapping_proposal_returned_in_snake_case.md
+docs/instructions/deploy_import_reliability.md
+docs/fintracker-cross-services/specs/XS-IMP-statement-import-contract-spec.md
+docs/fintracker-cross-services/specs/XS-IMP-statement-import-contract-tests.md
+docs/fintracker-cross-services/specs/XS-DPCAT-dp-ledger-categories-spec.md
+docs/fintracker-cross-services/specs/XS-DPCAT-dp-ledger-categories-tests.md
+docs/fintracker-data-pipelines/specs/DP-ING-statement-ingestion-spec.md
+docs/fintracker-data-pipelines/specs/DP-ING-statement-ingestion-tests.md
+docs/fintracker-data-pipelines/specs/DP-MAP-csv-column-mapping-spec.md
+docs/fintracker-data-pipelines/specs/DP-MAP-csv-column-mapping-tests.md
+docs/fintracker-ledger-doc/specs/LG-STMT-statement-upload-spec.md
+docs/fintracker-ledger-doc/specs/LG-STMT-statement-upload-tests.md
+
+# ---- ARCH-4.8 error handling + ARCH-9.1 Python layout (2026-10-23). Delete the files listed in
+# pending_commits.md "Delete before committing" first: deleted paths are listed here and must
+# already be deleted, or the dry run reports "no changes".
+
+
+# ---- Review fixes #6-#8: UTC TTLs, facts client reuse, refresh count, Bedrock log redaction (2026-10-24)
+
+# ---- AN-FS-10/14/15/20/21 review changes, User Profile S3 goals route and account deletion (2026-10-25).
+# The AN-FS requirements share generation.py, service.py and cost_guard.py, so their tests and code are
+# one red commit and one green commit rather than one pair per requirement.
+
+
+
+# ---- Fixes from temp_doc.md (2026-10-26): status API Decimal bug, DP-ING-12 ISO dates, LG-STMT-08 hash
+# correction, DP-ING-11 cleanup of every version, LG-READ internal routes, the UI's reason-code
+# catalog and row hints, User Profile route identity and the REST authorizer format.
+# Several files below also carry earlier uncommitted work (for example the Ledger's
+# GlobalExceptionHandler, JooqTransactionRepository and TransactionRepository, the UI's transactions
+# files and User Profile's handlers.py), so each commit includes it. Tests are listed first.
+
+[commit]
+repo: services/fintracker-ledger
+message: LG-READ-01 to LG-READ-04: Added the failing tests for the internal search and budget-status routes, the content-hash correction route, the declared period on the owner lookup, the database_unavailable answer and the budgets internal prefix.
+src/test/java/com/fintracker/ledger/InternalApiSecurityIT.java
+src/test/java/com/fintracker/ledger/config/InternalCallerFilterTest.java
+src/test/java/com/fintracker/ledger/config/DatabaseUnavailableHandlerTest.java
+src/test/java/com/fintracker/ledger/readroutes/InternalReadRoutesIT.java
+src/test/java/com/fintracker/ledger/statement/controller/InternalContentHashCorrectionIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: LG-READ-01 to LG-READ-04: Added the internal transaction search and budget-status routes with database totals, a retryable 503 for an unreachable database, the content-hash correction route (LG-STMT-08) and the declared period on the owner lookup (DP-ING-12).
+src/main/java/com/fintracker/ledger/budget/controller/InternalBudgetController.java
+src/main/java/com/fintracker/ledger/budget/dto/BudgetStatusResponse.java
+src/main/java/com/fintracker/ledger/budget/exception/BudgetMonthNotFoundException.java
+src/main/java/com/fintracker/ledger/budget/service/BudgetService.java
+src/main/java/com/fintracker/ledger/budget/service/impl/BudgetServiceImpl.java
+src/main/java/com/fintracker/ledger/config/GlobalExceptionHandler.java
+src/main/java/com/fintracker/ledger/config/InternalCallerFilterConfig.java
+src/main/java/com/fintracker/ledger/shared/InternalQueryParams.java
+src/main/java/com/fintracker/ledger/shared/exception/InvalidArgumentException.java
+src/main/java/com/fintracker/ledger/statement/controller/InternalStatementController.java
+src/main/java/com/fintracker/ledger/statement/dto/CorrectContentHashRequest.java
+src/main/java/com/fintracker/ledger/statement/dto/StatementOwnerResponse.java
+src/main/java/com/fintracker/ledger/statement/model/StatementOwner.java
+src/main/java/com/fintracker/ledger/statement/repository/JooqStatementRepository.java
+src/main/java/com/fintracker/ledger/statement/repository/StatementRepository.java
+src/main/java/com/fintracker/ledger/statement/service/StatementService.java
+src/main/java/com/fintracker/ledger/statement/service/impl/StatementServiceImpl.java
+src/main/java/com/fintracker/ledger/transaction/controller/InternalTransactionSearchController.java
+src/main/java/com/fintracker/ledger/transaction/dto/TransactionSearchResponse.java
+src/main/java/com/fintracker/ledger/transaction/model/SpendSearchResult.java
+src/main/java/com/fintracker/ledger/transaction/repository/JooqTransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/repository/TransactionRepository.java
+src/main/java/com/fintracker/ledger/transaction/service/TransactionSearchService.java
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-ING-12: Added the failing tests for the status API reading a stored duplicate, ISO dates with the year taken from the declared period, the client hash correction and the cleanup of every object version.
+tests/conftest.py
+tests/test_duplicate_checks.py
+tests/test_one_time_scripts.py
+tests/test_reason_codes.py
+tests/test_statement_dates.py
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-ING-12: Sent every date to the Ledger as an ISO date and counted skipped rows, corrected a wrong client hash through the Ledger, serialized stored numbers in the status API and made the page-image cleanup remove every version.
+scripts/one-time/2026-10-25_DP-ING-11_remove_textract_page_images.py
+src/data_dispatcher/handler.py
+src/duplicate_check/service.py
+src/extractor/handler.py
+src/extractor/schemas.py
+src/gatekeeper/service.py
+src/normalizer/handler.py
+src/normalizer/service.py
+src/shared/dates.py
+src/statement_ingestion/ledger_client.py
+src/statement_ingestion/orchestrator.py
+src/statement_ingestion/service.py
+src/statement_ingestion/status_handler.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AI-CHAT-05: Added the failing tests for the chat and MCP Ledger tools reading only the internal search and budget-status routes.
+tests/chat/test_execute_tool.py
+tests/tools/test_chat_clients.py
+tests/tools/test_clients.py
+tests/tools/test_tools.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AI-CHAT-05: Pointed the search and budget-status tools at the Ledger's internal routes and took the totals and remaining amounts from the Ledger.
+src/chat/tools.py
+src/tools/clients.py
+src/tools/schemas.py
+src/tools/tools.py
+
+[commit]
+repo: services/fintracker-user-profile
+message: UP-AUTH-02: Added the failing tests for profile and goals routes reading the authorizer context and for the REST authorizer response.
+tests/unit/identity/test_authorizer.py
+tests/unit/identity/test_identity_service.py
+tests/unit/identity/test_route_identity.py
+tests/unit/identity/test_settings_handlers.py
+tests/unit/identity/test_settings_service.py
+
+[commit]
+repo: services/fintracker-user-profile
+message: UP-AUTH-02: Read the user from the identity authorizer's context on the profile, settings, delete and goals routes and answered REST authorizer requests with an IAM policy.
+app/goals/handlers.py
+app/identity/handlers.py
+app/identity/service.py
+app/shared/request_context.py
+
+[commit]
+repo: fintracker-ui
+message: XS-IMP-04: Added the failing tests for the reason-code catalog, the Statements-tab failure message and the Pending tab hints.
+src/app/core/reason-messages.spec.ts
+src/app/core/services/statement.service.spec.ts
+src/app/core/services/transaction.service.spec.ts
+src/app/features/statements/statements.spec.ts
+src/app/features/statements/upload-statement-modal/upload-statement-modal.spec.ts
+src/app/features/transactions/transactions.spec.ts
+
+[commit]
+repo: fintracker-ui
+message: XS-IMP-04: Showed catalog messages for failed imports, the failure reason in the Statements tab, the low-confidence highlight and the "no longer available" and "From your rule" hints in the Pending tab.
+src/app/core/reason-messages.ts
+src/app/core/services/statement.service.ts
+src/app/core/services/transaction.service.ts
+src/app/features/statements/statements.html
+src/app/features/statements/statements.scss
+src/app/features/statements/statements.ts
+src/app/features/statements/upload-statement-modal/upload-statement-modal.ts
+src/app/features/transactions/transactions.html
+src/app/features/transactions/transactions.scss
+src/app/features/transactions/transactions.ts
+
+[commit]
+repo: .
+message: DP-ING-12: Documented the temp_doc.md fixes (three bug notes, the implementation notes with the decisions and spec differences), added the LG-READ test inventory, extended the DP-ING, XS-IMP, XS-DPCAT, LG-STMT, AI-CHAT and UP-AUTH inventories and set the implemented statuses.
+docs/bugs/2026-10-26_bug_job_status_api_500_on_stored_duplicate_count.md
+docs/bugs/2026-10-26_bug_page_image_cleanup_leaves_every_version_in_the_versioned_bucket.md
+docs/bugs/2026-10-26_bug_profile_routes_read_jwt_claims_that_the_authorizer_never_sets.md
+docs/fintracker-cross-services/2026-10-26_temp_doc_fixes_implementation_notes.md
+docs/fintracker-cross-services/specs/XS-IMP-statement-import-contract-spec.md
+docs/fintracker-cross-services/specs/XS-IMP-statement-import-contract-tests.md
+docs/fintracker-cross-services/specs/XS-DPCAT-dp-ledger-categories-spec.md
+docs/fintracker-cross-services/specs/XS-DPCAT-dp-ledger-categories-tests.md
+docs/fintracker-data-pipelines/specs/DP-ING-statement-ingestion-spec.md
+docs/fintracker-data-pipelines/specs/DP-ING-statement-ingestion-tests.md
+docs/fintracker-ledger-doc/specs/LG-STMT-statement-upload-spec.md
+docs/fintracker-ledger-doc/specs/LG-STMT-statement-upload-tests.md
+docs/fintracker-ledger-doc/specs/LG-READ-internal-read-routes-spec.md
+docs/fintracker-ledger-doc/specs/LG-READ-internal-read-routes-tests.md
+docs/fintracker-ai-assistant/specs/AI-CHAT-open-chat-spec.md
+docs/fintracker-ai-assistant/specs/AI-CHAT-open-chat-tests.md
+docs/fintracker-user-profile-doc/specs/UP-AUTH-authentication-tests.md
+docs/git/pending_commits.txt
+docs/git/pending_commits.md
+
+[commit]
+repo: services/fintracker-ledger
+message: XS-DPCAT-02: Added the test that the retired per-user categories route answers 404 and removed the two tests of the route.
+src/test/java/com/fintracker/ledger/category/InternalCategoryControllerIT.java
+
+[commit]
+repo: services/fintracker-ledger
+message: XS-DPCAT-02: Retired the internal per-user categories route and its service method, now that the Data Pipeline no longer calls it.
+src/main/java/com/fintracker/ledger/category/controller/InternalCategoryController.java
+src/main/java/com/fintracker/ledger/category/service/CategoryCatalogService.java
+
+[commit]
+repo: services/fintracker-data-pipeline
+message: DP-CAT-01: Removed the unused Ledger categories client, the unused bank mapping baseline module and its JSON, and the test that read the JSON.
+src/gatekeeper/bank_mapping_baseline.py
+src/gatekeeper/bank_mappings.json
+tests/test_categorizer.py
+
+[commit]
+repo: .
+message: XS-DPCAT-02: Updated the XS-DPCAT and DP-CAT test inventories for the retired user-categories route and the removed baseline test.
+docs/fintracker-cross-services/specs/XS-DPCAT-dp-ledger-categories-tests.md
+docs/fintracker-data-pipelines/specs/DP-CAT-categorization-tests.md
+
+# ---- AN-FS-22 read-only results role for the eval-required check (2026-10-26). Tests first, then logic.
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-22: Added the failing Terraform tests for the read-only results role that pull-request checks assume, with no Bedrock access and no write permissions.
+infrastructure/terraform/modules/eval_results/tests/results.tftest.hcl <= snapshots/fintracker-ai-assistant/eval_results/results.tftest.read-role.hcl
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-22: Added the read-only results role for pull-request checks, trusted only from this repository's pull-request runs, and its output for the EVAL_RESULTS_READ_ROLE_ARN variable.
+infrastructure/terraform/modules/eval_results/main.tf <= snapshots/fintracker-ai-assistant/eval_results/main.read-role.tf
+infrastructure/terraform/modules/eval_results/variables.tf <= snapshots/fintracker-ai-assistant/eval_results/variables.read-role.tf
+infrastructure/terraform/modules/eval_results/outputs.tf
+infrastructure/terraform/environments/dev/main.tf
+infrastructure/terraform/environments/dev/outputs.tf
+infrastructure/terraform/environments/dev/variables.tf
+infrastructure/terraform/environments/dev/terraform.tfvars.example
+
+# ---- AN-FS-20/22 one pass record per passing run, no versioning (2026-10-26). Tests first, then logic.
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-20: Added the failing tests for one pass record per passing run, the latest pass winning, failing runs leaving the last pass in place, and for the results bucket keeping no old versions and no expiry.
+tests/summary/test_eval.py
+infrastructure/terraform/modules/eval_results/tests/results.tftest.hcl
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-20: Changed evaluation results to keep one pass record per passing run instead of overwriting a last-pass pointer, and removed versioning and the 90-day expiry from the results bucket because records are small and never overwritten.
+src/summary/eval/results.py
+infrastructure/terraform/modules/eval_results/main.tf
+infrastructure/terraform/modules/eval_results/variables.tf
+
+[commit]
+repo: .
+message: AN-FS-20: Updated the AN-FS-20 and AN-FS-22 criteria, the evaluation results storage row and the change log for per-run pass records that never expire.
+docs/fintracker-analytics/specs/AN-FS-financial-summary-spec.md
+
+[commit]
+repo: .
+message: AN-FS-20: Removed the 90-day expiry of evaluation results from the AI assistant architecture, the Financial Summary run guide and the implementation plan.
+docs/fintracker-ai-assistant/architecture/ai-assistant-architecture.md
+docs/fintracker-ai-assistant/run_financial_summary.md
+docs/implementation_plans/2026-10-08_fs_financial_summary.md
+
+# ---- AN-FS-21 anomaly monitor hit the one-dimensional-monitor-per-account limit (2026-10-26). Tests first, then logic.
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-21: Added the failing test for the Bedrock cost anomaly monitor being a custom monitor on a cost category that holds Amazon Bedrock spend.
+infrastructure/terraform/modules/bedrock_cost_guard/tests/cost_guard.tftest.hcl
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-21: Changed the Bedrock cost anomaly monitor from a dimensional monitor to a custom monitor on a new Amazon Bedrock cost category so it no longer hits the one-dimensional-monitor-per-account limit.
+infrastructure/terraform/modules/bedrock_cost_guard/main.tf
+
+[commit]
+repo: .
+message: AN-FS-21: Documented the bug where terraform apply failed creating the Bedrock cost anomaly monitor.
+docs/bugs/2026-10-26_bug_bedrock_anomaly_monitor_dimensional_limit_exceeded.md
+
+# ---- DS-DL-01 Document service download slice (2026-10-26). New local repo (not in .gitmodules yet). Tests first, then code.
+
+[commit]
+repo: services/fintracker-document-service
+message: DS-DL-01: Added the failing tests for downloading a file by documentId through an audited, short-lived link, plus the service scaffold.
+.gitignore
+pyproject.toml
+poetry.lock
+README.md
+src/__init__.py
+src/core/__init__.py
+src/config/__init__.py
+src/downloads/__init__.py
+tests/__init__.py
+tests/unit/__init__.py
+tests/unit/core/__init__.py
+tests/unit/core/test_error_codes.py
+tests/unit/downloads/__init__.py
+tests/unit/downloads/fakes.py
+tests/unit/downloads/test_download_service.py
+tests/unit/downloads/test_signer.py
+tests/unit/downloads/test_router.py
+tests/integration/__init__.py
+tests/integration/test_dynamodb_download_adapters.py
+
+[commit]
+repo: services/fintracker-document-service
+message: DS-DL-01: Added the download route that checks ownership, writes an audit record and returns a 15-minute no-store link for clean files only.
+src/core/exceptions.py
+src/core/error_handlers.py
+src/core/request_context.py
+src/downloads/exceptions.py
+src/downloads/models.py
+src/downloads/service.py
+src/downloads/signer.py
+src/downloads/repository.py
+src/downloads/router.py
+src/config/settings.py
+src/config/container.py
+src/main.py
+
+[commit]
+repo: .
+message: DS-DL-01: Added the DS-DL test inventory and implementation notes (with proposed spec changes), added the Document service error code and set the DS-DL-01 status to In progress.
+docs/fintracker-document-service/specs/DS-DL-document-download-tests.md
+docs/fintracker-document-service/DS-DL-implementation-notes.md
+docs/fintracker-document-service/specs/DS-DL-document-download-spec.md
+docs/fintracker-architecture/error-catalog.md
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-22: Priced each dry-run tier as total input tokens plus max output tokens per fixture run, and added a test that pins the full-once estimate to that formula.
+src/summary/eval/runner.py
+tests/summary/test_eval.py
+
+[commit]
+repo: .
+message: AN-FS-22: Added the evaluation result folder notes (purpose of results, passes and passes-by-version, with proposed spec changes for Appendix C and the AI-EVAL retention line).
+docs/fintracker-analytics/AN-FS-20-22-eval-results-notes.md
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-22: Added tests that make smoke the first evaluation tier and keep a dry report out of the results bucket.
+tests/summary/test_eval.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-22: Made the dry run a cost preview only, so it is no longer a required tier, is never stored in S3 and is removed from the evaluation workflow choices.
+src/summary/eval/results.py
+src/summary/eval/__main__.py
+.github/workflows/llm-eval.yml
+
+[commit]
+repo: .
+message: AN-FS-22: Updated the AN-FS and AI-EVAL specs, the AI assistant architecture, the Financial Summary run guide and the AN-FS test inventory for the dry run being a cost preview only.
+docs/fintracker-analytics/specs/AN-FS-financial-summary-spec.md
+docs/fintracker-analytics/specs/AN-FS-financial-summary-tests.md
+docs/fintracker-ai-assistant/specs/AI-EVAL-evaluation-auditing-spec.md
+docs/fintracker-ai-assistant/architecture/ai-assistant-architecture.md
+docs/fintracker-ai-assistant/run_financial_summary.md
+
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-10/11: Added prompt version fs-v3: each insight cites its figure in metric_ref and carries its own recommendation (or null), one insight per issue, no insight ids, tokens only in free text and reference fields as bare paths.
+src/summary/prompt/versions/fs-v3/system.md
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-10: Added a single default summary model constant and removed hardcoded real model IDs from the tests, so changing the model needs one edit.
+src/summary/config.py
+tests/summary/test_eval.py
+tests/summary/test_generation.py
+tests/summary/test_generation_retries.py
+tests/summary/test_store_guard_audit.py
+tests/chat/test_config.py
+tests/chat/test_limits.py
+tests/chat/test_audit_and_logs.py
+
+# AN-FS-10/11 retry changes (2026-10-27). tests/summary/test_eval.py, test_generation.py and
+# test_generation_retries.py also hold the new retry, attempt-counter and dropped-item tests; they are
+# in the first block above, so they are committed before the implementation below (tests first).
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-10/11: Added tests for the shared retry on grounding problems with specific errors, keeping the first reply when the retry fails or is worse, dropped-item records and service tests that use a reply grounded in service.json.
+tests/summary/samples.py
+tests/summary/test_validation.py
+tests/summary/test_service.py
+tests/summary/test_service_resilience.py
+tests/fixtures/fs/replay/invented-evidence.json
+tests/fixtures/fs/replay/budget-insight-without-budgets.json
+
+# AN-FS-20 why a call failed and client_latency_ms (2026-10-27): src/summary/schemas.py, generation.py,
+# llm.py, eval/runner.py, eval/__main__.py and tests/summary/test_eval.py, test_generation_retries.py
+# also hold these changes and ride in the blocks that already list them. exceptions.py and test_llm.py are
+# only touched by this change; exceptions.py comes first because generation.py and llm.py read the new fields.
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-20: A failed LLM call keeps the AWS error code, the SDK error type and a masked, cut AWS message on the error object so the evaluation report can say why it failed; nothing logs them.
+src/summary/exceptions.py
+tests/summary/test_llm.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-10/11: Grounding problems now ask for the shared retry with the exact path, token or number at fault, the first reply is kept when the retry fails or is worse, CallRecord.attempt counts every LLM call, and eval rows record dropped items, retry errors and raw replies.
+src/summary/schemas.py
+src/summary/validation.py
+src/summary/generation.py
+src/summary/prompt/loader.py
+src/summary/eval/runner.py
+
+# AN-FS-20 eval report changes (2026-10-27): each call gets call_outcome plus validation_outcome with its
+# reason and messages, calls carry their actual tokens and cost, and live reports drop the estimates.
+# src/summary/schemas.py, validation.py, generation.py, eval/runner.py and the two test files above
+# also hold these changes; they ride in the blocks that already list them. llm.py and eval/__main__.py
+# are only touched by this change, so they get this block (after the implementation block above, because
+# llm.py reads the new LlmReply fields from schemas.py).
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-20: The Bedrock client reports cache read and write tokens and the eval CLI prints each call's call outcome, validation outcome and reason, tokens and cost.
+src/summary/llm.py
+src/summary/eval/__main__.py
+
+# AN-FS-12 guardrail retry and banned-term list (2026-10-27): src/summary/validation.py, schemas.py,
+# generation.py, config.py and tests/summary/test_validation.py, test_generation.py also hold these
+# changes and ride in the blocks that already list them. The spec and tests doc changes ride in the
+# root AN-FS-10/11/20 block below. fs-v2 is a new prompt version, not active until prompt_version is set.
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-10/12/22: Added prompt version fs-v2 with severity rules, fewer and non-repeating insights, highlights that don't repeat the figures the app shows, impact_ref rules and no unsupported causes; fs-v1 stays the active version until fs-v2 passes evaluation.
+src/summary/prompt/versions/fs-v2/system.md
+
+# AN-FS-22 result folder names and AN-FS-20 run record (2026-10-27): tests/summary/test_eval.py,
+# src/summary/eval/runner.py and src/summary/eval/__main__.py also hold these changes and ride in the
+# blocks that already list them (tests first). results.py is only touched by this change, so it gets this block.
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-22: Evaluation results are stored at results/<prompt version>/<model>/<tier>/<stamp>__<model>__<outcome>__r<runs>__<hash8>.json, so a run can be told apart by its file name without opening it; the pass indexes keep their keys.
+src/summary/eval/results.py
+tests/summary/test_eval.py
+
+[commit]
+repo: .
+message: AN-FS-10/11/20: Spec says a grounding problem asks for the shared retry with the exact error, the first reply is kept when the retry fails or is worse, and eval report rows record numbered calls, retry errors and dropped items; tests doc adds rows 386 to 399.
+docs/fintracker-analytics/specs/AN-FS-financial-summary-spec.md
+docs/fintracker-analytics/specs/AN-FS-financial-summary-tests.md
+
+[commit]
+repo: .
+message: AN-FS-20/22: Evaluation results notes explain how to read a results/ name and which settings and code details the report records beyond the version key; the spec Appendix C row, report bullet, change log and tests doc rows 417 to 422 ride in the block above.
+docs/fintracker-analytics/AN-FS-20-22-eval-results-notes.md
+
+[commit]
+repo: .
+message: ARCH-9.2: Architecture doc adds a testing strategy: fewer, higher-level tests that assert outcomes, rules for when to record a test and when to keep it as a scratch check, and every recorded test maps to a spec requirement or invariant.
+docs/fintracker-architecture/fintracker-architectural-doc.md
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-20: Stored eval results list totals and run failures right after runs_per_fixture, so a reader sees the verdict without scrolling past rows.
+src/summary/eval/results.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-12: Replay for a followed injection now includes the shared retry reply that still follows it, so the banned-term guardrail removes it and counts one hit after one retry.
+tests/fixtures/fs/replay/injection-merchant-followed.json
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-22: Prompt and service tests check the configured prompt version instead of a hardcoded fs-v1, and the system prompt wording test is removed (wording is judged by replay and live evaluation).
+tests/summary/test_prompt_and_projection.py
+tests/summary/test_service.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-11: Replay responses cite a metric_ref in every insight, as the output schema now requires.
+tests/fixtures/fs/replay/numbers-then-fixed.json
+tests/fixtures/fs/replay/injection-merchant-ignored.json
+tests/fixtures/fs/replay/typical-month-good.json
+
+[commit]
+repo: .
+message: AN-FS-20: Added the Financial Summary evaluation log: run history and one entry per root cause (symptom, cause, options, decision, result), starting with the 2026-10-28 Nova Lite baseline.
+docs/fintracker-ai-assistant/eval/financial-summary-eval-log.md
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-18: The log redaction check runs only in CI, so the duplicate pytest scan of the summary code is removed; the checker's own tests stay.
+tests/summary/test_log_redaction.py
+
+# generation.py, eval/runner.py, test_generation_retries.py and test_service.py also hold EVL-007 to EVL-010
+# changes and ride in the blocks that already list them.
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-10/11: Replay and router tests read recommendations inside their insight and build summaries with code-assigned insight ids.
+tests/summary/test_replay.py
+tests/summary/test_router.py
+
+# EVL-011 and SDR-003 (2026-10-28): validation.py, test_validation.py, test_generation.py, test_eval.py and the
+# invented-evidence replay ride in the blocks that already list them. The AN-FS spec and tests doc changes
+# (AN-FS-10/11/12/13/15/20, Appendix B, tests 429 to 450) ride in the root AN-FS-10/11/20 block above.
+
+[commit]
+repo: .
+message: AN-FS-10: Added SDR-003: the summary output schema is sent as prompt text with validation and one retry, not as a forced tool or native structured output, with a rule of thumb for choosing a structure mode; architecture doc adds S10, updates the validation step and S4.
+docs/fintracker-ai-assistant/architecture/decision_records/SDR-003-summary-output-structure-mode.md
+docs/fintracker-ai-assistant/architecture/ai-assistant-architecture.md
+
+[commit]
+repo: fintracker-ui
+message: AN-FS-13: Showed each insight's figure and its own recommendation under it, replacing the separate Recommendations section, to match the nested summary output.
+src/app/core/services/financial-summary.service.ts
+src/app/features/reports/financial-summary/financial-summary.html
+src/app/features/reports/financial-summary/financial-summary.scss
+src/app/features/reports/financial-summary/financial-summary.spec.ts
+src/app/features/reports/financial-summary/financial-summary.ts
+
+# EVL-012 to EVL-022 (2026-10-28): unit beside a token removed, ISO dates not figures, metric-type insights dropped
+# without a retry, max_tokens 2000, one insight per candidate (fs-v3 prompt), injection check ignores an echoed
+# merchant name, per-field text limits, headline / highlight / period-level tokenization, null candidate impact,
+# amounts in words, no self-calculated figures. src/summary/schemas.py, validation.py, config.py,
+# prompt/loader.py, eval/runner.py, prompt/versions/fs-v3/system.md, tests/summary/test_validation.py,
+# test_eval.py, test_generation.py, test_generation_retries.py,
+# docs/fintracker-ai-assistant/eval/financial-summary-eval-log.md and the AN-FS spec and tests docs (Appendix B limits,
+# AN-FS-11 criteria, tests 451 to 469) also hold these changes and ride in the blocks that already list them.
+# New files (the replay tool) are in the blocks after this note.
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-20: Added tests for the replay tool that runs a stored live evaluation result through the current validation without an LLM call.
+tests/summary/test_replay_eval_result.py
+
+[commit]
+repo: services/fintracker-ai-assistant
+message: AN-FS-20: Added scripts/replay_eval_result.py: replays the raw replies stored in a live evaluation result through the current parse and validation and prints stored vs current outcomes, so a validator change can be checked against a paid run for free.
+scripts/replay_eval_result.py
+
+[commit]
+repo: .
+message: AN-FS-20: Documented how to replay a stored live evaluation result against the current code (free), and set max_tokens 2000 in the settings example.
+docs/fintracker-ai-assistant/run_financial_summary.md
+
+# financial-summary-eval-log.md (replay pointer) rides in the block that already lists it.
+
+# KN-SDOC help docs (2026-10-28): 12 user-facing help documents for the RAG pipeline and the golden question sets.
+# The help/ docs carry <!-- verify: ... --> comments (stripped by the chunker); resolve them against the live app
+# before CI uploads help/ (accounts.md is entirely unverified).
+
+[commit]
+repo: .
+message: KN-SDOC: Added 12 user-facing help docs under docs/help (app overview, sign-in, dashboard, transactions, three statements docs, accounts, budgets, reports, settings, key concepts), one H1 per doc and one question per section so each chunk answers on its own.
+docs/help/getting-started/app-overview.md
+docs/help/getting-started/sign-in-and-session.md
+docs/help/dashboard.md
+docs/help/transactions.md
+docs/help/statements/upload-statement.md
+docs/help/statements/csv-mapping.md
+docs/help/statements/manage-statements.md
+docs/help/accounts.md
+docs/help/budgets.md
+docs/help/reports.md
+docs/help/settings.md
+docs/help/concepts.md
+
+[commit]
+repo: .
+message: KN-CHUNK-04: Added the golden question set (45 questions mapped to help paths) for the recall@5 gate, and a negative set (8 questions the docs must not answer) to calibrate the help-doc score threshold.
+docs/fintracker-knowledge/eval/golden-questions.yaml
+docs/fintracker-knowledge/eval/golden-negative-questions.yaml

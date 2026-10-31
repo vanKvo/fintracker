@@ -1,0 +1,107 @@
+{
+  "tier": "smoke",
+  "model_id": "amazon.nova-2-lite-v1:0",
+  "prompt_template_version": "fs-v2",
+  "output_schema_version": "1.0",
+  "facts_schema_version": "1.0",
+  "version_key": "46c4d335278dae14",
+  "temperature": 0.0,
+  "max_tokens": 1200,
+  "runs_per_fixture": 1,
+  "cap_usd": "0.05",
+  "deadline_s": 62.0,
+  "fixtures": [
+    "typical-month"
+  ],
+  "prices_per_1k_usd": {
+    "input": "0.0003",
+    "output": "0.00275"
+  },
+  "git_sha": null,
+  "github_run_id": null,
+  "started_at": "2026-10-28T00:23:44+00:00",
+  "rows": [
+    {
+      "fixture": "typical-month",
+      "run": 1,
+      "outcome": "llm_error",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "retries": 0,
+      "cost_usd": "0",
+      "insight_types": [],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "LlmError",
+          "latency_ms": 196,
+          "started_at": "2026-10-28T00:23:44.194345+00:00",
+          "input_tokens": null,
+          "output_tokens": null,
+          "cache_read_input_tokens": null,
+          "cache_write_input_tokens": null,
+          "bedrock_latency_ms": null,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "not_run",
+          "validation_reason": null,
+          "validation_errors": [],
+          "cost_usd": null
+        }
+      ],
+      "failures": [
+        "llm_error"
+      ],
+      "summary": null,
+      "used_first_reply": false,
+      "dropped": [],
+      "raw_responses": []
+    }
+  ],
+  "finished_at": "2026-10-28T00:23:44+00:00",
+  "status": "completed",
+  "passed": false,
+  "run_failures": [
+    "fixture_failures",
+    "insight_type_coverage"
+  ],
+  "totals": {
+    "avg_input_tokens": 0.0,
+    "avg_output_tokens": 0.0,
+    "max_tokens_per_summary": 0,
+    "avg_tokens_per_summary": 0.0,
+    "token_budget": null,
+    "total_cost_usd": "0",
+    "insight_type_coverage": 0.0,
+    "projected_next_tier_cost_usd": "0",
+    "llm_latency_ms": {
+      "amazon.nova-2-lite-v1:0": {
+        "calls": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "p99_usable": false
+      }
+    },
+    "bedrock_latency_ms": {
+      "amazon.nova-2-lite-v1:0": {
+        "calls": 0,
+        "p50": null,
+        "p95": null,
+        "p99": null,
+        "p99_usable": false
+      }
+    },
+    "call_outcomes": {
+      "LlmError": 1
+    },
+    "validation_outcomes": {
+      "not_run": 1
+    },
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "total_cache_tokens": 0,
+    "truncated_calls": 0,
+    "max_output_tokens_per_call": 0
+  }
+}

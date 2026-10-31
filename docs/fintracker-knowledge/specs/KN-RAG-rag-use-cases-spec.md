@@ -1,6 +1,16 @@
-# FinTracker Analytics Spec 01
+# KN-RAG: RAG Use Cases
 
-## REQ-FA-01: Budget variance explanations with history 
+> **Formerly:** `docs/fintracker-knowledge/ai-rag-pipelines-spec.md`, IDs REQ-FA-NN → KN-RAG-NN (renamed 2026-10; see [SPECS.md](../../SPECS.md))
+
+## Status
+
+| ID | Status |
+|---|---|
+| KN-RAG-01 | Proposed (no Knowledge service yet) |
+| KN-RAG-02 | Proposed (no Knowledge service yet) |
+
+
+## KN-RAG-01: Budget variance explanations with history *(was REQ-FA-01)*
 
 ### Problem
 User asks: "Why am I $400 over budget this month?"
@@ -19,7 +29,7 @@ It's a direct match for the resume wording: "natural-language financial summarie
 It uses data the system generates itself, so it's less sensitive than bank statements.
 It needs no new ingestion source.
 
-## REQ-FA-02: Semantic spending-pattern search
+## KN-RAG-02: Semantic spending-pattern search *(was REQ-FA-02)*
 ### Problem
 User asks: "How much have I spent on my kids' activities this year?"
 

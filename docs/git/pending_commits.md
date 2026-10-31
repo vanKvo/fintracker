@@ -23,6 +23,19 @@ Nothing is pushed.
 | Import reliability: DP-ING-09/10/11, XS-IMP-01 to -04, XS-DPCAT v3, LG-STMT-04/08, DP-MAP, 2026-10-25 | fintracker-ledger, fintracker-data-pipeline, fintracker-ui, root | 2 + 2 + 2 + 1 |
 | temp_doc.md fixes: DP-ING-12, LG-STMT-08, DP-ING-11 cleanup, LG-READ, UP-AUTH-02 route identity, UI reason catalog, 2026-10-26 | fintracker-ledger, fintracker-data-pipeline, fintracker-ai-assistant, fintracker-user-profile, fintracker-ui, root | 2 + 2 + 2 + 2 + 2 + 1 |
 | DS-DL-01 Document service download slice, 2026-10-26 | services/fintracker-document-service (new local repo), root | 2 + 1 |
+| AN-FS-10/11 retry on grounding problems, first-reply fallback, attempt counter and dropped-item logging, 2026-10-27 | fintracker-ai-assistant | 1 + 1 (plus the retry tests inside the first AN-FS-10 block) |
+| AN-FS-20 eval report: per-call call_outcome and validation_outcome with reason, actual per-call token cost, cache tokens, no estimates in live reports, 2026-10-27 | fintracker-ai-assistant | 1 (plus changes inside the AN-FS-10/11 blocks above) |
+| AN-FS-12 guardrail retry and banned-term list, prompt version fs-v2, spec and tests doc rows 400 to 416, 2026-10-27 | fintracker-ai-assistant, root | 1 (plus changes inside the AN-FS-10/11 blocks and the root AN-FS-10/11/20 block) |
+| AN-FS-22 result folder names and AN-FS-20 run record (temperature, max_tokens, git_sha, github_run_id, cap, deadline, fixtures, prices, start and end), 2026-10-27 | fintracker-ai-assistant, root | 1 + 1 (plus changes inside the blocks that already list test_eval.py, runner.py and __main__.py, and the root AN-FS-10/11/20 block) |
+| AN-FS-20 eval report: `client_latency_ms` (was `latency_ms`) and error_code / error_type / error_message on failed calls, 2026-10-27 | fintracker-ai-assistant | 1 (plus changes inside the blocks that already list schemas.py, generation.py, llm.py, runner.py, __main__.py, test_eval.py and test_generation_retries.py, and the root AN-FS-10/11/20 block) |
+| ARCH-9.2 testing strategy in the architecture doc, 2026-10-27 | root | 1 |
+| EVL-001 to EVL-011 and SDR-003: insight metric_ref, reference path syntax repair, retry text, code-assigned ids, nested recommendations, item-level schema, number tokenization, no half-dropped rule, prompt fs-v3, evaluation log, structure-mode SDR, 2026-10-28 | fintracker-ai-assistant, root | 3 + 2 (plus changes inside the blocks that already list schemas.py, validation.py, loader.py, config.py and the summary tests) |
+| EVL-012 to EVL-023 and the replay tool: unit beside a token, ISO dates, metric-type insights without a retry, max_tokens 2000, one insight per candidate, injection echo check, per-field text limits, headline and period-level tokenization, null candidate impact, amounts in words, no self-calculated figures, highlight comments without a token for their own metric (new prompt version fs-v4; fs-v3 stays as run), 2026-10-28 | fintracker-ai-assistant, root | 2 + 1 (replay tool, its tests and the run guide), plus changes inside the blocks that already list schemas.py, validation.py, loader.py, config.py, runner.py, fs-v3 system.md, the summary tests, the evaluation log and the AN-FS spec and tests docs |
+| KN-SDOC help docs (12 docs under docs/help) and KN-CHUNK-04 golden question sets, 2026-10-28 | root | 2 |
+| ADR-013 restructured to the adr-instruction.md format (Why in Decision, rejected alternatives, pros and cons in Consequences), 2026-10-29 | root | 1 |
+| ADR-011, 012, 014, 015 and adr-template.md restructured the same way, optional trade-off table, 2026-10-29 | root | 1 |
+| XS-ACCT last four only, XS-COMP compliance controls, app doc §11 and D26, 2026-10-29 | root | 3 |
+| Knowledge scope rename `mine` to `user` (docs and code; V1 and V4 edited in place), 2026-10-29 | fintracker-knowledge, root | 2 + 1 |
 
 ## Snapshots
 A file changed by two requirements can't be committed whole in the first one without breaking the

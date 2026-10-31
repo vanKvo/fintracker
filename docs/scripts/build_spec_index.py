@@ -23,7 +23,7 @@ SERVICES = {
     "UP": ("User profile", "fintracker-user-profile-doc"),
     "AI": ("AI assistant", "fintracker-ai-assistant"),
     "KN": ("Knowledge", "fintracker-knowledge"),
-    "DS": ("Document service", "fintracker-document-service"),
+    "DS": ("Document service", "fintracker-document"),
     "UI": ("Frontend", "fintracker-ui-doc"),
     "XS": ("Cross-service", "fintracker-cross-services"),
     "LB": ("Libraries", "fintracker-libraries"),

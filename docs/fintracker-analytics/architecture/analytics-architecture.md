@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | Proposed: final design before implementation (AI already moved to the AI assistant) | Van Vo | 2026-10-20 | main | [FinTracker architecture](../../fintracker-architecture/fintracker-architectural-doc.md) |
 
-This document describes the complete design of Analytics: the Dashboard and Reports widgets it serves, how it reads Ledger data, and the workflows it runs. Rules that apply to every service are in the app architecture doc. These include identity, events and invariants. Formulas, thresholds and the facts payload schema live in [FS: Financial Summary](../FS-financial-summary-spec.md): Appendix A, plus FS-03 to FS-08, FS-19 and FS-23 to FS-30.
+This document describes the complete design of Analytics: the Dashboard and Reports widgets it serves, how it reads Ledger data, and the workflows it runs. Rules that apply to every service are in the app architecture doc. These include identity, events and invariants. Formulas, thresholds and the facts payload schema live in [AN-FS: Financial Summary](../specs/AN-FS-financial-summary-spec.md): Appendix A, plus AN-FS-03 to AN-FS-08, AN-FS-19 and AN-FS-23 to AN-FS-30.
 
 ---
 
@@ -53,7 +53,7 @@ It also runs the Financial Summary detectors and serves read-only internal route
 
 Each person's history is small: at most a few thousand transactions over the 24 months the detectors look at. One indexed query over that is fast, so Analytics computes on read and stores nothing (S6).
 
-1. **One read contract, owned by the Ledger.** The Ledger publishes reporting views over its transactions, monthly budget limits and accounts. Each transaction row carries counting fields: whether it counts, and whether it is income, spending or a refund offset (TXT-02). The views use `security_invoker`, so Row-Level Security still applies. They leave out account names, account numbers and every other column Analytics doesn't use.
+1. **One read contract, owned by the Ledger.** The Ledger publishes reporting views over its transactions, monthly budget limits and accounts. Each transaction row carries counting fields: whether it counts, and whether it is income, spending or a refund offset (LG-TXT-02). The views use `security_invoker`, so Row-Level Security still applies. They leave out account names, account numbers and every other column Analytics doesn't use.
 2. **One definition of income and spending.** The Ledger's Dashboard totals and budget alerts read the same views. October's spending is therefore the same number on the Dashboard, in Reports and in the Financial Summary.
 3. **Aggregate in the database.** Widget sections run a `GROUP BY` query and get back a few dozen rows, well under the Data API's 1 MiB limit.
 4. **Row-level reads only for detectors.** Detectors need individual transactions, such as medians, 48-hour duplicates and first-seen merchants. They fetch only the columns they use, paged by date.
@@ -67,7 +67,7 @@ Each person's history is small: at most a few thousand transactions over the 24 
 **Trigger:** `GET /dashboard/spending-pace` from the Dashboard · **Result:** spending so far this month, the same days last month, and the difference · **On failure:** a retryable error; only the spending-pace card shows its error state, and the Ledger's widgets are unaffected
 
 1. Resolve the context: user, timezone and primary currency.
-2. Resolve "today" in the user's timezone, then this month to date and the same day range last month (FS-03).
+2. Resolve "today" in the user's timezone, then this month to date and the same day range last month (AN-FS-03).
 3. Run one aggregate query over the counted spending rows for both ranges.
 4. Return both totals, the difference, and the pending count, so the client can show that pending rows aren't included yet.
 
@@ -95,9 +95,9 @@ Each person's history is small: at most a few thousand transactions over the 24 
 
 1. Receive the request, from the public route or the internal route.
 2. Resolve the context, from the authorizer context (public) or the signed user context (internal).
-3. Resolve the period and its comparison period (FS-03).
+3. Resolve the period and its comparison period (AN-FS-03).
 4. Load the aggregates, plus the detector rows for the period and the 12 months before it.
-5. Apply the counting rules (FS-23): primary currency only. Record data-quality flags for pending rows, adjustments, other currencies, and stale or incomplete accounts.
+5. Apply the counting rules (AN-FS-23): primary currency only. Record data-quality flags for pending rows, adjustments, other currencies, and stale or incomplete accounts.
 6. Compute the metric sections. A section without data becomes `null` with a reason flag.
 7. Run the detectors. A detector that errors is logged, skipped and listed in `data_quality.skipped_detectors`.
 8. Score and rank the candidates: score = impact ÷ $100, capped at 1. The top 8 become `cand_1` … `cand_8`.
@@ -206,9 +206,9 @@ Cross-service decisions this service applies are in the app architecture doc: D4
 | S5 | Reports periods | Last month (default), Last 3 months, Year to date, Last 12 months; trend charts use the last 12 complete months. No *This month* | The Dashboard owns the current month (D21); complete months compare like with like | Never | Accepted | — |
 | S6 | Storage | Stateless: compute on read from the Ledger's reporting views | A person's history is small enough for indexed SQL; a copy adds sync, invalidation and deletion work | Reports latency or Analytics' Aurora load becomes material | Proposed | [SDR-001](decision_records/SDR-001-compute-on-read.md) |
 | S7 | Reports request shape | One `GET /reports` returns all four chart sections; a failed section is `null` with a reason | One Data API transaction and one cold start per page load; sections still fail independently | A section becomes slow enough to delay the others | Proposed | — |
-| S8 | Currency | Primary currency only; other currencies are excluded and flagged (FS-23) | No FX rates to source, store or explain | Multi-currency accounts are supported | Accepted | — |
+| S8 | Currency | Primary currency only; other currencies are excluded and flagged (AN-FS-23) | No FX rates to source, store or explain | Multi-currency accounts are supported | Accepted | — |
 
-**Open question:** with no FX, changing the primary currency in Settings would exclude every existing transaction. Lock it to the accounts' currency until multi-currency is supported; this is a User profile and UI decision.
+**Currency:** FinTracker supports USD only for now. The primary currency is read-only, and accounts and their imports are USD (XS-CTX-01).
 
 ---
 
@@ -219,7 +219,9 @@ Cross-service decisions this service applies are in the app architecture doc: D4
 - **Ledger** (publishes the reporting views Analytics reads): [ledger-architecture.md](../../fintracker-ledger-doc/architecture/ledger-architecture.md).
 - **AI assistant** (the main consumer of the facts payload): [ai-assistant-architecture.md](../../fintracker-ai-assistant/architecture/ai-assistant-architecture.md).
 - **Specs:**
-  - [FS: Financial Summary](../FS-financial-summary-spec.md). Analytics owns FS-01 (periods API), FS-02 for its own routes, FS-03 to FS-08, FS-19, FS-23 to FS-30, the section functions in FS-09, and Appendix A. The AI assistant owns the rest.
-  - [TXT: Transaction types](../../fintracker-ledger-doc/TXT-transaction-types-spec.md), which defines what counts as income, spending and refunds.
-- **Superseded:** [ai-integration-architecture.md](ai-integration-architecture.md) and [ai-governance-monitoring.md](ai-governance-monitoring.md), which describe AI inside Analytics. Their content now lives in the AI assistant doc.
+  - [AN-FS: Financial Summary](../specs/AN-FS-financial-summary-spec.md). Analytics owns AN-FS-01 (periods API), AN-FS-02 for its own routes, AN-FS-03 to AN-FS-08, AN-FS-19, AN-FS-23 to AN-FS-30, the section functions in AN-FS-09, and Appendix A. The AI assistant owns the rest.
+  - [LG-TXT: Transaction types](../../fintracker-ledger-doc/specs/LG-TXT-transaction-types-spec.md), which defines what counts as income, spending and refunds.
+  - [AN-RPT: Dashboard and Reports widgets](../specs/AN-RPT-dashboard-reports-widgets-spec.md): spending pace, the four Reports charts and their chat tools.
+  - [XS-RPTV: Ledger reporting views](../../fintracker-cross-services/specs/XS-RPTV-ledger-reporting-views-spec.md) and [XS-CTX: Settings in the verified user context](../../fintracker-cross-services/specs/XS-CTX-verified-user-context-spec.md), the two prerequisites for AN-RPT.
+- **Superseded:** [ai-integration-architecture.md](../../fintracker-ai-assistant/ai-integration-architecture.md) and [ai-governance-monitoring.md](../../fintracker-ai-assistant/ai-governance-monitoring.md), which describe AI inside Analytics. Their content now lives in the AI assistant doc.
 - **Diagram sources:** `images/analytics-components.svg`, `images/analytics-facts-payload.svg`.

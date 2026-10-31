@@ -1,0 +1,25 @@
+Naming convention
+Element	Format	Example
+Prefix	2–4 uppercase letters, unique across all specs	TXT
+Spec file	<prefix>-<feature-name>-spec.md	specs/TXT-transaction-types-spex.md
+Spec title	# <PREFIX>: <Feature Name>	# TXT: Transaction Types
+Requirement ID	<PREFIX>-<2-digit number>	TXT-03
+Requirement heading	### <ID>: <Short title>	### TXT-03: Split transactions
+
+Prefix is unique across all spec files.
+Starting the file name with the prefix makes ls specs/ sort and read like an index. It also means you can find any ID's file just by its prefix.
+
+Picking a prefix
+Two-word names: use initials plus one more letter, or a recognizable abbreviation. Financial Summary → FS or FSUM; Transaction Types → TXT.
+One-word names: use the first three consonants. Budgets → BDG; Accounts → ACC.
+Make it pronounceable or obvious. If you'd have to look it up, pick another.
+Check the registry first so it doesn't collide with an existing prefix.
+Rules that keep it consistent over time
+Never reuse or rename a prefix, even if the feature is renamed. Old commits still point to it.
+Never renumber requirements. If one is deleted, mark it ~~TXT-04~~ Removed: <reason> and keep going from TXT-05. If you split a requirement later, add new IDs; don't use TXT-03a.
+Keep a registry. One file, specs/README.md, maps every prefix to its spec:
+markdown
+| Prefix | Spec | Status | Owner |
+|---|---|---|---|
+| FS  | [Financial Summary](FS-financial-summary.md) | Draft | Van |
+| TXT | [Transaction Types](TXT-transaction-types.md) | Approved | Van |

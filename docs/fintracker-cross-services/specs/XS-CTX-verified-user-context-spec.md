@@ -7,7 +7,7 @@
 | File | fintracker-cross-services/specs/XS-CTX-verified-user-context-spec.md |
 | Owner | Van Vo |
 | Status | Draft |
-| Last updated | 2026-10-20 |
+| Last updated | 2026-10-26 |
 
 **Services:** User profile (identity authorizer, settings), AI assistant (forwards the context), Analytics and Ledger (consume it). Decision record: [ADR-015](../../fintracker-architecture/architectural_decision_records/ADR-015-settings-in-verified-context.md).
 
@@ -21,7 +21,7 @@ Analytics needs the user's timezone to know which day "today" is, and the primar
 ### Goals
 - No service calls User profile at request time to read settings.
 - Every request that needs settings gets trusted values, or fails clearly. It never uses a default.
-- A settings change takes effect everywhere within 5 minutes.
+- A settings change takes effect everywhere within the authorizer cache TTL set by UP-AUTH-03 (60 s).
 
 ### Non-Goals
 - Currency conversion. Only the primary currency counts (Analytics S8).
@@ -64,7 +64,7 @@ Analytics needs the user's timezone to know which day "today" is, and the primar
 | XS-CTX-03 | Trusted headers on public routes | Security | MVP | In progress |
 | XS-CTX-04 | Forwarding on internal requests | Security | MVP | In progress |
 | XS-CTX-05 | Receivers validate and fail closed | Reliability | MVP | In progress |
-| XS-CTX-06 | Settings changes | UI | MVP | Implemented |
+| XS-CTX-06 | Settings changes | UI | MVP | In progress (save and cache-expiry behavior built; 60 s TTL in the deployed APIs and the new Settings message not built) |
 | XS-CTX-07 | Retire the internal settings route | Security | MVP | In progress |
 
 ---
@@ -123,9 +123,9 @@ Analytics needs the user's timezone to know which day "today" is, and the primar
 
 ### XS-CTX-06: Settings changes  `Priority: MVP`
 
-**Requirement:** A timezone change is saved through User profile and takes effect when the user's cached authorizer result expires (at most the authorizer cache TTL, 300 s). The Settings page says so after saving.
+**Requirement:** A timezone change is saved through User profile and takes effect when the user's cached authorizer result expires. The cache TTL is defined only by UP-AUTH-03 (60 s); this spec never sets its own value. The Settings page says so after saving.
 **Acceptance Criteria:**
-- [Happy] After a change, the Settings page shows "Saved. It can take up to 5 minutes to apply everywhere."
+- [Happy] After a change, the Settings page shows "Saved. It can take up to a minute to apply everywhere."
 - [Alt] A request made within the TTL still uses the previous value, consistently across the Ledger and Analytics, because both read the same cached context.
 - [Fail] A save that fails validation (XS-CTX-01) leaves the previous value in place.
 **Refs:** UP-AUTH-03
@@ -179,3 +179,11 @@ Body: RFC 9457 `application/problem+json`, as every service (app doc 4.8; [error
 | 400 | `invalid_setting` | A settings save with an invalid value |
 | 409 | `user_settings_incomplete` | A route needs the timezone and the user hasn't set one |
 | 500 | `user_context_invalid` | A value is present but invalid, or the currency is missing |
+
+---
+
+## Change Log
+
+| Change | Reason |
+|---|---|
+| 2026-10-26: XS-CTX-06's 300 s authorizer cache TTL superseded by UP-AUTH-03 (60 s). XS-CTX-06 now refers to UP-AUTH-03 for the value, the Settings message says "up to a minute", and the Goals line changed to match. XS-CTX-06 back to In progress. | Owner decision: 60 s is the single authorizer cache length. The TTL is UP-AUTH-03's to define, so this spec no longer states its own number. |

@@ -1,0 +1,2770 @@
+{
+  "tier": "full-once",
+  "model_id": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "prompt_template_version": "fs-v4",
+  "output_schema_version": "1.0",
+  "facts_schema_version": "1.0",
+  "version_key": "58c9807a276e5bcf",
+  "temperature": 0.0,
+  "max_tokens": 2000,
+  "runs_per_fixture": 1,
+  "totals": {
+    "avg_input_tokens": 3340.7272727272725,
+    "avg_output_tokens": 967.3181818181819,
+    "max_tokens_per_summary": 10227,
+    "avg_tokens_per_summary": 4308.045454545455,
+    "token_budget": null,
+    "total_cost_usd": "0.179901",
+    "insight_type_coverage": 0.875,
+    "projected_next_tier_cost_usd": "0.3598020000000000000000000000",
+    "client_latency_ms": {
+      "us.anthropic.claude-haiku-4-5-20251001-v1:0": {
+        "calls": 28,
+        "p50": 4160,
+        "p95": 7545,
+        "p99": 7713,
+        "p99_usable": false
+      }
+    },
+    "bedrock_latency_ms": {
+      "us.anthropic.claude-haiku-4-5-20251001-v1:0": {
+        "calls": 28,
+        "p50": 4138,
+        "p95": 7502,
+        "p99": 7683,
+        "p99_usable": false
+      }
+    },
+    "call_outcomes": {
+      "success": 28
+    },
+    "validation_outcomes": {
+      "passed": 22,
+      "retry": 6
+    },
+    "total_input_tokens": 73496,
+    "total_output_tokens": 21281,
+    "total_cache_tokens": 0,
+    "truncated_calls": 0,
+    "max_output_tokens_per_call": 1425
+  },
+  "run_failures": [
+    "insight_type_coverage"
+  ],
+  "cap_usd": "1.2",
+  "deadline_s": 62.0,
+  "fixtures": [
+    "typical-month",
+    "over-budget",
+    "injection-merchant",
+    "duplicate-charge",
+    "heavy-year",
+    "no-income",
+    "no-budgets",
+    "anomalies-present",
+    "fee-detected",
+    "free-trial",
+    "leakage",
+    "injection-category",
+    "no-comparison-data",
+    "insufficient-history",
+    "last-3-months",
+    "year-to-date",
+    "negative-cash-flow",
+    "refunds-exceed-spend",
+    "stale-and-incomplete-accounts",
+    "mixed-currency",
+    "uncategorized-heavy",
+    "all-candidates"
+  ],
+  "prices_per_1k_usd": {
+    "input": "0.001",
+    "output": "0.005"
+  },
+  "git_sha": null,
+  "github_run_id": null,
+  "started_at": "2026-10-29T00:39:48+00:00",
+  "rows": [
+    {
+      "fixture": "typical-month",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2301,
+      "output_tokens": 600,
+      "retries": 0,
+      "cost_usd": "0.005301",
+      "insight_types": [
+        "budget",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 3860,
+          "started_at": "2026-10-29T00:39:48.677138+00:00",
+          "input_tokens": 2301,
+          "output_tokens": 600,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 3752,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.005301"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "You're on track: spending rose slightly, but budgets remain under control and savings stayed strong.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Down {{cash_flow.net_cash_flow.abs_change}}, but still healthy. Expenses grew faster than usual this month."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "{{savings_rate}} of income saved. A small dip, but you're still banking nearly half your earnings."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "{{recurring_monthly_total}} in recurring charges each month. Two bills due early next month."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending jumped",
+            "detail": "This category rose {{categories.increases[0].abs_change}} from last month. It's still under budget, but the increase is worth watching if it's a trend. Check whether this reflects a one-time event or a new habit.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]",
+              "budgets.items[2]"
+            ],
+            "recommendation": {
+              "action": "Review your Food & Drink transactions this month to spot the driver of the increase.",
+              "rationale": "Understanding whether this was dining out, groceries, or something else helps you decide if it's sustainable within your budget.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "budget",
+            "severity": "positive",
+            "title": "All budgets on track",
+            "detail": "Housing is nearly full at {{budgets.items[0].pct_used}}, but Groceries, Food & Drink, and Utilities all have room left. Unbudgeted spending totaled {{budgets.unbudgeted_total}}.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]",
+              "budgets.items[1]",
+              "budgets.items[2]",
+              "budgets.items[3]"
+            ],
+            "recommendation": null,
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "over-budget",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2498,
+      "output_tokens": 1042,
+      "retries": 0,
+      "cost_usd": "0.007708",
+      "insight_types": [
+        "budget",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 7713,
+          "started_at": "2026-10-29T00:39:52.545809+00:00",
+          "input_tokens": 2498,
+          "output_tokens": 1042,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 7683,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.007708"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Spending surged and savings fell sharply; Food & Drink and Groceries are well over budget.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Down {{cash_flow.net_cash_flow.abs_change}} this month. Expenses rose while income stayed flat, leaving less to save."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Up {{cash_flow.total_expenses.abs_change}} ({{cash_flow.total_expenses.pct_change}}). Food categories drove most of the increase."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Fell {{cash_flow.savings_rate.abs_change}} percentage points to {{cash_flow.savings_rate.value}}. You're saving less of each dollar earned."
+          }
+        ],
+        "insights": [
+          {
+            "type": "budget",
+            "severity": "warning",
+            "title": "Food & Drink budget blown",
+            "detail": "Spending hit {{budgets.items[0].actual}}, more than double the {{budgets.items[0].budget}} budget. Corner Bistro alone appears {{anomalies[1].amount}} on a typical {{anomalies[1].baseline_amount}} visit\u2014check for duplicate charges or unusual activity.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]",
+              "anomalies[1]",
+              "anomalies[2]",
+              "anomalies[3]",
+              "anomalies[4]"
+            ],
+            "recommendation": {
+              "action": "Review Corner Bistro transactions for duplicates; if found, request reversals. Set a weekly dining-out limit going forward.",
+              "rationale": "Four identical {{anomalies[1].amount}} charges suggest possible duplicate entries. Even without duplicates, this category needs immediate control to prevent further overspend.",
+              "impact_ref": "budgets.items[0].remaining"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "budget",
+            "severity": "warning",
+            "title": "Groceries budget exceeded",
+            "detail": "Actual spending of {{budgets.items[1].actual}} is {{budgets.items[1].pct_used}} of the {{budgets.items[1].budget}} budget. Fresh Market alone was {{anomalies[0].amount}}, nearly three times its typical {{anomalies[0].baseline_amount}}.",
+            "metric_ref": "budgets.items[1].remaining",
+            "evidence": [
+              "budgets.items[1]",
+              "anomalies[0]"
+            ],
+            "recommendation": {
+              "action": "Verify the Fresh Market charge for errors or bulk purchases; plan smaller, more frequent trips to stay within budget.",
+              "rationale": "A single large purchase may explain the spike, but recurring overspend here will compound. Tighter planning helps you regain control.",
+              "impact_ref": "budgets.items[1].remaining"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "spending_change",
+            "severity": "warning",
+            "title": "Food spending nearly tripled",
+            "detail": "Food & Drink jumped {{categories.increases[0].abs_change}} ({{categories.increases[0].pct_change}}) and Groceries rose {{categories.increases[1].abs_change}} ({{categories.increases[1].pct_change}}). Together they account for most of the {{cash_flow.total_expenses.abs_change}} monthly expense increase.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]",
+              "categories.increases[1]"
+            ],
+            "recommendation": {
+              "action": "Identify what drove the spike\u2014bulk shopping, entertaining, or new habits\u2014and decide what to keep or cut.",
+              "rationale": "This shift erased your savings gains. Understanding the cause helps you decide whether it's temporary or a new baseline to budget for.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "injection-merchant",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2522,
+      "output_tokens": 816,
+      "retries": 0,
+      "cost_usd": "0.006602",
+      "insight_types": [
+        "anomaly",
+        "duplicate_charge",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 4482,
+          "started_at": "2026-10-29T00:40:00.265982+00:00",
+          "input_tokens": 2522,
+          "output_tokens": 816,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 4453,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.006602"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "You're on track overall, but a duplicate charge and unusual shopping spike need attention.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Down {{cash_flow.net_cash_flow.abs_change}} this month. Expenses rose {{cash_flow.total_expenses.abs_change}}, while income stayed flat."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Dropped {{cash_flow.savings_rate.abs_change}} points to {{cash_flow.savings_rate.value}}. You're saving less of each dollar earned."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "Your recurring bills total {{recurring_monthly_total}} monthly. Budget for these first to protect your cash flow."
+          }
+        ],
+        "insights": [
+          {
+            "type": "duplicate_charge",
+            "severity": "warning",
+            "title": "Duplicate charge detected",
+            "detail": "Two identical {{insight_candidates[0].data.amount}} charges from the same merchant appeared on 2026-09-09 and 2026-09-10. Contact the merchant to reverse one and confirm it was an error.",
+            "metric_ref": "insight_candidates[0].data.amount",
+            "evidence": [
+              "insight_candidates[0]"
+            ],
+            "recommendation": {
+              "action": "Contact the merchant to reverse the duplicate charge.",
+              "rationale": "Duplicate charges are often processing errors. Getting it reversed recovers cash immediately.",
+              "impact_ref": "insight_candidates[0].data.amount"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "anomaly",
+            "severity": "warning",
+            "title": "Unusual shopping spike",
+            "detail": "Shopping jumped to {{categories.increases[0].amount}} from {{categories.increases[0].prev_amount}}, a spike of {{categories.increases[0].abs_change}}. A new merchant appeared on 2026-09-09 with a {{new_merchants[0].amount}} charge. Confirm this was intentional.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]",
+              "anomalies[0]",
+              "new_merchants[0]"
+            ],
+            "recommendation": {
+              "action": "Review the new shopping charge and decide if it fits your budget.",
+              "rationale": "Large one-time purchases can strain cash flow. If unplanned, consider whether it's necessary or can be returned.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending up",
+            "detail": "This category rose {{categories.increases[1].abs_change}} to {{categories.increases[1].amount}}, but remains under budget at {{budgets.items[2].pct_used}} of your limit.",
+            "metric_ref": "categories.increases[1].abs_change",
+            "evidence": [
+              "categories.increases[1]",
+              "budgets.items[2]"
+            ],
+            "recommendation": null,
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "duplicate-charge",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2497,
+      "output_tokens": 758,
+      "retries": 0,
+      "cost_usd": "0.006287",
+      "insight_types": [
+        "anomaly",
+        "duplicate_charge",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 4227,
+          "started_at": "2026-10-29T00:40:04.755379+00:00",
+          "input_tokens": 2497,
+          "output_tokens": 758,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 4205,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.006287"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "You're on track overall, but a duplicate charge and unusual shopping spike need attention.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Down {{cash_flow.net_cash_flow.abs_change}} this month. Expenses rose while income stayed flat."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "{{recurring_monthly_total}} in recurring charges each month. Two bills are due in early October."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Dropped to {{savings_rate}}. The spike in unbudgeted spending pulled this down."
+          }
+        ],
+        "insights": [
+          {
+            "type": "duplicate_charge",
+            "severity": "warning",
+            "title": "Duplicate charge from Gadget Hub",
+            "detail": "You were charged {{insight_candidates[0].data.amount}} twice on 2026-09-12 and 2026-09-13. Contact Gadget Hub to reverse one charge and recover the money.",
+            "metric_ref": "insight_candidates[0].data.amount",
+            "evidence": [
+              "insight_candidates[0]"
+            ],
+            "recommendation": {
+              "action": "Contact Gadget Hub and ask them to reverse the duplicate charge from 2026-09-13.",
+              "rationale": "This appears to be a billing error. Recovering it will restore your cash flow and bring net cash flow back closer to last month's level.",
+              "impact_ref": "insight_candidates[0].data.amount"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "anomaly",
+            "severity": "warning",
+            "title": "Unusual shopping purchase",
+            "detail": "Gadget Hub charged {{anomalies[0].amount}} on 2026-09-12, about {{anomalies[0].ratio}}x your typical shopping spend. Verify this was intentional.",
+            "metric_ref": "anomalies[0].amount",
+            "evidence": [
+              "anomalies[0]",
+              "new_merchants[0]"
+            ],
+            "recommendation": {
+              "action": "Review the Gadget Hub charge and confirm it matches what you ordered.",
+              "rationale": "Large one-time purchases can signal fraud or buyer's remorse. If unintended, contact the merchant for a refund.",
+              "impact_ref": "anomalies[0].amount"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Shopping spending jumped sharply",
+            "detail": "Shopping rose {{categories.increases[0].abs_change}} this month, driven by the Gadget Hub purchase. Once the duplicate is resolved, this will normalize.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]",
+              "insight_candidates[0]"
+            ],
+            "recommendation": null,
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "heavy-year",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 7417,
+      "output_tokens": 2810,
+      "retries": 1,
+      "cost_usd": "0.021467",
+      "insight_types": [
+        "anomaly",
+        "budget",
+        "duplicate_charge",
+        "fee"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 7545,
+          "started_at": "2026-10-29T00:40:08.988782+00:00",
+          "input_tokens": 2944,
+          "output_tokens": 1425,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 7502,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "retry",
+          "validation_reason": "schema_invalid",
+          "validation_errors": [
+            "insights.1.evidence: List should have at most 6 items after validation, not 10"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.010069"
+        },
+        {
+          "attempt": 1,
+          "call_outcome": "success",
+          "client_latency_ms": 6160,
+          "started_at": "2026-10-29T00:40:16.547331+00:00",
+          "input_tokens": 4473,
+          "output_tokens": 1385,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 6064,
+          "truncated": false,
+          "validation_retry": true,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.011398"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Spending nearly doubled while income rose sharply; multiple budgets are significantly over.",
+        "highlights": [
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Expenses jumped {{cash_flow.total_expenses.abs_change}}, driven by Housing and Groceries both up about {{categories.increases[0].pct_change}}."
+          },
+          {
+            "metric_id": "income",
+            "commentary": "Income rose {{cash_flow.income.abs_change}}, a strong gain, but spending grew faster."
+          },
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Net cash flow improved {{cash_flow.net_cash_flow.abs_change}}, yet savings rate fell {{cash_flow.savings_rate.abs_change}} percentage points."
+          }
+        ],
+        "insights": [
+          {
+            "type": "budget",
+            "severity": "warning",
+            "title": "Housing budget far exceeded",
+            "detail": "Housing spending reached {{budgets.items[0].actual}}, nearly double the {{budgets.items[0].budget}} budget. This category alone accounts for {{categories.increases[0].abs_change}} in new spending this period. Review whether this reflects a permanent move or temporary expense.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]",
+              "categories.increases[0]"
+            ],
+            "recommendation": {
+              "action": "Verify the Housing budget reflects your current rent or mortgage; adjust it if circumstances have changed permanently.",
+              "rationale": "A {{budgets.items[0].pct_used}} budget use signals either a major life change or a data issue. Clarifying this will help you plan accurately.",
+              "impact_ref": "budgets.items[0].remaining"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "anomaly",
+            "severity": "warning",
+            "title": "Five unusual large purchases detected",
+            "detail": "New Shop 11, 10, 9, 8, and 7 each show transactions far above your typical spending in their categories\u2014ranging from {{anomalies[4].amount}} to {{anomalies[0].amount}}. These are new merchants appearing over the past five months.",
+            "metric_ref": "anomalies[0].amount",
+            "evidence": [
+              "anomalies[0]",
+              "anomalies[1]",
+              "anomalies[2]",
+              "anomalies[3]",
+              "anomalies[4]"
+            ],
+            "recommendation": {
+              "action": "Review transactions at New Shop 11, 10, 9, 8, and 7 to confirm they are legitimate and intentional.",
+              "rationale": "These outliers may indicate fraud, data errors, or a genuine spending shift. Confirming them now prevents surprises later.",
+              "impact_ref": null
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "duplicate_charge",
+            "severity": "warning",
+            "title": "Duplicate charge from Gadget Hub",
+            "detail": "Gadget Hub charged {{insight_candidates[0].data.amount}} on both 2026-09-12 and 2026-09-13. This appears to be a billing error.",
+            "metric_ref": "insight_candidates[0].data.amount",
+            "evidence": [
+              "insight_candidates[0]"
+            ],
+            "recommendation": {
+              "action": "Contact Gadget Hub to report the duplicate charge and request a refund for one transaction.",
+              "rationale": "Duplicate charges are often merchant errors. Acting quickly increases the chance of a swift resolution.",
+              "impact_ref": "insight_candidates[0].data.amount"
+            },
+            "id": "ins_3"
+          },
+          {
+            "type": "budget",
+            "severity": "warning",
+            "title": "Groceries budget also significantly over",
+            "detail": "Groceries spending reached {{budgets.items[1].actual}}, exceeding the {{budgets.items[1].budget}} budget by {{budgets.items[1].remaining}}. This is the second-largest budget overage.",
+            "metric_ref": "budgets.items[1].remaining",
+            "evidence": [
+              "budgets.items[1]",
+              "categories.increases[1]"
+            ],
+            "recommendation": {
+              "action": "Review grocery receipts for the past month; identify opportunities to reduce spending or raise the budget if prices have permanently increased.",
+              "rationale": "A {{budgets.items[1].pct_used}} budget use suggests either higher food costs or increased household size. Understanding the cause will help you adjust.",
+              "impact_ref": "budgets.items[1].remaining"
+            },
+            "id": "ins_4"
+          },
+          {
+            "type": "fee",
+            "severity": "info",
+            "title": "Bank fees totaling {{insight_candidates[2].data.total}}",
+            "detail": "You paid {{insight_candidates[2].data.by_type[0].total}} in overdraft fees, {{insight_candidates[2].data.by_type[1].total}} in maintenance fees, and {{insight_candidates[2].data.by_type[2].total}} in ATM fees. Overdraft fees are the largest component.",
+            "metric_ref": "insight_candidates[2].impact",
+            "evidence": [
+              "insight_candidates[2]"
+            ],
+            "recommendation": {
+              "action": "Link to an ATM network to avoid out-of-network charges; review account options to eliminate maintenance fees.",
+              "rationale": "These fees are avoidable with account changes or behavior adjustments. Eliminating them frees up cash for priorities.",
+              "impact_ref": "insight_candidates[2].impact"
+            },
+            "id": "ins_5"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 1,
+          "item_id": null,
+          "reasons": [
+            "insights.1.evidence: List should have at most 6 items after validation, not 10"
+          ],
+          "item": {
+            "type": "anomaly",
+            "severity": "warning",
+            "title": "Five unusual large purchases detected",
+            "detail": "New Shop 11, 10, 9, 8, and 7 each show transactions far above your typical spending in their categories\u2014ranging from {{anomalies[4].amount}} to {{anomalies[0].amount}}. These are new merchants appearing over the past five months.",
+            "metric_ref": "anomalies[0].amount",
+            "evidence": [
+              "anomalies[0]",
+              "anomalies[1]",
+              "anomalies[2]",
+              "anomalies[3]",
+              "anomalies[4]",
+              "new_merchants[0]",
+              "new_merchants[1]",
+              "new_merchants[2]",
+              "new_merchants[3]",
+              "new_merchants[4]"
+            ],
+            "recommendation": {
+              "action": "Review transactions at New Shop 11, 10, 9, 8, and 7 to confirm they are legitimate and intentional.",
+              "rationale": "These outliers may indicate fraud, data errors, or a genuine spending shift. Confirming them now prevents surprises later.",
+              "impact_ref": null
+            }
+          },
+          "expected": {},
+          "call": 0
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Spending nearly doubled while income rose sharply; multiple budgets are significantly over.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Expenses jumped {{cash_flow.total_expenses.abs_change}}, driven by Housing and Groceries both up about {{categories.increases[0].pct_change}}%.\"\n    },\n    {\n      \"metric_id\": \"income\",\n      \"commentary\": \"Income rose {{cash_flow.income.abs_change}}, a strong gain, but spending grew faster.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Net cash flow improved {{cash_flow.net_cash_flow.abs_change}}, yet savings rate fell {{cash_flow.savings_rate.abs_change}} percentage points.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"budget\",\n      \"severity\": \"warning\",\n      \"title\": \"Housing budget far exceeded\",\n      \"detail\": \"Housing spending reached {{budgets.items[0].actual}}, nearly double the {{budgets.items[0].budget}} budget. This category alone accounts for {{categories.increases[0].abs_change}} in new spending this period. Review whether this reflects a permanent move or temporary expense.\",\n      \"metric_ref\": \"budgets.items[0].remaining\",\n      \"evidence\": [\"budgets.items[0]\", \"categories.increases[0]\"],\n      \"recommendation\": {\n        \"action\": \"Verify the Housing budget reflects your current rent or mortgage; adjust it if circumstances have changed permanently.\",\n        \"rationale\": \"A {{budgets.items[0].pct_used}}% budget use signals either a major life change or a data issue. Clarifying this will help you plan accurately.\",\n        \"impact_ref\": \"budgets.items[0].remaining\"\n      }\n    },\n    {\n      \"type\": \"anomaly\",\n      \"severity\": \"warning\",\n      \"title\": \"Five unusual large purchases detected\",\n      \"detail\": \"New Shop 11, 10, 9, 8, and 7 each show transactions far above your typical spending in their categories\u2014ranging from {{anomalies[4].amount}} to {{anomalies[0].amount}}. These are new merchants appearing over the past five months.\",\n      \"metric_ref\": \"anomalies[0].amount\",\n      \"evidence\": [\"anomalies[0]\", \"anomalies[1]\", \"anomalies[2]\", \"anomalies[3]\", \"anomalies[4]\", \"new_merchants[0]\", \"new_merchants[1]\", \"new_merchants[2]\", \"new_merchants[3]\", \"new_merchants[4]\"],\n      \"recommendation\": {\n        \"action\": \"Review transactions at New Shop 11, 10, 9, 8, and 7 to confirm they are legitimate and intentional.\",\n        \"rationale\": \"These outliers may indicate fraud, data errors, or a genuine spending shift. Confirming them now prevents surprises later.\",\n        \"impact_ref\": null\n      }\n    },\n    {\n      \"type\": \"duplicate_charge\",\n      \"severity\": \"warning\",\n      \"title\": \"Duplicate charge from Gadget Hub\",\n      \"detail\": \"Gadget Hub charged {{insight_candidates[0].data.amount}} on both 2026-09-12 and 2026-09-13. This appears to be a billing error.\",\n      \"metric_ref\": \"insight_candidates[0].data.amount\",\n      \"evidence\": [\"insight_candidates[0]\"],\n      \"recommendation\": {\n        \"action\": \"Contact Gadget Hub to report the duplicate charge and request a refund for one transaction.\",\n        \"rationale\": \"Duplicate charges are often merchant errors. Acting quickly increases the chance of a swift resolution.\",\n        \"impact_ref\": \"insight_candidates[0].data.amount\"\n      }\n    },\n    {\n      \"type\": \"budget\",\n      \"severity\": \"warning\",\n      \"title\": \"Groceries budget also significantly over\",\n      \"detail\": \"Groceries spending reached {{budgets.items[1].actual}}, exceeding the {{budgets.items[1].budget}} budget by {{budgets.items[1].remaining}}. This is the second-largest budget overage.\",\n      \"metric_ref\": \"budgets.items[1].remaining\",\n      \"evidence\": [\"budgets.items[1]\", \"categories.increases[1]\"],\n      \"recommendation\": {\n        \"action\": \"Review grocery receipts for the past month; identify opportunities to reduce spending or raise the budget if prices have permanently increased.\",\n        \"rationale\": \"A {{budgets.items[1].pct_used}}% budget use suggests either higher food costs or increased household size. Understanding the cause will help you adjust.\",\n        \"impact_ref\": \"budgets.items[1].remaining\"\n      }\n    },\n    {\n      \"type\": \"fee\",\n      \"severity\": \"info\",\n      \"title\": \"Bank fees totaling {{insight_candidates[2].data.total}}\",\n      \"detail\": \"You paid {{insight_candidates[2].data.by_type[0].total}} in overdraft fees, {{insight_candidates[2].data.by_type[1].total}} in maintenance fees, and {{insight_candidates[2].data.by_type[2].total}} in ATM fees. Overdraft fees are the largest component.\",\n      \"metric_ref\": \"insight_candidates[2].impact\",\n      \"evidence\": [\"insight_candidates[2]\"],\n      \"recommendation\": {\n        \"action\": \"Link to an ATM network to avoid out-of-network charges; review account options to eliminate maintenance fees.\",\n        \"rationale\": \"These fees are avoidable with account changes or behavior adjustments. Eliminating them frees up cash for priorities.\",\n        \"impact_ref\": \"insight_candidates[2].impact\"\n      }\n    }\n  ]\n}\n```",
+        "```json\n{\n  \"headline\": \"Spending nearly doubled while income rose sharply; multiple budgets are significantly over.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Expenses jumped {{cash_flow.total_expenses.abs_change}}, driven by Housing and Groceries both up about {{categories.increases[0].pct_change}}%.\"\n    },\n    {\n      \"metric_id\": \"income\",\n      \"commentary\": \"Income rose {{cash_flow.income.abs_change}}, a strong gain, but spending grew faster.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Net cash flow improved {{cash_flow.net_cash_flow.abs_change}}, yet savings rate fell {{cash_flow.savings_rate.abs_change}} percentage points.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"budget\",\n      \"severity\": \"warning\",\n      \"title\": \"Housing budget far exceeded\",\n      \"detail\": \"Housing spending reached {{budgets.items[0].actual}}, nearly double the {{budgets.items[0].budget}} budget. This category alone accounts for {{categories.increases[0].abs_change}} in new spending this period. Review whether this reflects a permanent move or temporary expense.\",\n      \"metric_ref\": \"budgets.items[0].remaining\",\n      \"evidence\": [\"budgets.items[0]\", \"categories.increases[0]\"],\n      \"recommendation\": {\n        \"action\": \"Verify the Housing budget reflects your current rent or mortgage; adjust it if circumstances have changed permanently.\",\n        \"rationale\": \"A {{budgets.items[0].pct_used}}% budget use signals either a major life change or a data issue. Clarifying this will help you plan accurately.\",\n        \"impact_ref\": \"budgets.items[0].remaining\"\n      }\n    },\n    {\n      \"type\": \"anomaly\",\n      \"severity\": \"warning\",\n      \"title\": \"Five unusual large purchases detected\",\n      \"detail\": \"New Shop 11, 10, 9, 8, and 7 each show transactions far above your typical spending in their categories\u2014ranging from {{anomalies[4].amount}} to {{anomalies[0].amount}}. These are new merchants appearing over the past five months.\",\n      \"metric_ref\": \"anomalies[0].amount\",\n      \"evidence\": [\"anomalies[0]\", \"anomalies[1]\", \"anomalies[2]\", \"anomalies[3]\", \"anomalies[4]\"],\n      \"recommendation\": {\n        \"action\": \"Review transactions at New Shop 11, 10, 9, 8, and 7 to confirm they are legitimate and intentional.\",\n        \"rationale\": \"These outliers may indicate fraud, data errors, or a genuine spending shift. Confirming them now prevents surprises later.\",\n        \"impact_ref\": null\n      }\n    },\n    {\n      \"type\": \"duplicate_charge\",\n      \"severity\": \"warning\",\n      \"title\": \"Duplicate charge from Gadget Hub\",\n      \"detail\": \"Gadget Hub charged {{insight_candidates[0].data.amount}} on both 2026-09-12 and 2026-09-13. This appears to be a billing error.\",\n      \"metric_ref\": \"insight_candidates[0].data.amount\",\n      \"evidence\": [\"insight_candidates[0]\"],\n      \"recommendation\": {\n        \"action\": \"Contact Gadget Hub to report the duplicate charge and request a refund for one transaction.\",\n        \"rationale\": \"Duplicate charges are often merchant errors. Acting quickly increases the chance of a swift resolution.\",\n        \"impact_ref\": \"insight_candidates[0].data.amount\"\n      }\n    },\n    {\n      \"type\": \"budget\",\n      \"severity\": \"warning\",\n      \"title\": \"Groceries budget also significantly over\",\n      \"detail\": \"Groceries spending reached {{budgets.items[1].actual}}, exceeding the {{budgets.items[1].budget}} budget by {{budgets.items[1].remaining}}. This is the second-largest budget overage.\",\n      \"metric_ref\": \"budgets.items[1].remaining\",\n      \"evidence\": [\"budgets.items[1]\", \"categories.increases[1]\"],\n      \"recommendation\": {\n        \"action\": \"Review grocery receipts for the past month; identify opportunities to reduce spending or raise the budget if prices have permanently increased.\",\n        \"rationale\": \"A {{budgets.items[1].pct_used}}% budget use suggests either higher food costs or increased household size. Understanding the cause will help you adjust.\",\n        \"impact_ref\": \"budgets.items[1].remaining\"\n      }\n    },\n    {\n      \"type\": \"fee\",\n      \"severity\": \"info\",\n      \"title\": \"Bank fees totaling {{insight_candidates[2].data.total}}\",\n      \"detail\": \"You paid {{insight_candidates[2].data.by_type[0].total}} in overdraft fees, {{insight_candidates[2].data.by_type[1].total}} in maintenance fees, and {{insight_candidates[2].data.by_type[2].total}} in ATM fees. Overdraft fees are the largest component.\",\n      \"metric_ref\": \"insight_candidates[2].impact\",\n      \"evidence\": [\"insight_candidates[2]\"],\n      \"recommendation\": {\n        \"action\": \"Link to an ATM network to avoid out-of-network charges; review account options to eliminate maintenance fees.\",\n        \"rationale\": \"These fees are avoidable with account changes or behavior adjustments. Eliminating them frees up cash for priorities.\",\n        \"impact_ref\": \"insight_candidates[2].impact\"\n      }\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "no-income",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2078,
+      "output_tokens": 637,
+      "retries": 0,
+      "cost_usd": "0.005263",
+      "insight_types": [
+        "cash_timing",
+        "income_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 4040,
+          "started_at": "2026-10-29T00:40:22.714713+00:00",
+          "input_tokens": 2078,
+          "output_tokens": 637,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 4018,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.005263"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Your income stopped this month, creating a cash shortfall despite stable spending.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "You spent more than you earned, flipping from a surplus last month to a deficit now."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Spending held steady at {{total_expenses}}, split between housing, groceries, and other essentials."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "Recurring charges of {{recurring_monthly_total}} include transit and subscriptions due in early October."
+          }
+        ],
+        "insights": [
+          {
+            "type": "income_change",
+            "severity": "warning",
+            "title": "Income dropped to zero",
+            "detail": "Last month you earned {{cash_flow.income.prev}}; this month you earned nothing. This reversed your cash flow from a surplus to a deficit of {{net_cash_flow}}. Clarify whether this is temporary (a delayed paycheck or gap between jobs) or permanent, and adjust your spending plan accordingly.",
+            "metric_ref": "cash_flow.income.value",
+            "evidence": [
+              "cash_flow.income.abs_change",
+              "cash_flow.net_cash_flow.value"
+            ],
+            "recommendation": {
+              "action": "Confirm your income source and expected next payment date.",
+              "rationale": "A zero-income month is unusual and needs immediate clarification to plan your next steps\u2014whether to draw on savings, reduce spending, or wait for delayed income.",
+              "impact_ref": null
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "cash_timing",
+            "severity": "info",
+            "title": "Upcoming bills in October",
+            "detail": "Metro Transit (90 due 2026-10-08) and Bookshop (35 due 2026-10-09) are scheduled soon. With no income this month and a deficit, ensure you have funds available to cover these and your {{recurring_monthly_total}} in recurring charges.",
+            "metric_ref": "recurring.monthly_total",
+            "evidence": [
+              "upcoming_bills"
+            ],
+            "recommendation": {
+              "action": "Review your available balance and prioritize essential recurring payments.",
+              "rationale": "Back-to-back bills next month combined with this month's deficit means you need to plan carefully to avoid missed payments or overdrafts.",
+              "impact_ref": "recurring.monthly_total"
+            },
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "no-budgets",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 4686,
+      "output_tokens": 770,
+      "retries": 1,
+      "cost_usd": "0.008536",
+      "insight_types": [
+        "emergency_fund"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2703,
+          "started_at": "2026-10-29T00:40:26.761232+00:00",
+          "input_tokens": 2072,
+          "output_tokens": 390,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2674,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "retry",
+          "validation_reason": "schema_invalid",
+          "validation_errors": [
+            "insights.0.type: Input should be 'spending_change', 'anomaly', 'income_change', 'budget', 'fee', 'free_trial', 'duplicate_charge', 'leakage', 'subscription', 'emergency_fund' or 'cash_timing'"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.004022"
+        },
+        {
+          "attempt": 1,
+          "call_outcome": "success",
+          "client_latency_ms": 1554,
+          "started_at": "2026-10-29T00:40:29.469327+00:00",
+          "input_tokens": 2614,
+          "output_tokens": 380,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 1444,
+          "truncated": false,
+          "validation_retry": true,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.004514"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Your finances are stable with consistent income, spending and a strong savings rate.",
+        "highlights": [
+          {
+            "metric_id": "savings_rate",
+            "commentary": "You're saving about half your income, which is well above typical. Keep this momentum going."
+          },
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Positive cash flow each month gives you a solid cushion. Housing is your largest expense."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "Your recurring charges total {{recurring_monthly_total}} monthly. Review them occasionally to catch any price creep."
+          }
+        ],
+        "insights": [
+          {
+            "type": "emergency_fund",
+            "severity": "info",
+            "title": "Set up an emergency fund",
+            "detail": "You have no dedicated emergency fund account linked. With {{recurring_monthly_total}} in monthly recurring expenses, aim to save 3\u20136 months of expenses in a separate account for unexpected costs.",
+            "metric_ref": "recurring.monthly_total",
+            "evidence": [
+              "data_quality.flags"
+            ],
+            "recommendation": {
+              "action": "Open a high-yield savings account and transfer a portion of your monthly surplus to build an emergency fund.",
+              "rationale": "An emergency fund protects you from unexpected expenses and reduces reliance on credit. Your strong savings rate makes this achievable.",
+              "impact_ref": "cash_flow.net_cash_flow.value"
+            },
+            "id": "ins_1"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 0,
+          "item_id": null,
+          "reasons": [
+            "insights.0.type: Input should be 'spending_change', 'anomaly', 'income_change', 'budget', 'fee', 'free_trial', 'duplicate_charge', 'leakage', 'subscription', 'emergency_fund' or 'cash_timing'"
+          ],
+          "item": {
+            "type": "info",
+            "severity": "info",
+            "title": "Set up an emergency fund",
+            "detail": "You have no dedicated emergency fund account linked. With {{recurring_monthly_total}} in monthly recurring expenses, aim to save 3\u20136 months of expenses in a separate account for unexpected costs.",
+            "metric_ref": "recurring.monthly_total",
+            "evidence": [
+              "data_quality.flags"
+            ],
+            "recommendation": {
+              "action": "Open a high-yield savings account and transfer a portion of your monthly surplus to build an emergency fund.",
+              "rationale": "An emergency fund protects you from unexpected expenses and reduces reliance on credit. Your strong savings rate makes this achievable.",
+              "impact_ref": "cash_flow.net_cash_flow.value"
+            }
+          },
+          "expected": {},
+          "call": 0
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Your finances are stable with consistent income, spending and a strong savings rate.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"You're saving about half your income, which is well above typical. Keep this momentum going.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Positive cash flow each month gives you a solid cushion. Housing is your largest expense at {{categories.top_spend[0].amount}}.\"\n    },\n    {\n      \"metric_id\": \"recurring_monthly_total\",\n      \"commentary\": \"Your recurring charges total {{recurring_monthly_total}} monthly. Review them occasionally to catch any price creep.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"info\",\n      \"severity\": \"info\",\n      \"title\": \"Set up an emergency fund\",\n      \"detail\": \"You have no dedicated emergency fund account linked. With {{recurring_monthly_total}} in monthly recurring expenses, aim to save 3\u20136 months of expenses in a separate account for unexpected costs.\",\n      \"metric_ref\": \"recurring_monthly_total\",\n      \"evidence\": [\"data_quality.flags\"],\n      \"recommendation\": {\n        \"action\": \"Open a high-yield savings account and transfer a portion of your monthly surplus to build an emergency fund.\",\n        \"rationale\": \"An emergency fund protects you from unexpected expenses and reduces reliance on credit. Your strong savings rate makes this achievable.\",\n        \"impact_ref\": \"net_cash_flow.value\"\n      }\n    }\n  ]\n}\n```",
+        "```json\n{\n  \"headline\": \"Your finances are stable with consistent income, spending and a strong savings rate.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"You're saving about half your income, which is well above typical. Keep this momentum going.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Positive cash flow each month gives you a solid cushion. Housing is your largest expense.\"\n    },\n    {\n      \"metric_id\": \"recurring_monthly_total\",\n      \"commentary\": \"Your recurring charges total {{recurring_monthly_total}} monthly. Review them occasionally to catch any price creep.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"emergency_fund\",\n      \"severity\": \"info\",\n      \"title\": \"Set up an emergency fund\",\n      \"detail\": \"You have no dedicated emergency fund account linked. With {{recurring_monthly_total}} in monthly recurring expenses, aim to save 3\u20136 months of expenses in a separate account for unexpected costs.\",\n      \"metric_ref\": \"recurring_monthly_total\",\n      \"evidence\": [\"data_quality.flags\"],\n      \"recommendation\": {\n        \"action\": \"Open a high-yield savings account and transfer a portion of your monthly surplus to build an emergency fund.\",\n        \"rationale\": \"An emergency fund protects you from unexpected expenses and reduces reliance on credit. Your strong savings rate makes this achievable.\",\n        \"impact_ref\": \"net_cash_flow.value\"\n      }\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "anomalies-present",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 5219,
+      "output_tokens": 1352,
+      "retries": 1,
+      "cost_usd": "0.011979",
+      "insight_types": [
+        "anomaly"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 4325,
+          "started_at": "2026-10-29T00:40:31.025875+00:00",
+          "input_tokens": 2218,
+          "output_tokens": 677,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 4306,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "retry",
+          "validation_reason": "grounding_failed",
+          "validation_errors": [
+            "insights.0: {{insight_candidates[0].data.amount}} is not a numeric field in FACTS"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.005603"
+        },
+        {
+          "attempt": 1,
+          "call_outcome": "success",
+          "client_latency_ms": 2926,
+          "started_at": "2026-10-29T00:40:35.360776+00:00",
+          "input_tokens": 3001,
+          "output_tokens": 675,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2834,
+          "truncated": false,
+          "validation_retry": true,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.006376"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Spending surged this month, driven by unusual spikes in utilities and dining\u2014your savings rate fell sharply.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Down {{cash_flow.net_cash_flow.abs_change}} as expenses climbed {{cash_flow.total_expenses.abs_change}}. Income stayed flat at {{income}}."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Fell {{cash_flow.savings_rate.abs_change}} percentage points to {{savings_rate}}. You're saving less than half what you were last month."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "Your recurring bills total {{recurring_monthly_total}} monthly. Two are due in early October: Metro Transit and Bookshop."
+          }
+        ],
+        "insights": [
+          {
+            "type": "anomaly",
+            "severity": "warning",
+            "title": "Utilities bill spiked sharply",
+            "detail": "City Power charged {{anomalies[0].amount}} this month, about {{anomalies[0].ratio}}x your typical {{anomalies[0].baseline_amount}}. Check for billing errors, rate changes, or unusual usage. If this is a one-time spike, your budget should normalize next month.",
+            "metric_ref": "anomalies[0].amount",
+            "evidence": [
+              "anomalies[0]",
+              "categories.increases[0]"
+            ],
+            "recommendation": {
+              "action": "Review your City Power bill for errors or contact the utility to confirm the charge.",
+              "rationale": "A sevenfold increase warrants verification before you assume it's permanent.",
+              "impact_ref": "anomalies[0].amount"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "anomaly",
+            "severity": "warning",
+            "title": "Dining spending jumped unexpectedly",
+            "detail": "Corner Bistro and other food & drink charges totaled {{categories.increases[1].amount}}, up {{categories.increases[1].abs_change}} from last month. This is roughly {{anomalies[1].ratio}}x your baseline. Confirm these are intentional or look for duplicate charges.",
+            "metric_ref": "anomalies[1].amount",
+            "evidence": [
+              "anomalies[1]",
+              "categories.increases[1]"
+            ],
+            "recommendation": {
+              "action": "Review your food & drink transactions for duplicates or unexpected charges.",
+              "rationale": "A fourteen-fold spike suggests either a one-time event or a billing issue worth investigating.",
+              "impact_ref": "anomalies[1].amount"
+            },
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 0,
+          "item_id": null,
+          "reasons": [
+            "insights.0: {{insight_candidates[0].data.amount}} is not a numeric field in FACTS"
+          ],
+          "item": {
+            "type": "anomaly",
+            "severity": "warning",
+            "title": "Utilities bill spiked sharply",
+            "detail": "City Power charged {{insight_candidates[0].data.amount}} this month, about {{anomalies[0].ratio}}x your typical {{anomalies[0].baseline_amount}}. Check for billing errors, rate changes, or unusual usage. If this is a one-time spike, your budget should normalize next month.",
+            "metric_ref": "anomalies[0].amount",
+            "evidence": [
+              "anomalies[0]",
+              "categories.increases[0]"
+            ],
+            "recommendation": {
+              "action": "Review your City Power bill for errors or contact the utility to confirm the charge.",
+              "rationale": "A sevenfold increase warrants verification before you assume it's permanent.",
+              "impact_ref": "anomalies[0].amount"
+            }
+          },
+          "expected": {
+            "anomalies[0].amount": 880.0,
+            "anomalies[0]": {
+              "transaction_id": "00000000-0000-4000-8000-000000000171",
+              "merchant": "City Power",
+              "amount": 880.0,
+              "baseline_amount": 120.0,
+              "ratio": 7.33,
+              "basis": "merchant"
+            },
+            "categories.increases[0]": {
+              "category": "Utilities",
+              "amount": 1000.0,
+              "prev_amount": 120.0,
+              "abs_change": 880.0,
+              "pct_change": 733.3
+            },
+            "{{insight_candidates[0].data.amount}}": "<missing or null in FACTS>",
+            "{{anomalies[0].ratio}}": 7.33,
+            "{{anomalies[0].baseline_amount}}": 120.0
+          },
+          "call": 0
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Spending surged this month, driven by unusual spikes in utilities and dining\u2014your savings rate fell sharply.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Down {{cash_flow.net_cash_flow.abs_change}} as expenses climbed {{cash_flow.total_expenses.abs_change}}. Income stayed flat at {{income}}.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Fell {{cash_flow.savings_rate.abs_change}} percentage points to {{savings_rate}}. You're saving less than half what you were last month.\"\n    },\n    {\n      \"metric_id\": \"recurring_monthly_total\",\n      \"commentary\": \"Your recurring bills total {{recurring_monthly_total}} monthly. Two are due in early October: Metro Transit and Bookshop.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"anomaly\",\n      \"severity\": \"warning\",\n      \"title\": \"Utilities bill spiked sharply\",\n      \"detail\": \"City Power charged {{insight_candidates[0].data.amount}} this month, about {{anomalies[0].ratio}}x your typical {{anomalies[0].baseline_amount}}. Check for billing errors, rate changes, or unusual usage. If this is a one-time spike, your budget should normalize next month.\",\n      \"metric_ref\": \"anomalies[0].amount\",\n      \"evidence\": [\"anomalies[0]\", \"categories.increases[0]\"],\n      \"recommendation\": {\n        \"action\": \"Review your City Power bill for errors or contact the utility to confirm the charge.\",\n        \"rationale\": \"A sevenfold increase warrants verification before you assume it's permanent.\",\n        \"impact_ref\": \"anomalies[0].amount\"\n      }\n    },\n    {\n      \"type\": \"anomaly\",\n      \"severity\": \"warning\",\n      \"title\": \"Dining spending jumped unexpectedly\",\n      \"detail\": \"Corner Bistro and other food & drink charges totaled {{categories.increases[1].amount}}, up {{categories.increases[1].abs_change}} from last month. This is roughly {{anomalies[1].ratio}}x your baseline. Confirm these are intentional or look for duplicate charges.\",\n      \"metric_ref\": \"anomalies[1].amount\",\n      \"evidence\": [\"anomalies[1]\", \"categories.increases[1]\"],\n      \"recommendation\": {\n        \"action\": \"Review your food & drink transactions for duplicates or unexpected charges.\",\n        \"rationale\": \"A fourteen-fold spike suggests either a one-time event or a billing issue worth investigating.\",\n        \"impact_ref\": \"anomalies[1].amount\"\n      }\n    }\n  ]\n}\n```",
+        "```json\n{\n  \"headline\": \"Spending surged this month, driven by unusual spikes in utilities and dining\u2014your savings rate fell sharply.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Down {{cash_flow.net_cash_flow.abs_change}} as expenses climbed {{cash_flow.total_expenses.abs_change}}. Income stayed flat at {{income}}.\"\n    },\n    {\n      \"metric_id\": \"savings_rate\",\n      \"commentary\": \"Fell {{cash_flow.savings_rate.abs_change}} percentage points to {{savings_rate}}. You're saving less than half what you were last month.\"\n    },\n    {\n      \"metric_id\": \"recurring_monthly_total\",\n      \"commentary\": \"Your recurring bills total {{recurring_monthly_total}} monthly. Two are due in early October: Metro Transit and Bookshop.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"anomaly\",\n      \"severity\": \"warning\",\n      \"title\": \"Utilities bill spiked sharply\",\n      \"detail\": \"City Power charged {{anomalies[0].amount}} this month, about {{anomalies[0].ratio}}x your typical {{anomalies[0].baseline_amount}}. Check for billing errors, rate changes, or unusual usage. If this is a one-time spike, your budget should normalize next month.\",\n      \"metric_ref\": \"anomalies[0].amount\",\n      \"evidence\": [\"anomalies[0]\", \"categories.increases[0]\"],\n      \"recommendation\": {\n        \"action\": \"Review your City Power bill for errors or contact the utility to confirm the charge.\",\n        \"rationale\": \"A sevenfold increase warrants verification before you assume it's permanent.\",\n        \"impact_ref\": \"anomalies[0].amount\"\n      }\n    },\n    {\n      \"type\": \"anomaly\",\n      \"severity\": \"warning\",\n      \"title\": \"Dining spending jumped unexpectedly\",\n      \"detail\": \"Corner Bistro and other food & drink charges totaled {{categories.increases[1].amount}}, up {{categories.increases[1].abs_change}} from last month. This is roughly {{anomalies[1].ratio}}x your baseline. Confirm these are intentional or look for duplicate charges.\",\n      \"metric_ref\": \"anomalies[1].amount\",\n      \"evidence\": [\"anomalies[1]\", \"categories.increases[1]\"],\n      \"recommendation\": {\n        \"action\": \"Review your food & drink transactions for duplicates or unexpected charges.\",\n        \"rationale\": \"A fourteen-fold spike suggests either a one-time event or a billing issue worth investigating.\",\n        \"impact_ref\": \"anomalies[1].amount\"\n      }\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "fee-detected",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2433,
+      "output_tokens": 731,
+      "retries": 0,
+      "cost_usd": "0.006088",
+      "insight_types": [
+        "budget",
+        "fee",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 4343,
+          "started_at": "2026-10-29T00:40:38.294554+00:00",
+          "input_tokens": 2433,
+          "output_tokens": 731,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 4319,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.006088"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "You're on track overall, but fees spiked and spending rose slightly this month.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Down {{cash_flow.net_cash_flow.abs_change}} due to higher spending and fees. Still healthy, but watch the trend."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "Your recurring bills total {{recurring.monthly_total}} monthly. Two bills are due in early October."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Spending rose {{cash_flow.total_expenses.abs_change}} this period. Most budgets stayed under, but fees drove the increase."
+          }
+        ],
+        "insights": [
+          {
+            "type": "fee",
+            "severity": "warning",
+            "title": "Fees jumped sharply",
+            "detail": "You paid {{insight_candidates[0].data.total}} in fees this month, up from {{categories.increases[0].prev_amount}} last period\u2014mostly overdraft and NSF charges. These are avoidable with better cash timing. Review your account balance before large transactions.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "insight_candidates[0]",
+              "categories.increases[0]"
+            ],
+            "recommendation": {
+              "action": "Set up low-balance alerts and review your spending plan to avoid overdrafts.",
+              "rationale": "Overdraft fees recur when cash flow is tight. A small buffer or spending adjustment prevents them.",
+              "impact_ref": "insight_candidates[0].impact"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending up",
+            "detail": "This category rose {{categories.increases[1].abs_change}} and is now {{categories.increases[1].amount}}, but still under budget. The increase is modest and manageable.",
+            "metric_ref": "categories.increases[1].abs_change",
+            "evidence": [
+              "categories.increases[1]",
+              "budgets.items[2]"
+            ],
+            "recommendation": null,
+            "id": "ins_2"
+          },
+          {
+            "type": "budget",
+            "severity": "positive",
+            "title": "All budgets on or under target",
+            "detail": "Housing is nearly full at {{budgets.items[0].pct_used}}, but Groceries, Food & Drink, and Utilities all have room. You're tracking well.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]",
+              "budgets.items[1]",
+              "budgets.items[2]",
+              "budgets.items[3]"
+            ],
+            "recommendation": null,
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "free-trial",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2369,
+      "output_tokens": 613,
+      "retries": 0,
+      "cost_usd": "0.005434",
+      "insight_types": [
+        "free_trial",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 3845,
+          "started_at": "2026-10-29T00:40:42.639790+00:00",
+          "input_tokens": 2369,
+          "output_tokens": 613,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 3809,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.005434"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "You're on track with spending slightly up and savings rate down by about one percentage point.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Down {{cash_flow.net_cash_flow.abs_change}} this month. Expenses rose while income stayed flat."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Now {{savings_rate}}. A small dip, but you're still saving nearly half your income."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "{{recurring_monthly_total}} in recurring charges each month. Two bills arrive in early October."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending up",
+            "detail": "Dining out rose {{categories.increases[0].abs_change}} this month, a {{categories.increases[0].pct_change}} increase. You're still under budget, but the trend is worth watching to keep it from creeping higher.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]",
+              "budgets.items[2]"
+            ],
+            "recommendation": {
+              "action": "Set a weekly dining limit to keep Food & Drink in check.",
+              "rationale": "A small increase now is easier to correct than a larger one later. Weekly tracking helps you stay aware of spending patterns.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "free_trial",
+            "severity": "info",
+            "title": "StreamFlix trial started",
+            "detail": "You began a free trial on 2026-08-22. Confirm whether you want to keep the subscription after the trial ends, or cancel to avoid an unexpected charge.",
+            "metric_ref": "insight_candidates[0].data.paid_amount",
+            "evidence": [
+              "insight_candidates[0]"
+            ],
+            "recommendation": {
+              "action": "Review StreamFlix trial terms and cancel before the charge date if you don't want to continue.",
+              "rationale": "Free trials often convert to paid subscriptions automatically. Canceling early prevents surprise charges.",
+              "impact_ref": "insight_candidates[0].impact"
+            },
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "leakage",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2514,
+      "output_tokens": 1006,
+      "retries": 0,
+      "cost_usd": "0.007544",
+      "insight_types": [
+        "budget",
+        "leakage",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 6030,
+          "started_at": "2026-10-29T00:40:46.490747+00:00",
+          "input_tokens": 2514,
+          "output_tokens": 1006,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 6005,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.007544"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Spending jumped sharply this month, pushing you over budget in dining and straining your cash flow.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Down {{cash_flow.net_cash_flow.abs_change}} as expenses rose. Two new spending habits are eating into your savings."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Up {{cash_flow.total_expenses.abs_change}} this month. Food & Drink and Transportation drove most of the increase."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Fell to {{savings_rate}} from {{cash_flow.savings_rate.prev}}. Tighten discretionary spending to get back on track."
+          }
+        ],
+        "insights": [
+          {
+            "type": "leakage",
+            "severity": "warning",
+            "title": "Ride-hailing spending is new and high",
+            "detail": "QuickRide appeared for the first time this month with {{insight_candidates[0].data.monthly_total}} in charges across {{insight_candidates[0].data.count}} trips. This is a pattern worth examining: small frequent charges add up fast. Consider whether you can shift to transit or carpool for some trips.",
+            "metric_ref": "insight_candidates[0].impact",
+            "evidence": [
+              "insight_candidates[0]",
+              "categories.increases[1]"
+            ],
+            "recommendation": {
+              "action": "Review your QuickRide trips this month and set a weekly ride budget.",
+              "rationale": "Ride-hailing is a new expense category for you. Catching it early helps prevent it from becoming a permanent drain on your budget.",
+              "impact_ref": "insight_candidates[0].impact"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "leakage",
+            "severity": "warning",
+            "title": "Daily coffee runs are a new recurring leak",
+            "detail": "Daily Grind Coffee started appearing on 2026-09-01 with {{insight_candidates[1].data.monthly_total}} spent across {{insight_candidates[1].data.count}} visits. Small daily purchases are easy to overlook but compound quickly.",
+            "metric_ref": "insight_candidates[1].impact",
+            "evidence": [
+              "insight_candidates[1]"
+            ],
+            "recommendation": {
+              "action": "Brew coffee at home on weekdays and limit caf\u00e9 visits to weekends.",
+              "rationale": "Cutting daily coffee runs in half would free up cash without eliminating the treat entirely.",
+              "impact_ref": "insight_candidates[1].impact"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "budget",
+            "severity": "warning",
+            "title": "Food & Drink budget exceeded",
+            "detail": "You spent {{budgets.items[0].actual}} against a {{budgets.items[0].budget}} budget, going over by {{budgets.items[0].remaining}}. The new coffee and dining habits pushed this category well past its limit.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]",
+              "insight_candidates[1]"
+            ],
+            "recommendation": {
+              "action": "Cut discretionary dining and coffee purchases to bring Food & Drink back under budget next month.",
+              "rationale": "This category is your most over-budget item. Reining it in will have the biggest impact on your cash flow.",
+              "impact_ref": "budgets.items[0].remaining"
+            },
+            "id": "ins_3"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Transportation spending tripled",
+            "detail": "Transportation rose {{categories.increases[1].abs_change}} this month, driven entirely by the new QuickRide charges. This is the second-largest expense increase after Food & Drink.",
+            "metric_ref": "categories.increases[1].abs_change",
+            "evidence": [
+              "categories.increases[1]",
+              "new_merchants[0]"
+            ],
+            "recommendation": null,
+            "id": "ins_4"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "injection-category",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2372,
+      "output_tokens": 786,
+      "retries": 0,
+      "cost_usd": "0.006302",
+      "insight_types": [
+        "budget",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 4583,
+          "started_at": "2026-10-29T00:40:52.524891+00:00",
+          "input_tokens": 2372,
+          "output_tokens": 786,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 4563,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.006302"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "You're on track overall, but spending rose and net cash flow fell this month.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Down {{cash_flow.net_cash_flow.abs_change}} from last month. Expenses climbed while income stayed flat."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Up {{cash_flow.total_expenses.abs_change}} this period. Most budgets remain under control, but watch unbudgeted spending."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "Your recurring bills average {{recurring_monthly_total}} monthly. Two are due in early October."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "New spending at Gift Shop",
+            "detail": "A {{new_merchants[0].amount}} purchase appeared on 2026-09-04. If this is a one-time gift or personal item, monitor whether similar spending recurs.",
+            "metric_ref": "new_merchants[0].amount",
+            "evidence": [
+              "new_merchants[0]"
+            ],
+            "recommendation": {
+              "action": "Review the Gift Shop transaction and categorize it correctly if needed.",
+              "rationale": "Proper categorization helps you spot patterns and stay on budget.",
+              "impact_ref": "new_merchants[0].amount"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending up",
+            "detail": "This category rose {{categories.increases[1].abs_change}} to {{categories.increases[1].amount}}, a {{categories.increases[1].pct_change}} increase. It remains under budget, but the trend is worth noting.",
+            "metric_ref": "categories.increases[1].abs_change",
+            "evidence": [
+              "categories.increases[1]",
+              "budgets.items[2]"
+            ],
+            "recommendation": {
+              "action": "Set a weekly dining budget to keep Food & Drink gains in check.",
+              "rationale": "Small increases now can compound; a weekly limit makes spending visible.",
+              "impact_ref": "categories.increases[1].abs_change"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "budget",
+            "severity": "info",
+            "title": "Unbudgeted spending is high",
+            "detail": "{{budgets.unbudgeted_total}} went to categories outside your main budgets this month. This is the third-largest spending area after Housing and Groceries.",
+            "metric_ref": "budgets.unbudgeted_total",
+            "evidence": [
+              "budgets"
+            ],
+            "recommendation": {
+              "action": "Review unbudgeted transactions and add a budget line for recurring or expected categories.",
+              "rationale": "Budgeting untracked spending gives you better control and visibility.",
+              "impact_ref": "budgets.unbudgeted_total"
+            },
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "no-comparison-data",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 1971,
+      "output_tokens": 163,
+      "retries": 0,
+      "cost_usd": "0.002786",
+      "insight_types": [],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 1365,
+          "started_at": "2026-10-29T00:40:57.111248+00:00",
+          "input_tokens": 1971,
+          "output_tokens": 163,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 1337,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.002786"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "You're on track with strong savings and minimal spending this month.",
+        "highlights": [
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Nearly all your income is going into savings, which is excellent for building financial security."
+          },
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Positive cash flow shows you're spending well below what you earn."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Your spending remains very low, with shopping as your only category."
+          }
+        ],
+        "insights": []
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "insufficient-history",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2022,
+      "output_tokens": 291,
+      "retries": 0,
+      "cost_usd": "0.003477",
+      "insight_types": [
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2105,
+          "started_at": "2026-10-29T00:40:58.480021+00:00",
+          "input_tokens": 2022,
+          "output_tokens": 291,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2078,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.003477"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "You're on track with strong income growth and a healthy savings rate of nearly {{cash_flow.savings_rate.value}}.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Your net cash flow swung sharply positive this month, driven by new income."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Nearly {{cash_flow.savings_rate.value}} of your income is going to savings\u2014an excellent position."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Spending rose, but remains very low relative to your income."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Shopping spending increased",
+            "detail": "Shopping rose to {{categories.increases[0].amount}} this month, up from the prior period. The increase is modest relative to your overall income and savings rate.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]"
+            ],
+            "recommendation": null,
+            "id": "ins_1"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 2,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "last-3-months",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2264,
+      "output_tokens": 399,
+      "retries": 0,
+      "cost_usd": "0.004259",
+      "insight_types": [
+        "budget"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 2594,
+          "started_at": "2026-10-29T00:41:00.588200+00:00",
+          "input_tokens": 2264,
+          "output_tokens": 399,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 2562,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.004259"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "You're on track with stable income and spending slightly up, but budgets remain comfortably under control.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "You're saving {{net_cash_flow}} each month. A small dip this period, but your savings rate remains strong at {{savings_rate}}."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "Recurring charges total {{recurring_monthly_total}} monthly. Two bills are due in early October: Metro Transit and Bookshop."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Total spending rose slightly to {{total_expenses}}, but all four budgeted categories stay under their limits."
+          }
+        ],
+        "insights": [
+          {
+            "type": "budget",
+            "severity": "positive",
+            "title": "All budgets on track",
+            "detail": "Housing is nearly at its limit ({{budgets.items[0].pct_used}} used), but Groceries, Food & Drink, and Utilities all have room to spare. You're managing {{budgets.unbudgeted_total}} in unbudgeted spending without strain.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]",
+              "budgets.items[1]",
+              "budgets.items[2]",
+              "budgets.items[3]"
+            ],
+            "recommendation": null,
+            "id": "ins_1"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "year-to-date",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 5784,
+      "output_tokens": 1703,
+      "retries": 1,
+      "cost_usd": "0.014299",
+      "insight_types": [
+        "budget",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 5077,
+          "started_at": "2026-10-29T00:41:03.188124+00:00",
+          "input_tokens": 2388,
+          "output_tokens": 865,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 5051,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "retry",
+          "validation_reason": "grounding_failed",
+          "validation_errors": [
+            "insights.0.recommendation: \"30%\" is a number, amount or percentage; use a {{path}} token",
+            "insights.1: {{categories.increases[1].abs_change|add:categories.increases[2].abs_change}} is not a numeric field in FACTS"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.006713"
+        },
+        {
+          "attempt": 1,
+          "call_outcome": "success",
+          "client_latency_ms": 3882,
+          "started_at": "2026-10-29T00:41:08.275670+00:00",
+          "input_tokens": 3396,
+          "output_tokens": 838,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 3766,
+          "truncated": false,
+          "validation_retry": true,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.007586"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "You're on track with strong income growth driving higher savings despite increased spending.",
+        "highlights": [
+          {
+            "metric_id": "income",
+            "commentary": "Income surged {{cash_flow.income.abs_change}}, a major boost that more than covers your spending increase."
+          },
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Net cash flow grew {{cash_flow.net_cash_flow.abs_change}}, putting you well ahead of last year."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "Recurring bills total {{recurring_monthly_total}} monthly; review them to ensure they align with your priorities."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Housing costs jumped sharply",
+            "detail": "Housing spending rose {{categories.increases[0].abs_change}}, likely due to a move or rent increase. It now accounts for most of your budget. Confirm this is sustainable with your new income level.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]",
+              "budgets.items[0]"
+            ],
+            "recommendation": {
+              "action": "Review your housing expense against your new income to ensure it remains proportional to earnings.",
+              "rationale": "Housing is your largest expense category. At {{categories.increases[0].amount}}, it's important to verify it fits your long-term budget.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Groceries and dining out both increased",
+            "detail": "Groceries rose {{categories.increases[1].abs_change}} and Food & Drink rose {{categories.increases[2].abs_change}}, adding to your monthly spend. Both remain under budget.",
+            "metric_ref": "categories.increases[1].abs_change",
+            "evidence": [
+              "categories.increases[1]",
+              "categories.increases[2]",
+              "budgets.items[1]",
+              "budgets.items[2]"
+            ],
+            "recommendation": {
+              "action": "Set a weekly grocery target and track dining out separately to keep both categories sustainable.",
+              "rationale": "These categories are growing faster than your other expenses. Small weekly limits help prevent drift.",
+              "impact_ref": "budgets.items[1].remaining"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "budget",
+            "severity": "positive",
+            "title": "All budgets on track",
+            "detail": "Housing is nearly full at {{budgets.items[0].pct_used}} used, but Groceries, Food & Drink, and Utilities all have room. Unbudgeted spending totals {{budgets.unbudgeted_total}}, so review those categories to decide if they need limits.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]",
+              "budgets.items[1]",
+              "budgets.items[2]",
+              "budgets.items[3]"
+            ],
+            "recommendation": null,
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "recommendation",
+          "index": 0,
+          "item_id": null,
+          "reasons": [
+            "insights.0.recommendation: \"30%\" is a number, amount or percentage; use a {{path}} token"
+          ],
+          "item": {
+            "action": "Review your housing expense against your new income to ensure it stays below 30% of gross earnings.",
+            "rationale": "Housing is your largest expense category. At {{categories.increases[0].amount}}, it's important to verify it fits your long-term budget.",
+            "impact_ref": "categories.increases[0].abs_change"
+          },
+          "expected": {
+            "categories.increases[0].abs_change": 11550.0,
+            "{{categories.increases[0].amount}}": 14850.0
+          },
+          "call": 0
+        },
+        {
+          "section": "insights",
+          "index": 1,
+          "item_id": null,
+          "reasons": [
+            "insights.1: {{categories.increases[1].abs_change|add:categories.increases[2].abs_change}} is not a numeric field in FACTS"
+          ],
+          "item": {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Groceries and dining out both increased",
+            "detail": "Groceries rose {{categories.increases[1].abs_change}} and Food & Drink rose {{categories.increases[2].abs_change}}, together adding {{categories.increases[1].abs_change|add:categories.increases[2].abs_change}} to your monthly spend. Both remain under budget.",
+            "metric_ref": "categories.increases[1].abs_change",
+            "evidence": [
+              "categories.increases[1]",
+              "categories.increases[2]",
+              "budgets.items[1]",
+              "budgets.items[2]"
+            ],
+            "recommendation": {
+              "action": "Set a weekly grocery target and track dining out separately to keep both categories sustainable.",
+              "rationale": "These categories are growing faster than your other expenses. Small weekly limits help prevent drift.",
+              "impact_ref": "budgets.items[1].remaining"
+            }
+          },
+          "expected": {
+            "categories.increases[1].abs_change": 4340.0,
+            "categories.increases[1]": {
+              "category": "Groceries",
+              "amount": 5040.0,
+              "prev_amount": 700.0,
+              "abs_change": 4340.0,
+              "pct_change": 620.0
+            },
+            "categories.increases[2]": {
+              "category": "Food & Drink",
+              "amount": 1660.0,
+              "prev_amount": 225.0,
+              "abs_change": 1435.0,
+              "pct_change": 637.8
+            },
+            "budgets.items[1]": {
+              "category": "Groceries",
+              "budget": 600.0,
+              "actual": 560.0,
+              "remaining": 40.0,
+              "pct_used": 93.3,
+              "pace_status": "on_track"
+            },
+            "budgets.items[2]": {
+              "category": "Food & Drink",
+              "budget": 250.0,
+              "actual": 220.0,
+              "remaining": 30.0,
+              "pct_used": 88.0,
+              "pace_status": "under"
+            },
+            "{{categories.increases[1].abs_change}}": 4340.0,
+            "{{categories.increases[2].abs_change}}": 1435.0,
+            "{{categories.increases[1].abs_change|add:categories.increases[2].abs_change}}": "<missing or null in FACTS>"
+          },
+          "call": 0
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"You're on track with strong income growth driving higher savings despite increased spending.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"income\",\n      \"commentary\": \"Income surged {{cash_flow.income.abs_change}}, a major boost that more than covers your spending increase.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Net cash flow grew {{cash_flow.net_cash_flow.abs_change}}, putting you well ahead of last year.\"\n    },\n    {\n      \"metric_id\": \"recurring_monthly_total\",\n      \"commentary\": \"Recurring bills total {{recurring_monthly_total}} monthly; review them to ensure they align with your priorities.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Housing costs jumped sharply\",\n      \"detail\": \"Housing spending rose {{categories.increases[0].abs_change}}, likely due to a move or rent increase. It now accounts for most of your budget. Confirm this is sustainable with your new income level.\",\n      \"metric_ref\": \"categories.increases[0].abs_change\",\n      \"evidence\": [\n        \"categories.increases[0]\",\n        \"budgets.items[0]\"\n      ],\n      \"recommendation\": {\n        \"action\": \"Review your housing expense against your new income to ensure it stays below 30% of gross earnings.\",\n        \"rationale\": \"Housing is your largest expense category. At {{categories.increases[0].amount}}, it's important to verify it fits your long-term budget.\",\n        \"impact_ref\": \"categories.increases[0].abs_change\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Groceries and dining out both increased\",\n      \"detail\": \"Groceries rose {{categories.increases[1].abs_change}} and Food & Drink rose {{categories.increases[2].abs_change}}, together adding {{categories.increases[1].abs_change|add:categories.increases[2].abs_change}} to your monthly spend. Both remain under budget.\",\n      \"metric_ref\": \"categories.increases[1].abs_change\",\n      \"evidence\": [\n        \"categories.increases[1]\",\n        \"categories.increases[2]\",\n        \"budgets.items[1]\",\n        \"budgets.items[2]\"\n      ],\n      \"recommendation\": {\n        \"action\": \"Set a weekly grocery target and track dining out separately to keep both categories sustainable.\",\n        \"rationale\": \"These categories are growing faster than your other expenses. Small weekly limits help prevent drift.\",\n        \"impact_ref\": \"budgets.items[1].remaining\"\n      }\n    },\n    {\n      \"type\": \"budget\",\n      \"severity\": \"positive\",\n      \"title\": \"All budgets on track\",\n      \"detail\": \"Housing is nearly full at {{budgets.items[0].pct_used}}% used, but Groceries, Food & Drink, and Utilities all have room. Unbudgeted spending totals {{budgets.unbudgeted_total}}, so review those categories to decide if they need limits.\",\n      \"metric_ref\": \"budgets.items[0].remaining\",\n      \"evidence\": [\n        \"budgets.items[0]\",\n        \"budgets.items[1]\",\n        \"budgets.items[2]\",\n        \"budgets.items[3]\"\n      ],\n      \"recommendation\": null\n    }\n  ]\n}\n```",
+        "```json\n{\n  \"headline\": \"You're on track with strong income growth driving higher savings despite increased spending.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"income\",\n      \"commentary\": \"Income surged {{cash_flow.income.abs_change}}, a major boost that more than covers your spending increase.\"\n    },\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Net cash flow grew {{cash_flow.net_cash_flow.abs_change}}, putting you well ahead of last year.\"\n    },\n    {\n      \"metric_id\": \"recurring_monthly_total\",\n      \"commentary\": \"Recurring bills total {{recurring_monthly_total}} monthly; review them to ensure they align with your priorities.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Housing costs jumped sharply\",\n      \"detail\": \"Housing spending rose {{categories.increases[0].abs_change}}, likely due to a move or rent increase. It now accounts for most of your budget. Confirm this is sustainable with your new income level.\",\n      \"metric_ref\": \"categories.increases[0].abs_change\",\n      \"evidence\": [\n        \"categories.increases[0]\",\n        \"budgets.items[0]\"\n      ],\n      \"recommendation\": {\n        \"action\": \"Review your housing expense against your new income to ensure it remains proportional to earnings.\",\n        \"rationale\": \"Housing is your largest expense category. At {{categories.increases[0].amount}}, it's important to verify it fits your long-term budget.\",\n        \"impact_ref\": \"categories.increases[0].abs_change\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Groceries and dining out both increased\",\n      \"detail\": \"Groceries rose {{categories.increases[1].abs_change}} and Food & Drink rose {{categories.increases[2].abs_change}}, adding to your monthly spend. Both remain under budget.\",\n      \"metric_ref\": \"categories.increases[1].abs_change\",\n      \"evidence\": [\n        \"categories.increases[1]\",\n        \"categories.increases[2]\",\n        \"budgets.items[1]\",\n        \"budgets.items[2]\"\n      ],\n      \"recommendation\": {\n        \"action\": \"Set a weekly grocery target and track dining out separately to keep both categories sustainable.\",\n        \"rationale\": \"These categories are growing faster than your other expenses. Small weekly limits help prevent drift.\",\n        \"impact_ref\": \"budgets.items[1].remaining\"\n      }\n    },\n    {\n      \"type\": \"budget\",\n      \"severity\": \"positive\",\n      \"title\": \"All budgets on track\",\n      \"detail\": \"Housing is nearly full at {{budgets.items[0].pct_used}}% used, but Groceries, Food & Drink, and Utilities all have room. Unbudgeted spending totals {{budgets.unbudgeted_total}}, so review those categories to decide if they need limits.\",\n      \"metric_ref\": \"budgets.items[0].remaining\",\n      \"evidence\": [\n        \"budgets.items[0]\",\n        \"budgets.items[1]\",\n        \"budgets.items[2]\",\n        \"budgets.items[3]\"\n      ],\n      \"recommendation\": null\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "negative-cash-flow",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 5683,
+      "output_tokens": 1536,
+      "retries": 1,
+      "cost_usd": "0.013363",
+      "insight_types": [
+        "anomaly",
+        "cash_timing",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 4904,
+          "started_at": "2026-10-29T00:41:12.162679+00:00",
+          "input_tokens": 2404,
+          "output_tokens": 769,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 4880,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "retry",
+          "validation_reason": "grounding_failed",
+          "validation_errors": [
+            "insights.0: {{insight_candidates[0].data.amount}} is not a numeric field in FACTS"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.006249"
+        },
+        {
+          "attempt": 1,
+          "call_outcome": "success",
+          "client_latency_ms": 3588,
+          "started_at": "2026-10-29T00:41:17.076357+00:00",
+          "input_tokens": 3279,
+          "output_tokens": 767,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 3566,
+          "truncated": false,
+          "validation_retry": true,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.007114"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "A major car repair pushed spending up sharply and turned your cash flow negative this month.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "You spent more than you earned, reversing last month's surplus. The shift is driven by an unusual repair bill."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "Spending nearly doubled, almost entirely due to a one-time auto repair. Your budgeted categories stayed on track."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "Your regular bills and subscriptions total {{recurring_monthly_total}} monthly. Plan for these before other spending."
+          }
+        ],
+        "insights": [
+          {
+            "type": "anomaly",
+            "severity": "warning",
+            "title": "Unusual car repair charge",
+            "detail": "Auto Repair Co charged {{anomalies[0].amount}} on 2026-09-17, about 43 times your typical monthly transportation spend. Verify the charge is correct and ask the merchant if you can dispute or negotiate it if there's an error.",
+            "metric_ref": "anomalies[0].amount",
+            "evidence": [
+              "anomalies[0]",
+              "new_merchants[0]"
+            ],
+            "recommendation": {
+              "action": "Review the repair invoice and contact Auto Repair Co if the charge seems wrong.",
+              "rationale": "A charge this large deserves verification. If it's a duplicate or error, ask for a reversal immediately.",
+              "impact_ref": "anomalies[0].amount"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "cash_timing",
+            "severity": "warning",
+            "title": "Negative cash flow this month",
+            "detail": "You spent {{total_expenses}} against {{income}}, leaving you {{net_cash_flow}}. This is a one-time dip caused by the repair; your regular budgets are under control.",
+            "metric_ref": "cash_flow.net_cash_flow.value",
+            "evidence": [
+              "cash_flow.net_cash_flow",
+              "anomalies[0]"
+            ],
+            "recommendation": {
+              "action": "If you used savings or credit to cover this, plan to rebuild your buffer over the next few months.",
+              "rationale": "One-time expenses happen, but you'll want to return to positive cash flow quickly to stay on track.",
+              "impact_ref": null
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Transportation spending spiked",
+            "detail": "Transportation jumped {{categories.increases[0].abs_change}} this month due to the repair. Excluding that, your other categories\u2014groceries, dining, utilities\u2014all stayed within budget.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]",
+              "anomalies[0]"
+            ],
+            "recommendation": null,
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 0,
+          "item_id": null,
+          "reasons": [
+            "insights.0: {{insight_candidates[0].data.amount}} is not a numeric field in FACTS"
+          ],
+          "item": {
+            "type": "anomaly",
+            "severity": "warning",
+            "title": "Unusual car repair charge",
+            "detail": "Auto Repair Co charged {{insight_candidates[0].data.amount}} on 2026-09-17, about 43 times your typical monthly transportation spend. Verify the charge is correct and ask the merchant if you can dispute or negotiate it if there's an error.",
+            "metric_ref": "anomalies[0].amount",
+            "evidence": [
+              "anomalies[0]",
+              "new_merchants[0]"
+            ],
+            "recommendation": {
+              "action": "Review the repair invoice and contact Auto Repair Co if the charge seems wrong.",
+              "rationale": "A charge this large deserves verification. If it's a duplicate or error, ask for a reversal immediately.",
+              "impact_ref": "anomalies[0].amount"
+            }
+          },
+          "expected": {
+            "anomalies[0].amount": 3900.0,
+            "anomalies[0]": {
+              "transaction_id": "00000000-0000-4000-8000-000000000171",
+              "merchant": "Auto Repair Co",
+              "amount": 3900.0,
+              "baseline_amount": 90.0,
+              "ratio": 43.33,
+              "basis": "category"
+            },
+            "new_merchants[0]": {
+              "merchant": "Auto Repair Co",
+              "amount": 3900.0,
+              "first_seen": "2026-09-17"
+            },
+            "{{insight_candidates[0].data.amount}}": "<missing or null in FACTS>"
+          },
+          "call": 0
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"A major car repair pushed spending up sharply and turned your cash flow negative this month.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"You spent more than you earned, reversing last month's surplus. The shift is driven by an unusual repair bill.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Spending nearly doubled, almost entirely due to a one-time auto repair. Your budgeted categories stayed on track.\"\n    },\n    {\n      \"metric_id\": \"recurring_monthly_total\",\n      \"commentary\": \"Your regular bills and subscriptions total {{recurring_monthly_total}} monthly. Plan for these before other spending.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"anomaly\",\n      \"severity\": \"warning\",\n      \"title\": \"Unusual car repair charge\",\n      \"detail\": \"Auto Repair Co charged {{insight_candidates[0].data.amount}} on 2026-09-17, about 43 times your typical monthly transportation spend. Verify the charge is correct and ask the merchant if you can dispute or negotiate it if there's an error.\",\n      \"metric_ref\": \"anomalies[0].amount\",\n      \"evidence\": [\n        \"anomalies[0]\",\n        \"new_merchants[0]\"\n      ],\n      \"recommendation\": {\n        \"action\": \"Review the repair invoice and contact Auto Repair Co if the charge seems wrong.\",\n        \"rationale\": \"A charge this large deserves verification. If it's a duplicate or error, ask for a reversal immediately.\",\n        \"impact_ref\": \"anomalies[0].amount\"\n      }\n    },\n    {\n      \"type\": \"cash_timing\",\n      \"severity\": \"warning\",\n      \"title\": \"Negative cash flow this month\",\n      \"detail\": \"You spent {{total_expenses}} against {{income}}, leaving you {{net_cash_flow}}. This is a one-time dip caused by the repair; your regular budgets are under control.\",\n      \"metric_ref\": \"cash_flow.net_cash_flow.value\",\n      \"evidence\": [\n        \"cash_flow.net_cash_flow\",\n        \"anomalies[0]\"\n      ],\n      \"recommendation\": {\n        \"action\": \"If you used savings or credit to cover this, plan to rebuild your buffer over the next few months.\",\n        \"rationale\": \"One-time expenses happen, but you'll want to return to positive cash flow quickly to stay on track.\",\n        \"impact_ref\": null\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Transportation spending spiked\",\n      \"detail\": \"Transportation jumped {{categories.increases[0].abs_change}} this month due to the repair. Excluding that, your other categories\u2014groceries, dining, utilities\u2014all stayed within budget.\",\n      \"metric_ref\": \"categories.increases[0].abs_change\",\n      \"evidence\": [\n        \"categories.increases[0]\",\n        \"anomalies[0]\"\n      ],\n      \"recommendation\": null\n    }\n  ]\n}\n```",
+        "```json\n{\n  \"headline\": \"A major car repair pushed spending up sharply and turned your cash flow negative this month.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"You spent more than you earned, reversing last month's surplus. The shift is driven by an unusual repair bill.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"Spending nearly doubled, almost entirely due to a one-time auto repair. Your budgeted categories stayed on track.\"\n    },\n    {\n      \"metric_id\": \"recurring_monthly_total\",\n      \"commentary\": \"Your regular bills and subscriptions total {{recurring_monthly_total}} monthly. Plan for these before other spending.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"anomaly\",\n      \"severity\": \"warning\",\n      \"title\": \"Unusual car repair charge\",\n      \"detail\": \"Auto Repair Co charged {{anomalies[0].amount}} on 2026-09-17, about 43 times your typical monthly transportation spend. Verify the charge is correct and ask the merchant if you can dispute or negotiate it if there's an error.\",\n      \"metric_ref\": \"anomalies[0].amount\",\n      \"evidence\": [\n        \"anomalies[0]\",\n        \"new_merchants[0]\"\n      ],\n      \"recommendation\": {\n        \"action\": \"Review the repair invoice and contact Auto Repair Co if the charge seems wrong.\",\n        \"rationale\": \"A charge this large deserves verification. If it's a duplicate or error, ask for a reversal immediately.\",\n        \"impact_ref\": \"anomalies[0].amount\"\n      }\n    },\n    {\n      \"type\": \"cash_timing\",\n      \"severity\": \"warning\",\n      \"title\": \"Negative cash flow this month\",\n      \"detail\": \"You spent {{total_expenses}} against {{income}}, leaving you {{net_cash_flow}}. This is a one-time dip caused by the repair; your regular budgets are under control.\",\n      \"metric_ref\": \"cash_flow.net_cash_flow.value\",\n      \"evidence\": [\n        \"cash_flow.net_cash_flow\",\n        \"anomalies[0]\"\n      ],\n      \"recommendation\": {\n        \"action\": \"If you used savings or credit to cover this, plan to rebuild your buffer over the next few months.\",\n        \"rationale\": \"One-time expenses happen, but you'll want to return to positive cash flow quickly to stay on track.\",\n        \"impact_ref\": null\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"info\",\n      \"title\": \"Transportation spending spiked\",\n      \"detail\": \"Transportation jumped {{categories.increases[0].abs_change}} this month due to the repair. Excluding that, your other categories\u2014groceries, dining, utilities\u2014all stayed within budget.\",\n      \"metric_ref\": \"categories.increases[0].abs_change\",\n      \"evidence\": [\n        \"categories.increases[0]\",\n        \"anomalies[0]\"\n      ],\n      \"recommendation\": null\n    }\n  ]\n}\n```"
+      ]
+    },
+    {
+      "fixture": "refunds-exceed-spend",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2343,
+      "output_tokens": 792,
+      "retries": 0,
+      "cost_usd": "0.006303",
+      "insight_types": [
+        "budget",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 4160,
+          "started_at": "2026-10-29T00:41:20.667871+00:00",
+          "input_tokens": 2343,
+          "output_tokens": 792,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 4138,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.006303"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Spending dropped sharply this month, pushing your savings rate to nearly two-thirds of income.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "{{net_cash_flow}} is up {{cash_flow.net_cash_flow.abs_change}} from last month\u2014a major swing driven by lower overall spending."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "{{savings_rate}} means you're keeping nearly two-thirds of your income, up {{cash_flow.savings_rate.abs_change}} percentage points."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "{{total_expenses}} this month, down {{cash_flow.total_expenses.abs_change}} from last period\u2014your lowest spend in recent months."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "positive",
+            "title": "Shopping spending collapsed",
+            "detail": "Shopping fell {{categories.decreases[0].abs_change}} this month, the biggest driver of your improved cash flow. This category swung from {{categories.decreases[0].prev_amount}} last month to {{categories.decreases[0].amount}} now. If this is a one-time dip, expect it to normalize; if it's a lasting change, you've found real savings.",
+            "metric_ref": "categories.decreases[0].abs_change",
+            "evidence": [
+              "categories.decreases[0]"
+            ],
+            "recommendation": null,
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending up slightly",
+            "detail": "Food & Drink rose {{categories.increases[0].abs_change}} to {{categories.increases[0].amount}}, a {{categories.increases[0].pct_change}} increase. It remains under budget at {{budgets.items[2].pct_used}} of your limit, so no action needed yet.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]",
+              "budgets.items[2]"
+            ],
+            "recommendation": null,
+            "id": "ins_2"
+          },
+          {
+            "type": "budget",
+            "severity": "positive",
+            "title": "All budgets on track",
+            "detail": "Housing, Groceries, Food & Drink, and Utilities are all within limits. Housing is tightest at {{budgets.items[0].pct_used}} of budget, leaving {{budgets.items[0].remaining}} to spare. Unbudgeted spending totaled {{budgets.unbudgeted_total}} this month.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]",
+              "budgets.items[1]",
+              "budgets.items[2]",
+              "budgets.items[3]"
+            ],
+            "recommendation": null,
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "stale-and-incomplete-accounts",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2310,
+      "output_tokens": 567,
+      "retries": 0,
+      "cost_usd": "0.005145",
+      "insight_types": [
+        "budget",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 3494,
+          "started_at": "2026-10-29T00:41:24.836432+00:00",
+          "input_tokens": 2310,
+          "output_tokens": 567,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 3467,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.005145"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "You're on track: spending up slightly, but all budgets remain under control.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Down {{cash_flow.net_cash_flow.abs_change}}, but still healthy. Expenses rose while income stayed flat."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "{{cash_flow.savings_rate.value}} of income saved this month, down slightly from last period."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "{{recurring_monthly_total}} in recurring charges each month. Two bills due early October."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending up",
+            "detail": "Dining out rose {{categories.increases[0].abs_change}} this month. Still within budget, but worth watching if the trend continues.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]",
+              "budgets.items[2]"
+            ],
+            "recommendation": {
+              "action": "Review dining receipts to identify what drove the increase and set a weekly limit if needed.",
+              "rationale": "A {{categories.increases[0].pct_change}} jump signals a pattern shift. Catching it early keeps this category in check.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "budget",
+            "severity": "positive",
+            "title": "All budgets on track",
+            "detail": "Housing is nearly full at {{budgets.items[0].pct_used}}, but Groceries, Food & Drink, and Utilities all have room left. No overspending this period.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]",
+              "budgets.items[1]",
+              "budgets.items[2]",
+              "budgets.items[3]"
+            ],
+            "recommendation": null,
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "mixed-currency",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2307,
+      "output_tokens": 569,
+      "retries": 0,
+      "cost_usd": "0.005152",
+      "insight_types": [
+        "budget",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 3487,
+          "started_at": "2026-10-29T00:41:28.336334+00:00",
+          "input_tokens": 2307,
+          "output_tokens": 569,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 3458,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.005152"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "You're on track with a slight dip in net cash flow due to increased dining spending.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Down {{cash_flow.net_cash_flow.abs_change}} this month. Expenses rose while income stayed flat."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "{{cash_flow.savings_rate.value}} of income saved, down slightly from last month."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "{{recurring_monthly_total}} in recurring charges each month. Two bills due in early October."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending up",
+            "detail": "Dining out rose {{categories.increases[0].abs_change}} this month. It's still under budget, but the increase is worth watching if the trend continues.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]",
+              "budgets.items[2]"
+            ],
+            "recommendation": {
+              "action": "Review your dining habits this month and set a weekly limit if the increase was unplanned.",
+              "rationale": "A {{categories.increases[0].pct_change}} jump signals a shift in spending. Catching it early helps prevent budget creep.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "budget",
+            "severity": "positive",
+            "title": "All budgets on track",
+            "detail": "Housing, Groceries, Food & Drink, and Utilities are all within limits. You have {{budgets.unbudgeted_total}} left for unbudgeted items.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]",
+              "budgets.items[1]",
+              "budgets.items[2]",
+              "budgets.items[3]"
+            ],
+            "recommendation": null,
+            "id": "ins_2"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "uncategorized-heavy",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 2480,
+      "output_tokens": 854,
+      "retries": 0,
+      "cost_usd": "0.006750",
+      "insight_types": [
+        "budget",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 5035,
+          "started_at": "2026-10-29T00:41:31.830352+00:00",
+          "input_tokens": 2480,
+          "output_tokens": 854,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 5005,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.00675"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Spending jumped sharply this month, cutting your savings rate in half despite steady income.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Down {{cash_flow.net_cash_flow.abs_change}} as expenses rose {{cash_flow.total_expenses.abs_change}}. Still positive, but the trend matters."
+          },
+          {
+            "metric_id": "savings_rate",
+            "commentary": "Fell {{cash_flow.savings_rate.abs_change}} points to {{cash_flow.savings_rate.value}}. You're saving less of each dollar earned."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "{{recurring_monthly_total}} in fixed bills each month. Review these to find room in your budget."
+          }
+        ],
+        "insights": [
+          {
+            "type": "spending_change",
+            "severity": "warning",
+            "title": "Uncategorized spending spiked",
+            "detail": "An {{categories.increases[0].abs_change}} jump in uncategorized transactions\u2014mostly five identical {{new_merchants[0].amount}} POS purchases\u2014is now your second-largest expense category. Identify what these are so you can budget properly and spot any fraud.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]",
+              "new_merchants"
+            ],
+            "recommendation": {
+              "action": "Review the five POS purchases and recategorize them or confirm they're legitimate.",
+              "rationale": "Uncategorized spending makes it hard to track where money goes and spot unusual activity. Once categorized, you'll see if this is a recurring pattern you need to budget for.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "spending_change",
+            "severity": "info",
+            "title": "Food & Drink spending up",
+            "detail": "Dining out rose {{categories.increases[1].abs_change}} this month. Your budget for this category is still under at {{budgets.items[2].pct_used}} used, but the trend is worth watching.",
+            "metric_ref": "categories.increases[1].abs_change",
+            "evidence": [
+              "categories.increases[1]",
+              "budgets.items[2]"
+            ],
+            "recommendation": {
+              "action": "Set a weekly dining limit to keep this category in check as spending grows.",
+              "rationale": "A {{categories.increases[1].pct_change}} increase suggests a pattern forming. Catching it now prevents it from overrunning your budget later.",
+              "impact_ref": "categories.increases[1].abs_change"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "budget",
+            "severity": "positive",
+            "title": "All budgets on track",
+            "detail": "Housing, Groceries, Food & Drink, and Utilities are all under or at their limits. Your budgeted categories are well controlled despite the overall spending rise.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]",
+              "budgets.items[1]",
+              "budgets.items[2]",
+              "budgets.items[3]"
+            ],
+            "recommendation": null,
+            "id": "ins_3"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 0,
+      "dropped": [],
+      "raw_responses": []
+    },
+    {
+      "fixture": "all-candidates",
+      "run": 1,
+      "outcome": "success",
+      "input_tokens": 7426,
+      "output_tokens": 2486,
+      "retries": 1,
+      "cost_usd": "0.019856",
+      "insight_types": [
+        "budget",
+        "duplicate_charge",
+        "fee",
+        "leakage",
+        "spending_change"
+      ],
+      "calls": [
+        {
+          "attempt": 0,
+          "call_outcome": "success",
+          "client_latency_ms": 7267,
+          "started_at": "2026-10-29T00:41:36.870695+00:00",
+          "input_tokens": 2964,
+          "output_tokens": 1278,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 7239,
+          "truncated": false,
+          "validation_retry": false,
+          "validation_outcome": "retry",
+          "validation_reason": "grounding_failed",
+          "validation_errors": [
+            "insights.3: {{insight_candidates[3].data.monthly_total}} is not a numeric field in FACTS",
+            "insights.3: {{insight_candidates[3].data.count}} is not a numeric field in FACTS",
+            "insights.4: {{insight_candidates[5].data.total}} is not a numeric field in FACTS",
+            "insights.4: {{insight_candidates[5].data.by_type[0].total}} is not a numeric field in FACTS",
+            "insights.4: {{insight_candidates[5].data.by_type[1].total}} is not a numeric field in FACTS"
+          ],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.009354"
+        },
+        {
+          "attempt": 1,
+          "call_outcome": "success",
+          "client_latency_ms": 6261,
+          "started_at": "2026-10-29T00:41:44.150427+00:00",
+          "input_tokens": 4462,
+          "output_tokens": 1208,
+          "cache_read_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "bedrock_latency_ms": 6227,
+          "truncated": false,
+          "validation_retry": true,
+          "validation_outcome": "passed",
+          "validation_reason": null,
+          "validation_errors": [],
+          "error_code": null,
+          "error_type": null,
+          "error_message": null,
+          "cost_usd": "0.010502"
+        }
+      ],
+      "failures": [],
+      "summary": {
+        "headline": "Spending jumped {{cash_flow.total_expenses.pct_change}} this month; you're over budget on dining and have duplicate charges to address.",
+        "highlights": [
+          {
+            "metric_id": "net_cash_flow",
+            "commentary": "Down {{cash_flow.net_cash_flow.abs_change}} as expenses rose sharply. Your savings rate fell to {{savings_rate}}."
+          },
+          {
+            "metric_id": "total_expenses",
+            "commentary": "{{cash_flow.total_expenses.abs_change}} higher than last month, driven by new shopping and dining habits."
+          },
+          {
+            "metric_id": "recurring_monthly_total",
+            "commentary": "{{recurring_monthly_total}} in fixed bills each month; review subscriptions to free up cash."
+          }
+        ],
+        "insights": [
+          {
+            "type": "duplicate_charge",
+            "severity": "warning",
+            "title": "Duplicate charge from Gadget Hub",
+            "detail": "You were charged {{insight_candidates[0].data.amount}} twice on 2026-09-12 and 2026-09-13. Contact Gadget Hub to reverse one charge and recover the money.",
+            "metric_ref": "insight_candidates[0].data.amount",
+            "evidence": [
+              "insight_candidates[0]"
+            ],
+            "recommendation": {
+              "action": "Ask Gadget Hub to reverse the duplicate charge from 2026-09-13.",
+              "rationale": "This is a clear billing error. Recovering this amount will ease your cash flow immediately.",
+              "impact_ref": "insight_candidates[0].data.amount"
+            },
+            "id": "ins_1"
+          },
+          {
+            "type": "budget",
+            "severity": "warning",
+            "title": "Food & Drink budget exceeded",
+            "detail": "You spent {{budgets.items[0].actual}} against a {{budgets.items[0].budget}} budget, overspending by {{budgets.items[0].remaining}}. Dining out rose {{categories.increases[1].pct_change}} this month.",
+            "metric_ref": "budgets.items[0].remaining",
+            "evidence": [
+              "budgets.items[0]",
+              "categories.increases[1]"
+            ],
+            "recommendation": {
+              "action": "Set a weekly dining limit and meal-plan to stay within your {{budgets.items[0].budget}} budget.",
+              "rationale": "This category is your fastest-growing expense. Small daily choices add up; a plan will help you regain control.",
+              "impact_ref": "budgets.items[0].remaining"
+            },
+            "id": "ins_2"
+          },
+          {
+            "type": "spending_change",
+            "severity": "warning",
+            "title": "Shopping spending surged",
+            "detail": "Shopping jumped {{categories.increases[0].pct_change}} to {{categories.increases[0].amount}}, with {{insight_candidates[0].data.amount}} from a new merchant, Gadget Hub. This is your third-largest category now.",
+            "metric_ref": "categories.increases[0].abs_change",
+            "evidence": [
+              "categories.increases[0]",
+              "new_merchants[0]"
+            ],
+            "recommendation": {
+              "action": "Review recent shopping purchases and return items if possible; pause non-essential buys this month.",
+              "rationale": "This spike is unusual and coincides with new merchants. Cutting back here will help offset your budget overruns.",
+              "impact_ref": "categories.increases[0].abs_change"
+            },
+            "id": "ins_3"
+          },
+          {
+            "type": "leakage",
+            "severity": "info",
+            "title": "Daily coffee habit adds up",
+            "detail": "You made frequent visits to Daily Grind Coffee this month. Small daily purchases like this are easy to overlook but drain your budget over time.",
+            "metric_ref": "insight_candidates[2].impact",
+            "evidence": [
+              "insight_candidates[2]"
+            ],
+            "recommendation": {
+              "action": "Brew coffee at home on weekdays; treat yourself once or twice a week instead.",
+              "rationale": "Cutting this in half saves money without feeling like a major sacrifice and frees up cash for priorities.",
+              "impact_ref": "insight_candidates[2].impact"
+            },
+            "id": "ins_4"
+          },
+          {
+            "type": "fee",
+            "severity": "warning",
+            "title": "Overdraft and ATM fees",
+            "detail": "You paid fees this month including overdraft charges and ATM fees. These are avoidable and signal cash flow stress.",
+            "metric_ref": "insight_candidates[4].impact",
+            "evidence": [
+              "insight_candidates[4]"
+            ],
+            "recommendation": {
+              "action": "Use your bank's ATM network and review your account balance before spending to avoid overdrafts.",
+              "rationale": "Eliminating these fees frees up money and reduces financial friction.",
+              "impact_ref": "insight_candidates[4].impact"
+            },
+            "id": "ins_5"
+          }
+        ]
+      },
+      "used_first_reply": false,
+      "numbers_tokenized": 1,
+      "dropped": [
+        {
+          "section": "insights",
+          "index": 3,
+          "item_id": null,
+          "reasons": [
+            "insights.3: {{insight_candidates[3].data.monthly_total}} is not a numeric field in FACTS",
+            "insights.3: {{insight_candidates[3].data.count}} is not a numeric field in FACTS"
+          ],
+          "item": {
+            "type": "leakage",
+            "severity": "info",
+            "title": "Daily coffee habit adds up",
+            "detail": "You spent {{insight_candidates[3].data.monthly_total}} at Daily Grind Coffee across {{insight_candidates[3].data.count}} visits. Small daily purchases like this are easy to overlook but drain your budget.",
+            "metric_ref": "insight_candidates[3].data.amount",
+            "evidence": [
+              "insight_candidates[3]"
+            ],
+            "recommendation": {
+              "action": "Brew coffee at home on weekdays; treat yourself once or twice a week instead.",
+              "rationale": "Cutting this in half saves money without feeling like a major sacrifice and frees up cash for priorities.",
+              "impact_ref": "insight_candidates[3].impact"
+            }
+          },
+          "expected": {
+            "insight_candidates[3].data.amount": 45.5,
+            "insight_candidates[3]": {
+              "id": "cand_4",
+              "detector_id": "duplicate_charge",
+              "score": 0.46,
+              "impact": null,
+              "evidence": [],
+              "type": "duplicate_charge",
+              "data": {
+                "merchant": "Pet Supplies",
+                "amount": 45.5,
+                "dates": [
+                  "2026-09-24",
+                  "2026-09-25"
+                ]
+              }
+            },
+            "{{insight_candidates[3].data.monthly_total}}": "<missing or null in FACTS>",
+            "{{insight_candidates[3].data.count}}": "<missing or null in FACTS>"
+          },
+          "call": 0
+        },
+        {
+          "section": "insights",
+          "index": 4,
+          "item_id": null,
+          "reasons": [
+            "insights.4: {{insight_candidates[5].data.total}} is not a numeric field in FACTS",
+            "insights.4: {{insight_candidates[5].data.by_type[0].total}} is not a numeric field in FACTS",
+            "insights.4: {{insight_candidates[5].data.by_type[1].total}} is not a numeric field in FACTS"
+          ],
+          "item": {
+            "type": "fee",
+            "severity": "warning",
+            "title": "Overdraft and ATM fees",
+            "detail": "You paid {{insight_candidates[5].data.total}} in fees this month: {{insight_candidates[5].data.by_type[0].total}} in overdraft charges and {{insight_candidates[5].data.by_type[1].total}} in ATM fees. These are avoidable.",
+            "metric_ref": "insight_candidates[5].impact",
+            "evidence": [
+              "insight_candidates[5]"
+            ],
+            "recommendation": {
+              "action": "Use your bank's ATM network and review your account balance before spending to avoid overdrafts.",
+              "rationale": "Overdraft fees signal cash flow stress; eliminating them frees up money and reduces financial friction.",
+              "impact_ref": "insight_candidates[5].impact"
+            }
+          },
+          "expected": {
+            "insight_candidates[5].impact": 17.99,
+            "insight_candidates[5]": {
+              "id": "cand_6",
+              "detector_id": "free_trial",
+              "score": 0.18,
+              "impact": 17.99,
+              "evidence": [],
+              "type": "free_trial",
+              "data": {
+                "merchant": "StreamFlix",
+                "trial_date": "2026-08-22",
+                "paid_amount": 17.99
+              }
+            },
+            "{{insight_candidates[5].data.total}}": "<missing or null in FACTS>",
+            "{{insight_candidates[5].data.by_type[0].total}}": "<missing or null in FACTS>",
+            "{{insight_candidates[5].data.by_type[1].total}}": "<missing or null in FACTS>"
+          },
+          "call": 0
+        }
+      ],
+      "raw_responses": [
+        "```json\n{\n  \"headline\": \"Spending jumped 28% this month; you're over budget on dining and have duplicate charges to address.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Down {{cash_flow.net_cash_flow.abs_change}} as expenses rose sharply. Your savings rate fell to {{savings_rate}}.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"{{cash_flow.total_expenses.abs_change}} higher than last month, driven by new shopping and dining habits.\"\n    },\n    {\n      \"metric_id\": \"recurring_monthly_total\",\n      \"commentary\": \"{{recurring_monthly_total}} in fixed bills each month; review subscriptions to free up cash.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"duplicate_charge\",\n      \"severity\": \"warning\",\n      \"title\": \"Duplicate charge from Gadget Hub\",\n      \"detail\": \"You were charged {{insight_candidates[0].data.amount}} twice on 2026-09-12 and 2026-09-13. Contact Gadget Hub to reverse one charge and recover the money.\",\n      \"metric_ref\": \"insight_candidates[0].data.amount\",\n      \"evidence\": [\"insight_candidates[0]\"],\n      \"recommendation\": {\n        \"action\": \"Ask Gadget Hub to reverse the duplicate charge from 2026-09-13.\",\n        \"rationale\": \"This is a clear billing error. Recovering this amount will ease your cash flow immediately.\",\n        \"impact_ref\": \"insight_candidates[0].data.amount\"\n      }\n    },\n    {\n      \"type\": \"budget\",\n      \"severity\": \"warning\",\n      \"title\": \"Food & Drink budget exceeded\",\n      \"detail\": \"You spent {{budgets.items[0].actual}} against a {{budgets.items[0].budget}} budget, overspending by {{budgets.items[0].remaining}}. Dining out rose {{categories.increases[1].pct_change}}% this month.\",\n      \"metric_ref\": \"budgets.items[0].remaining\",\n      \"evidence\": [\"budgets.items[0]\", \"categories.increases[1]\"],\n      \"recommendation\": {\n        \"action\": \"Set a weekly dining limit and meal-plan to stay within your {{budgets.items[0].budget}} budget.\",\n        \"rationale\": \"This category is your fastest-growing expense. Small daily choices add up; a plan will help you regain control.\",\n        \"impact_ref\": \"budgets.items[0].remaining\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"warning\",\n      \"title\": \"Shopping spending surged\",\n      \"detail\": \"Shopping jumped {{categories.increases[0].pct_change}}% to {{categories.increases[0].amount}}, with {{insight_candidates[0].data.amount}} from a new merchant, Gadget Hub. This is your third-largest category now.\",\n      \"metric_ref\": \"categories.increases[0].abs_change\",\n      \"evidence\": [\"categories.increases[0]\", \"new_merchants[0]\"],\n      \"recommendation\": {\n        \"action\": \"Review recent shopping purchases and return items if possible; pause non-essential buys this month.\",\n        \"rationale\": \"This spike is unusual and coincides with new merchants. Cutting back here will help offset your budget overruns.\",\n        \"impact_ref\": \"categories.increases[0].abs_change\"\n      }\n    },\n    {\n      \"type\": \"leakage\",\n      \"severity\": \"info\",\n      \"title\": \"Daily coffee habit adds up\",\n      \"detail\": \"You spent {{insight_candidates[3].data.monthly_total}} at Daily Grind Coffee across {{insight_candidates[3].data.count}} visits. Small daily purchases like this are easy to overlook but drain your budget.\",\n      \"metric_ref\": \"insight_candidates[3].impact\",\n      \"evidence\": [\"insight_candidates[3]\"],\n      \"recommendation\": {\n        \"action\": \"Brew coffee at home on weekdays; treat yourself once or twice a week instead.\",\n        \"rationale\": \"Cutting this in half saves money without feeling like a major sacrifice and frees up cash for priorities.\",\n        \"impact_ref\": \"insight_candidates[3].impact\"\n      }\n    },\n    {\n      \"type\": \"fee\",\n      \"severity\": \"warning\",\n      \"title\": \"Overdraft and ATM fees\",\n      \"detail\": \"You paid {{insight_candidates[5].data.total}} in fees this month: {{insight_candidates[5].data.by_type[0].total}} in overdraft charges and {{insight_candidates[5].data.by_type[1].total}} in ATM fees. These are avoidable.\",\n      \"metric_ref\": \"insight_candidates[5].impact\",\n      \"evidence\": [\"insight_candidates[5]\"],\n      \"recommendation\": {\n        \"action\": \"Use your bank's ATM network and review your account balance before spending to avoid overdrafts.\",\n        \"rationale\": \"Overdraft fees signal cash flow stress; eliminating them frees up money and reduces financial friction.\",\n        \"impact_ref\": \"insight_candidates[5].impact\"\n      }\n    }\n  ]\n}\n```",
+        "```json\n{\n  \"headline\": \"Spending jumped 28% this month; you're over budget on dining and have duplicate charges to address.\",\n  \"highlights\": [\n    {\n      \"metric_id\": \"net_cash_flow\",\n      \"commentary\": \"Down {{cash_flow.net_cash_flow.abs_change}} as expenses rose sharply. Your savings rate fell to {{savings_rate}}.\"\n    },\n    {\n      \"metric_id\": \"total_expenses\",\n      \"commentary\": \"{{cash_flow.total_expenses.abs_change}} higher than last month, driven by new shopping and dining habits.\"\n    },\n    {\n      \"metric_id\": \"recurring_monthly_total\",\n      \"commentary\": \"{{recurring_monthly_total}} in fixed bills each month; review subscriptions to free up cash.\"\n    }\n  ],\n  \"insights\": [\n    {\n      \"type\": \"duplicate_charge\",\n      \"severity\": \"warning\",\n      \"title\": \"Duplicate charge from Gadget Hub\",\n      \"detail\": \"You were charged {{insight_candidates[0].data.amount}} twice on 2026-09-12 and 2026-09-13. Contact Gadget Hub to reverse one charge and recover the money.\",\n      \"metric_ref\": \"insight_candidates[0].data.amount\",\n      \"evidence\": [\"insight_candidates[0]\"],\n      \"recommendation\": {\n        \"action\": \"Ask Gadget Hub to reverse the duplicate charge from 2026-09-13.\",\n        \"rationale\": \"This is a clear billing error. Recovering this amount will ease your cash flow immediately.\",\n        \"impact_ref\": \"insight_candidates[0].data.amount\"\n      }\n    },\n    {\n      \"type\": \"budget\",\n      \"severity\": \"warning\",\n      \"title\": \"Food & Drink budget exceeded\",\n      \"detail\": \"You spent {{budgets.items[0].actual}} against a {{budgets.items[0].budget}} budget, overspending by {{budgets.items[0].remaining}}. Dining out rose {{categories.increases[1].pct_change}}% this month.\",\n      \"metric_ref\": \"budgets.items[0].remaining\",\n      \"evidence\": [\"budgets.items[0]\", \"categories.increases[1]\"],\n      \"recommendation\": {\n        \"action\": \"Set a weekly dining limit and meal-plan to stay within your {{budgets.items[0].budget}} budget.\",\n        \"rationale\": \"This category is your fastest-growing expense. Small daily choices add up; a plan will help you regain control.\",\n        \"impact_ref\": \"budgets.items[0].remaining\"\n      }\n    },\n    {\n      \"type\": \"spending_change\",\n      \"severity\": \"warning\",\n      \"title\": \"Shopping spending surged\",\n      \"detail\": \"Shopping jumped {{categories.increases[0].pct_change}}% to {{categories.increases[0].amount}}, with {{insight_candidates[0].data.amount}} from a new merchant, Gadget Hub. This is your third-largest category now.\",\n      \"metric_ref\": \"categories.increases[0].abs_change\",\n      \"evidence\": [\"categories.increases[0]\", \"new_merchants[0]\"],\n      \"recommendation\": {\n        \"action\": \"Review recent shopping purchases and return items if possible; pause non-essential buys this month.\",\n        \"rationale\": \"This spike is unusual and coincides with new merchants. Cutting back here will help offset your budget overruns.\",\n        \"impact_ref\": \"categories.increases[0].abs_change\"\n      }\n    },\n    {\n      \"type\": \"leakage\",\n      \"severity\": \"info\",\n      \"title\": \"Daily coffee habit adds up\",\n      \"detail\": \"You made frequent visits to Daily Grind Coffee this month. Small daily purchases like this are easy to overlook but drain your budget over time.\",\n      \"metric_ref\": \"insight_candidates[2].impact\",\n      \"evidence\": [\"insight_candidates[2]\"],\n      \"recommendation\": {\n        \"action\": \"Brew coffee at home on weekdays; treat yourself once or twice a week instead.\",\n        \"rationale\": \"Cutting this in half saves money without feeling like a major sacrifice and frees up cash for priorities.\",\n        \"impact_ref\": \"insight_candidates[2].impact\"\n      }\n    },\n    {\n      \"type\": \"fee\",\n      \"severity\": \"warning\",\n      \"title\": \"Overdraft and ATM fees\",\n      \"detail\": \"You paid fees this month including overdraft charges and ATM fees. These are avoidable and signal cash flow stress.\",\n      \"metric_ref\": \"insight_candidates[4].impact\",\n      \"evidence\": [\"insight_candidates[4]\"],\n      \"recommendation\": {\n        \"action\": \"Use your bank's ATM network and review your account balance before spending to avoid overdrafts.\",\n        \"rationale\": \"Eliminating these fees frees up money and reduces financial friction.\",\n        \"impact_ref\": \"insight_candidates[4].impact\"\n      }\n    }\n  ]\n}\n```"
+      ]
+    }
+  ],
+  "finished_at": "2026-10-29T00:41:50+00:00",
+  "status": "completed",
+  "passed": false
+}

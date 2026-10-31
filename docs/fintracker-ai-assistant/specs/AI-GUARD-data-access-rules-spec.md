@@ -1,5 +1,9 @@
 
 
+# AI-GUARD: AI Data Access Rules
+
+> **Formerly:** `docs/fintracker-ai-assistant/ai-data-access-rules.md`, no requirement IDs (renamed 2026-10; see [SPECS.md](../../SPECS.md))
+
 # Guardrails
 1. Restrict the tools the model can use, per use case.
 The backend decides which tools the model sees. Keep one tool registry and define each use case's allowlist in config. Enforce the allowlist again when a tool runs, because the model's tool name is untrusted input.

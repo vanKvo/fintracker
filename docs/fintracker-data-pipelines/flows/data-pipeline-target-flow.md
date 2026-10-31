@@ -1,48 +1,56 @@
-# Data Pipeline — Target Flow (after REQ-DP-09 + DP-Ledger Categories)
+# Data Pipeline: Target Flow (after XS-DPCAT v3, XS-IMP, DP-ING-09 to -11 and DP-MAP)
 
-High-level logic only; for the deployed state today, see `data-pipeline-logic-flow.md`. This file shows the flow once the implementation plan in `implementation_plans/2026-09-28_dp_ledger_categories.md` is complete.
+High-level logic only. For what runs today, see the [Data pipeline architecture](../architecture/data-pipeline-architecture.md). This file shows the flow once the specs above are implemented. Updated 2026-10-21: the pipeline sends category codes, the Ledger applies the user's categories and rules, and failed imports reach the Ledger.
 
 ```mermaid
 flowchart TD
-    U([User uploads statement]) -->|presigned URL| S3[(S3 bucket)]
+    U([User uploads statement]) -->|presigned URL from the Ledger| S3[(S3 bucket)]
     S3 -->|ObjectCreated| P[S3 Processor<br/>verify owner with Ledger]
     P --> GK
 
     subgraph SF [" Step Functions "]
         GK{Gatekeeper<br/>file type?}
-        GK -->|CSV, columns unknown| CM[[Pause: user confirms<br/>CSV column mapping]]
+        GK -->|every CSV| CM[[Pause: user confirms<br/>CSV columns · 30 min]]
         CM --> EX
-        GK -->|CSV known / PDF / image| EX[Extractor<br/>CSV parse · PDF text layer · Textract]
-        EX --> NM[Normalizer<br/>resolve each row to a category_id]
+        GK -->|PDF / image| EX[Extractor<br/>CSV parse · PDF text layer · Textract]
+        EX --> NM[Normalizer<br/>suggest a SYSTEM code per row]
         NM --> LP[LedgerPush<br/>one package, all rows PENDING]
+        CM -.->|timeout or cancel| RF[RecordFailure<br/>job FAILED + reason code]
+        EX -.->|any stage error| RF
     end
 
-    subgraph RES [" Category resolution (first match wins) "]
+    subgraph RES [" DP suggestion (first match wins) "]
         direction LR
-        R1[User merchant rule] --> R2[Bank label]
-        R2 --> R3[Merchant pattern map]
-        R3 --> R4[uncategorized]
+        R1[Bank label → code] --> R2[Merchant pattern map → code]
+        R2 --> R3[no code]
     end
     NM -.-> RES
-    CACHE[(Cached Ledger categories<br/>+ MerchantCategoryMap)] -.-> NM
 
-    LP --> L[Ledger ingest<br/>skip duplicates · invalid category → uncategorized]
-    L --> REV[User reviews Pending tab<br/>recategorize · remember rule]
+    RF -->|import failed + reason| LF[Ledger: statement FAILED<br/>re-upload starts clean]
+    LP --> L[Ledger ingest<br/>user rule → user category → DP code → uncategorized]
+    L --> REV[User reviews Pending tab<br/>recategorize · remember rule · check flagged rows]
     REV -->|approve| POSTED[(POSTED)]
     POSTED --> B[Budgets & Analytics]
-    REV -.->|"remember rule"| R1
 ```
-## Chart Desccription
-1. Upload. The browser uploads the file straight to S3. The S3 event starts the pipeline after checking with the Ledger who owns the statement.
 
-2. Gatekeeper. It detects the file type. A CSV from an unknown bank pauses until the user confirms which columns are date, merchant and amount (the renamed CsvColMappingConfirmation step).
+## Chart description
 
-3. Extractor. It reads rows: directly from a CSV (including the bank's category column), from a PDF's text, or through Textract for scans and images.
-
-4. Normalizer. It gives every row a real Ledger category_id, taking the first match in this order: the user's merchant rule, the bank's label, the merchant pattern map, then uncategorized. It reads categories and patterns from an in-memory cache, not a database call per row.
-
-5. LedgerPush. It sends one package per statement, with every row marked PENDING.
-
-6. Ledger. It skips rows it already has, stores any row with an invalid category as uncategorized, and keeps everything PENDING.
-
-7. Review. In the Pending tab the user fixes categories (optionally saving a "remember this merchant" rule, which feeds step 4 next time) and approves. Only approved rows count toward budgets and analytics.
+1. **Upload.** The browser uploads the file straight to S3. The S3 event starts the pipeline after the Ledger confirms who owns the statement.
+2. **Gatekeeper.**
+   - It checks the file's size and page count, and detects its type.
+   - Every CSV pauses until the user confirms which columns are date, merchant and amount (DP-ING-01, DP-MAP).
+   - The pause ends after 30 minutes, or at once if the user cancels (DP-ING-09).
+3. **Extractor.**
+   - A CSV is read directly, including the bank's category column.
+   - A PDF is read from its text layer first.
+   - Pages without text go to Textract as bytes. Rendered pages aren't stored (DP-ING-11).
+4. **Normalizer.** It suggests a SYSTEM category **code** for each row: first from the bank's label (bank-label table), then from the merchant pattern map, otherwise no code (XS-DPCAT-03). It holds no copy of the Ledger's categories and never sends a category id.
+5. **LedgerPush.** It sends one package per statement. Every row is marked PENDING and carries its code, the bank's label, the merchant key and a review flag for low-confidence rows (XS-IMP-01).
+6. **Ledger.**
+   - It skips rows it already has.
+   - It chooses each row's category: the user's merchant rule, then the user's own category matching the bank label, then the pipeline's code, then `uncategorized` (XS-DPCAT-07).
+   - Everything stays PENDING.
+7. **Review.** In the Pending tab the user checks flagged rows, fixes categories (optionally saving a "remember this merchant" rule) and approves. Only approved rows count toward budgets and analytics.
+8. **Failure.**
+   - Any failure, timeout or cancel goes through one RecordFailure step. It stores a reason code on the job and tells the Ledger (XS-IMP-02).
+   - The statement shows as failed with a next step for the user, and uploading the file again starts clean (XS-IMP-03, XS-IMP-04).

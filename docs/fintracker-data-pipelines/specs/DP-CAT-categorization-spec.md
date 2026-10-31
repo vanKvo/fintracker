@@ -1,6 +1,22 @@
-# FinTracker Data Pipeline Spec 02
+# DP-CAT: Categorization
 
-## REQ-DP-09: Updating Categories Workflow
+> **Formerly:** `docs/fintracker-data-pipelines/data-pipeline-spec-02.md`, IDs REQ-DP-09 → DP-CAT-01 (renamed 2026-10; see [SPECS.md](../../SPECS.md))
+
+> **Superseded in part (2026-10-21):** the category contract with the Ledger is [XS-DPCAT](../../fintracker-cross-services/specs/XS-DPCAT-dp-ledger-categories-spec.md) v3. The pipeline now suggests SYSTEM category **codes** only, and the Ledger turns them into categories. The Ledger also applies the user's merchant rules and custom categories on import (XS-DPCAT-07); the pipeline no longer reads them. These parts below are out of date:
+> - Item 1: a user's rule still takes priority, but the Ledger applies it on import, not the pipeline;
+> - Items 3 and 6, "translated into FinTracker's category names";
+> - "Interface Details": `categorize_merchant`, `translate_bank_category`, the label list, and "payload unchanged".
+>
+> Items 2, 4 and 5 still hold.
+
+## Status
+
+| ID | Status |
+|---|---|
+| DP-CAT-01 | Implemented (parts superseded by XS-DPCAT v3) |
+
+
+## DP-CAT-01: Updating Categories Workflow *(was REQ-DP-09)*
 ### Problem
 The Normalizer calls a Comprehend custom classifier endpoint, which is billed per hour while it exists, whether or not you use it: about $1.80/hour, roughly $1,300/month. A custom classifier needs labeled training data and costs about $3/hour to train and about $0.50/month to store, on top of the always-on endpoint charge. This creates a surprise large bill unnecessarily. 
 

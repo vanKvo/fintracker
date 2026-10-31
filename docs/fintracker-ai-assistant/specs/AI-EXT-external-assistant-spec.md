@@ -1,6 +1,15 @@
-# FinTracker Analytics - User AI Assistant
+# AI-EXT: User's Own AI Assistant
 
-## 1: User AI Assistant
+> **Formerly:** `docs/fintracker-ai-assistant/ai-chat-support.md`, no requirement IDs (renamed 2026-10; see [SPECS.md](../../SPECS.md))
+
+## Status
+
+| ID | Status |
+|---|---|
+| AI-EXT-01 | In progress (read-only MCP tool server runs locally over stdio; per-user connect, consent, disconnect and request log not built) |
+
+
+## AI-EXT-01: User AI Assistant
 
 ### Problem
 Many users already run their daily life through a general AI assistant, alongside their calendar, email and documents. Their finances are locked inside FinTracker, so they copy numbers or paste screenshots and statements into the assistant. That is error-prone, and it's insecure because pasted statements expose account numbers and personal details.

@@ -139,11 +139,15 @@ The Hosted UI also handles MFA challenge flows, password policy enforcement, and
 
 Amplify v6 defaults to `localStorage`. OWASP ASVS 3.4.2 prohibits storing sensitive auth tokens in `localStorage` because it is accessible to any JavaScript on the page — a single XSS vulnerability permanently exfiltrates tokens. `sessionStorage` is tab-scoped and cleared on tab close. Configured via `Amplify.configure()` in `app.config.ts`.
 
+> **Correction (2026-10-23):** this setting was never made in the code. Amplify's default storage (`localStorage`) is still in use. The decision is accepted and the change is specified in [UI-AUTH-01](../specs/UI-AUTH-session-security-spec.md).
+
 Tradeoff accepted: page refresh within the same tab re-uses the existing session (Amplify's silent refresh), but closing and reopening a tab requires re-login. This is the fintech standard behaviour.
 
 ### Dev/prod interceptor split, not a unified flow
 
 The production flow requires API Gateway to validate the JWT and inject `X-Internal-User-Id`. In local development there is no API Gateway — the Angular dev server proxies directly to `localhost:8081` (Spring Boot). A single interceptor that always sends `Authorization: Bearer` would have nothing to validate against locally. Environment files (`environment.ts` / `environment.production.ts`) toggle the interceptor behaviour at build time with no runtime branching in production.
+
+> **Update (2026-10-23):** the dev path now applies only to `/api/v1/ledger` calls; every other backend always gets the bearer token. The dev path is to be removed once the Ledger sits behind the gateway: [UI-AUTH-02](../specs/UI-AUTH-session-security-spec.md).
 
 ---
 

@@ -57,7 +57,7 @@ F2P TESTS (111)
 
 --- user-profile · test_settings_route_config (3) ---
 32. put /profile/settings route exists behind the authorizer: XS-CTX-01, XS-CTX-06.
-33. authorizer cache ttl is at most five minutes: XS-CTX-06 Alt.
+33. authorizer cache ttl is the UP-AUTH-03 value, 60 s: XS-CTX-06 / UP-AUTH-03 A1.
 34. no internal settings route is declared: XS-CTX-07 Happy.
 
 --- analytics · test_user_context (16) ---
@@ -171,6 +171,6 @@ F2P TESTS (111)
 --- ui · Settings page (5) ---
 107. shows the saved timezone and a read-only usd currency: XS-CTX-01 Currency.
 108. leaves the timezone empty, not defaulted, when none is saved yet: XS-CTX-01.
-109. saves a changed timezone and says it can take up to 5 minutes to apply: XS-CTX-06 Happy.
+109. saves a changed timezone and says it can take up to a minute to apply: XS-CTX-06 Happy.
 110. keeps the previous timezone when the save is refused: XS-CTX-06 Fail.
 111. does not call the server when the timezone did not change: XS-CTX-06.

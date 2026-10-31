@@ -1,6 +1,21 @@
+# UP-AUTH: Authentication and Token Issuance
+
+> **Formerly:** `docs/fintracker-user-profile-doc/user-profile-spec-01.md`, IDs REQ-UP-NN → UP-AUTH-NN (renamed 2026-10; see [SPECS.md](../../SPECS.md))
+
+## Status
+
+| ID | Status |
+|---|---|
+| UP-AUTH-01 | Unverified (UI code not reviewed) |
+| UP-AUTH-02 | Implemented |
+| UP-AUTH-03 | In progress (60 s TTL set in the local SAM template; cost-route exclusion not built) |
+| UP-AUTH-04 | Implemented |
+| UP-AUTH-05 | Proposed |
+
+
 # Authentication & Token Issuance
 
-## REQ-UP-01: Cognito Hosted UI Login (OAuth2 + PKCE)
+## UP-AUTH-01: Cognito Hosted UI Login (OAuth2 + PKCE) *(was REQ-UP-01)*
 
 A. Business Rules:
 A1. Hosted UI Credential Check 
@@ -10,13 +25,13 @@ A2. Token Exchange
 Amplify exchanges the OAuth2 authorization code for ID/access/refresh tokens via Authorization Code Grant + PKCE (RFC 7636) after Cognito redirects back to `redirectSignIn`. **[Implemented — Amplify `fetchAuthSession`/Hub listener]**
 
 A3. Bearer Attachment 
-The UI attaches `Authorization: Bearer <access token>` to every `/api/` request in production builds; dev builds attach `X-Internal-User-Id` directly instead, since there's no local API Gateway. **[Implemented — `auth.interceptor.ts`]**
+The UI attaches `Authorization: Bearer <access token>` to every `/api/` request in production builds; non-production builds attach `X-Internal-User-Id` instead, but only for Ledger calls, since the local Ledger has no API Gateway. **[Implemented — `auth.interceptor.ts`; the dev path is to be removed by UI-AUTH-02]**
 
 A4. No Authorizer at Login: 
 Login itself never passes through API Gateway or any authorizer — that only happens on the *next* authenticated API call. **[Implemented by design — not a gap, documented here so it isn't re-litigated]**
 
 B. Constraints:
-B1. Cognito User Pool is on the **Basic (Lite) feature plan** — Pre-Token Generation V2/V3 access-token claim customization is unavailable. This is why subscription cannot be embedded in the access token and must be resolved server-side (see REQ-UP-02).
+B1. Cognito User Pool is on the **Basic (Lite) feature plan** — Pre-Token Generation V2/V3 access-token claim customization is unavailable. This is why subscription cannot be embedded in the access token and must be resolved server-side (see UP-AUTH-02).
 
 C. Data Impacts: None — no changes to this flow.
 
@@ -32,7 +47,7 @@ F1. **TOKEN_REFRESH_FAILURE**: `fetchAuthSession()` throws (expired refresh toke
 
 # Identity & Subscription Resolution
 
-## REQ-UP-02: Lambda Authorizer — JWT Verification + sub → internal_user_id + Subscription Lookup
+## UP-AUTH-02: Lambda Authorizer — JWT Verification + sub → internal_user_id + Subscription Lookup *(was REQ-UP-02)*
 
 A. Business Rules:
 A1. JWT Signature Verification
@@ -87,13 +102,13 @@ F3. **DYNAMODB_UNAVAILABLE**: Sub-resolution or subscription read fails after th
 
 # Caching & Performance
 
-## REQ-UP-03: API Gateway Authorizer Result Caching
+## UP-AUTH-03: API Gateway Authorizer Result Caching *(was REQ-UP-03)*
 
 A. Business Rules:
 A1. Cache authorizer results per access token (`IdentitySource: $request.header.Authorization`) with a **60-second TTL**. **[Not Implemented]**
 *Why 60s:* a page load typically fires several API calls in a tight burst (dashboard tiles, recent transactions, budget summary) — a 60s window collapses that entire burst into a single authorizer invocation (one JWT verify + two DynamoDB reads) instead of one per call, which is where most of the cost reduction comes from. It's short enough that a subscription downgrade is reflected for ordinary reads within about a minute — in line with the "not urgent, but not indefinite" tolerance already established for this data — while long enough to meaningfully cut Lambda/DynamoDB volume against a chatty SPA. This is a single config value (`AuthorizerResultTtlInSeconds`), not a code change, so it can be tuned per-environment without a redeploy of the authorizer itself.
 
-A2. Cost-sensitive routes (see REQ-UP-05) are excluded from this cache regardless of the global TTL. **[Not Implemented]**
+A2. Cost-sensitive routes (see UP-AUTH-05) are excluded from this cache regardless of the global TTL. **[Not Implemented]**
 
 B. Constraints:
 B1. `AuthorizerResultTtlInSeconds` is capped at 3600s by API Gateway; 60s is well within range.
@@ -114,7 +129,7 @@ F1. **STALE_SUBSCRIPTION_WINDOW**: Not an error condition — documented expecte
 
 # Multi-Tenant Security
 
-## REQ-UP-04: Fail-Closed Authorization
+## UP-AUTH-04: Fail-Closed Authorization *(was REQ-UP-04)*
 
 **Problem:**
 An authorizer that fails open (allows the request through when verification or lookup errors out) would let an unverifiable identity reach backend services that unconditionally trust `X-Internal-User-Id` — the same trust violation the architecture already prohibits for user-supplied IDs.
@@ -123,18 +138,18 @@ An authorizer that fails open (allows the request through when verification or l
 - Every authorizer failure mode (bad signature, expired token, unmapped sub, DynamoDB unavailable) must deny the request. No code path may forward a request to a backend without a verified `internal_user_id` in the authorizer's context.
 
 **Constraints (if applicable):**
-- None beyond what's already listed under REQ-UP-02's error handling.
+- None beyond what's already listed under UP-AUTH-02's error handling.
 
 **Interface (if applicable):**
 - None new.
 
-## REQ-UP-05: Live, Uncached Check for Cost-Bearing Actions
+## UP-AUTH-05: Live, Uncached Check for Cost-Bearing Actions *(was REQ-UP-05)*
 
 **Problem:**
-REQ-UP-03's 60-second cache is a reasonable default for cheap, frequent reads, but it is not safe as the sole gate on any action that spends real money externally (e.g. statement upload triggering Textract/Bedrock calls). A user downgraded mid-session could keep invoking a cost-bearing endpoint at their old tier for up to the full cache TTL.
+UP-AUTH-03's 60-second cache is a reasonable default for cheap, frequent reads, but it is not safe as the sole gate on any action that spends real money externally (e.g. statement upload triggering Textract/Bedrock calls). A user downgraded mid-session could keep invoking a cost-bearing endpoint at their old tier for up to the full cache TTL.
 
 **Requested Changes:**
-- Cost-bearing routes (statement upload, and any future AI-insight endpoint) must not rely on the cached authorizer context alone for subscription/quota enforcement. Either exclude that route from authorizer caching (`AuthorizerResultTtlInSeconds: 0` for that route) or perform a second, live subscription check inside the handler itself before doing the expensive work. This matches the ledger architecture doc's own separate "Subscription Lambda" design for the upload-gating path — that mechanism should be kept, not replaced by REQ-UP-02/03.
+- Cost-bearing routes (statement upload, and any future AI-insight endpoint) must not rely on the cached authorizer context alone for subscription/quota enforcement. Either exclude that route from authorizer caching (`AuthorizerResultTtlInSeconds: 0` for that route) or perform a second, live subscription check inside the handler itself before doing the expensive work. This matches the ledger architecture doc's own separate "Subscription Lambda" design for the upload-gating path — that mechanism should be kept, not replaced by UP-AUTH-02/03.
 
 **Constraints (if applicable):**
 - Applies only to routes that trigger external paid inference calls or enforce a hard usage quota — not a blanket exclusion from caching.
