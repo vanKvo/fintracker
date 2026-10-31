@@ -25,6 +25,7 @@ Every error code a client can receive, from every service. The app doc (4.8) set
 | `method_not_allowed` | 405 | No | The route exists but not for this method | Client bug; nothing to retry |
 | `user_settings_incomplete` | 409 | No | A route needs the timezone and the user hasn't set one (XS-CTX-05) | Set the timezone in Settings |
 | `invalid_setting` | 400 | No | A settings save has an invalid value (XS-CTX-01) | Fix the value |
+| `invalid_notice_version` | 400 | No | The privacy-notice acceptance names a version that isn't the current one (UP-FAPI-04) | Reload the notice and accept again |
 | `timeout` | 504 | Yes (reads) | The request ran past its deadline | Try again |
 | `service_unavailable` | 503 | Yes | A dependency is down | Try again in a moment |
 | `database_unavailable` | 503 | Yes | Aurora failed after one retry, including a cold resume in dev | Try again; reads retry once automatically (UI-CORE-01) |
@@ -38,7 +39,7 @@ Returned on internal APIs only. The calling service maps them to its own error a
 | Code | HTTP | Service | Meaning |
 |---|---|---|---|
 | `user_context_missing` | 401 | Knowledge | A signed request without a forwarded user context (KN-RET-01) |
-| `caller_not_allowed` | 403 | Knowledge | The caller's IAM role isn't on the allow-list (KN-RET-01) |
+| `caller_not_allowed` | 403 | Knowledge, Analytics, User Profile, Ledger | The caller's IAM role isn't on the allow-list (KN-RET-01). A call with no verified caller at all is `unauthorized` (401) |
 | `scope_not_enabled` | 400 | Knowledge | `scope = user` before KN-UDOC ships (KN-RET-02) |
 | `embedding_unavailable` | 503 | Knowledge | Bedrock embedding failed after retries (KN-RET-03) |
 

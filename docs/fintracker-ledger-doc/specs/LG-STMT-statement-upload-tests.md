@@ -117,7 +117,7 @@ F2P TESTS (144)
 
 --- InternalFingerprintEndpointSecurityIT — LG-STMT-04 (3) ---
 82. the fingerprint route fails closed with 401 when no verified caller principal is present: LG-STMT-04 multi-tenant.
-83. a verified caller ARN not on the allow-list is rejected with 401: LG-STMT-04 multi-tenant.
+83. a verified caller ARN not on the allow-list is rejected with 403: LG-STMT-04 multi-tenant.
 84. an allow-listed caller reaches the controller, answering 404 for a random statement id: LG-STMT-04.
 
 --- statement.service.spec.ts (6) ---

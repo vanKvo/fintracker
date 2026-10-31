@@ -54,7 +54,7 @@ This document describes how the User Profile service works. Rules that apply to 
 
 #### Serve a user's goals to another service
 
-**Trigger:** signed internal request from the AI assistant (chat goals tool) · **Result:** the user's raw goals · **On failure:** 401 for an unknown caller, 404 for an unknown user
+**Trigger:** signed internal request from the AI assistant (chat goals tool) · **Result:** the user's raw goals · **On failure:** 401 `unauthorized` for no verified caller, 403 `caller_not_allowed` for a caller not on the allow-list, 404 for an unknown user
 
 1. API Gateway verifies the SigV4 signature (IAM authorization) on `user-profile-internal`.
 2. The handler checks the caller's role ARN against the allow-list; an empty list rejects every call.

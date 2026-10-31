@@ -341,7 +341,7 @@ public class InternalCallerFilter extends OncePerRequestFilter {
     // signature (API Gateway: the requestContext identity ARN, forwarded as a
     // header the edge sets and strips from client input; ALB: the verified ARN
     // from the signing filter). Confirms it is on the configured allow-list of
-    // permitted internal caller ARNs, and rejects with 401 via the same
+    // permitted internal caller ARNs, and rejects with 403 (401 when the header is missing) via the same
     // ProblemDetail-writing helper pattern UserContextFilter already uses.
     //
     // This filter never verifies a signature itself and holds no secret — the
@@ -375,7 +375,7 @@ Nullable, and indexed only where non-null, the same pattern already used for `id
 **Error Handling**
 
 - **Invalid or missing SigV4 signature**: rejected at the edge (`403` from API Gateway's `AWS_IAM` authorizer, or the ALB signing filter) before the request reaches the Ledger at all. Nothing to implement in application code.
-- **Verified caller not on the internal allow-list**: rejected by `InternalCallerFilter` as `401 Unauthorized` before any controller method runs — same short-circuit pattern `UserContextFilter` already uses for a missing `X-Internal-User-Id`. No new `GlobalExceptionHandler` entry needed since the filter writes the `ProblemDetail` response itself.
+- **Verified caller not on the internal allow-list**: rejected by `InternalCallerFilter` as `403 Forbidden` (a missing caller header stays `401 Unauthorized`) before any controller method runs — same short-circuit pattern `UserContextFilter` already uses for a missing `X-Internal-User-Id`. No new `GlobalExceptionHandler` entry needed since the filter writes the `ProblemDetail` response itself.
 - **StatementNotFound / StatementNotOwnedByUser** (statementId in the body doesn't belong to the `X-Internal-User-Id` caller claims): `TransactionServiceImpl.bulkCreateFromStatement` throws the existing `StatementNotFoundException` (`.../statement/exception/StatementNotFoundException.java`), already mapped to `404` by `GlobalExceptionHandler.handleStatementNotFound`. Reused as-is — no new exception type.
 - **Row-level validation failure** (non-positive amount, blank merchant, `type` outside `PURCHASE`/`CREDIT`): not thrown at all — caught in `TransactionServiceImpl.bulkCreateFromStatement` per-row and returned as a `FailedRow` entry in the `200 OK` response body, per the Constraints section above. Bean Validation (`@Valid`) on `BulkCreateTransactionsRequest.TransactionLine` handles structurally malformed JSON (missing required fields) at the request-parsing layer, before this per-row logic runs, via the already-existing `MethodArgumentNotValidException` → `handleValidation` mapping.
 
