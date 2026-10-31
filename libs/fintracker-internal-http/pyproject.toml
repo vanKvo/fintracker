@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fintracker-internal-http"
+version = "0.1.0"
+description = "FinTracker internal HTTP: SigV4 outbound client, inbound caller allow-list check and forwarded user context (LB-IHTTP)"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{ name = "Van Vo" }]
+# LB-PKG-09: lower bound plus upper major bound; the service's own lock file decides the exact version.
+# botocore (not boto3) is enough for SigV4; the inbound checks are FastAPI dependencies.
+dependencies = [
+    "httpx>=0.27,<1",
+    "botocore>=1.34,<2",
+    "fastapi>=0.115,<1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fintracker_internal_http"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "README.md", "CHANGELOG.md", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = ["botocore.*"]
+ignore_missing_imports = true

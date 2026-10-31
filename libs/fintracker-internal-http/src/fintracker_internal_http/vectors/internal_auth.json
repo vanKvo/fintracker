@@ -1,0 +1,256 @@
+{
+  "_comment": "Appendix A of LB-IHTTP as data. allowed_caller_arns: null = variable unset, [] = set but empty, else comma-joined. Caller values: verified_caller is requestContext.authorizer.iam.userArn; header_caller is X-Internal-Caller-Arn.",
+  "library_version": "0.1.0",
+  "caller_matrix": [
+    {
+      "id": "iam-no-caller",
+      "mode": "iam",
+      "verified_caller": null,
+      "header_caller": null,
+      "allowed_caller_arns": [
+        "arn:aws:sts::111111111111:assumed-role/test-caller"
+      ],
+      "headers": {
+        "X-Internal-User-Id": "11111111-1111-4111-8111-111111111111",
+        "X-User-Timezone": "Europe/Berlin",
+        "X-User-Currency": "USD"
+      },
+      "status": 401,
+      "code": "unauthorized"
+    },
+    {
+      "id": "iam-header-only",
+      "mode": "iam",
+      "verified_caller": null,
+      "header_caller": "arn:aws:sts::111111111111:assumed-role/test-caller/session",
+      "allowed_caller_arns": [
+        "arn:aws:sts::111111111111:assumed-role/test-caller"
+      ],
+      "headers": {
+        "X-Internal-User-Id": "11111111-1111-4111-8111-111111111111",
+        "X-User-Timezone": "Europe/Berlin",
+        "X-User-Currency": "USD"
+      },
+      "status": 401,
+      "code": "unauthorized"
+    },
+    {
+      "id": "iam-off-list",
+      "mode": "iam",
+      "verified_caller": "arn:aws:sts::999999999999:assumed-role/other/session",
+      "header_caller": null,
+      "allowed_caller_arns": [
+        "arn:aws:sts::111111111111:assumed-role/test-caller"
+      ],
+      "headers": {
+        "X-Internal-User-Id": "11111111-1111-4111-8111-111111111111",
+        "X-User-Timezone": "Europe/Berlin",
+        "X-User-Currency": "USD"
+      },
+      "status": 403,
+      "code": "caller_not_allowed"
+    },
+    {
+      "id": "iam-list-empty",
+      "mode": "iam",
+      "verified_caller": "arn:aws:sts::111111111111:assumed-role/test-caller/session",
+      "header_caller": null,
+      "allowed_caller_arns": [],
+      "headers": {
+        "X-Internal-User-Id": "11111111-1111-4111-8111-111111111111",
+        "X-User-Timezone": "Europe/Berlin",
+        "X-User-Currency": "USD"
+      },
+      "status": 403,
+      "code": "caller_not_allowed"
+    },
+    {
+      "id": "iam-list-unset",
+      "mode": "iam",
+      "verified_caller": "arn:aws:sts::111111111111:assumed-role/test-caller/session",
+      "header_caller": null,
+      "allowed_caller_arns": null,
+      "headers": {
+        "X-Internal-User-Id": "11111111-1111-4111-8111-111111111111",
+        "X-User-Timezone": "Europe/Berlin",
+        "X-User-Currency": "USD"
+      },
+      "status": 403,
+      "code": "caller_not_allowed"
+    },
+    {
+      "id": "iam-user-missing",
+      "mode": "iam",
+      "verified_caller": "arn:aws:sts::111111111111:assumed-role/test-caller/session",
+      "header_caller": null,
+      "allowed_caller_arns": [
+        "arn:aws:sts::111111111111:assumed-role/test-caller"
+      ],
+      "headers": {
+        "X-User-Timezone": "Europe/Berlin",
+        "X-User-Currency": "USD"
+      },
+      "status": 401,
+      "code": "user_context_missing"
+    },
+    {
+      "id": "iam-user-malformed",
+      "mode": "iam",
+      "verified_caller": "arn:aws:sts::111111111111:assumed-role/test-caller/session",
+      "header_caller": null,
+      "allowed_caller_arns": [
+        "arn:aws:sts::111111111111:assumed-role/test-caller"
+      ],
+      "headers": {
+        "X-Internal-User-Id": "not-a-uuid",
+        "X-User-Timezone": "Europe/Berlin",
+        "X-User-Currency": "USD"
+      },
+      "status": 400,
+      "code": "invalid_argument"
+    },
+    {
+      "id": "iam-valid",
+      "mode": "iam",
+      "verified_caller": "arn:aws:sts::111111111111:assumed-role/test-caller/session",
+      "header_caller": null,
+      "allowed_caller_arns": [
+        "arn:aws:sts::111111111111:assumed-role/test-caller"
+      ],
+      "headers": {
+        "X-Internal-User-Id": "11111111-1111-4111-8111-111111111111",
+        "X-User-Timezone": "Europe/Berlin",
+        "X-User-Currency": "USD"
+      },
+      "status": 200,
+      "code": null
+    },
+    {
+      "id": "local-no-header",
+      "mode": "local",
+      "verified_caller": null,
+      "header_caller": null,
+      "allowed_caller_arns": null,
+      "headers": {
+        "X-Internal-User-Id": "11111111-1111-4111-8111-111111111111",
+        "X-User-Timezone": "Europe/Berlin",
+        "X-User-Currency": "USD"
+      },
+      "status": 401,
+      "code": "unauthorized"
+    },
+    {
+      "id": "local-off-list",
+      "mode": "local",
+      "verified_caller": null,
+      "header_caller": "arn:aws:sts::999999999999:assumed-role/other/session",
+      "allowed_caller_arns": [
+        "arn:aws:sts::111111111111:assumed-role/test-caller"
+      ],
+      "headers": {
+        "X-Internal-User-Id": "11111111-1111-4111-8111-111111111111",
+        "X-User-Timezone": "Europe/Berlin",
+        "X-User-Currency": "USD"
+      },
+      "status": 403,
+      "code": "caller_not_allowed"
+    },
+    {
+      "id": "local-list-unset",
+      "mode": "local",
+      "verified_caller": null,
+      "header_caller": "arn:aws:sts::111111111111:assumed-role/test-caller/session",
+      "allowed_caller_arns": null,
+      "headers": {
+        "X-Internal-User-Id": "11111111-1111-4111-8111-111111111111",
+        "X-User-Timezone": "Europe/Berlin",
+        "X-User-Currency": "USD"
+      },
+      "status": 200,
+      "code": null
+    },
+    {
+      "id": "local-on-list",
+      "mode": "local",
+      "verified_caller": null,
+      "header_caller": "arn:aws:sts::111111111111:assumed-role/test-caller/session",
+      "allowed_caller_arns": [
+        "arn:aws:sts::111111111111:assumed-role/test-caller"
+      ],
+      "headers": {
+        "X-Internal-User-Id": "11111111-1111-4111-8111-111111111111",
+        "X-User-Timezone": "Europe/Berlin",
+        "X-User-Currency": "USD"
+      },
+      "status": 200,
+      "code": null
+    }
+  ],
+  "context_errors": [
+    {
+      "id": "timezone-missing",
+      "requires": "timezone",
+      "headers": {
+        "X-Internal-User-Id": "11111111-1111-4111-8111-111111111111",
+        "X-User-Currency": "USD"
+      },
+      "status": 409,
+      "code": "user_settings_incomplete"
+    },
+    {
+      "id": "timezone-invalid",
+      "requires": "timezone",
+      "headers": {
+        "X-Internal-User-Id": "11111111-1111-4111-8111-111111111111",
+        "X-User-Timezone": "Mars/Olympus",
+        "X-User-Currency": "USD"
+      },
+      "status": 500,
+      "code": "user_context_invalid"
+    },
+    {
+      "id": "currency-invalid",
+      "requires": "currency",
+      "headers": {
+        "X-Internal-User-Id": "11111111-1111-4111-8111-111111111111",
+        "X-User-Timezone": "Europe/Berlin",
+        "X-User-Currency": "eur"
+      },
+      "status": 500,
+      "code": "user_context_invalid"
+    },
+    {
+      "id": "currency-missing",
+      "requires": "currency",
+      "headers": {
+        "X-Internal-User-Id": "11111111-1111-4111-8111-111111111111",
+        "X-User-Timezone": "Europe/Berlin"
+      },
+      "status": 500,
+      "code": "user_context_invalid"
+    }
+  ],
+  "startup": [
+    {
+      "id": "local-with-aws-marker",
+      "env": {
+        "INTERNAL_AUTH_MODE": "local",
+        "AWS_LAMBDA_FUNCTION_NAME": "fn"
+      },
+      "expect": "exit"
+    },
+    {
+      "id": "invalid-mode",
+      "env": {
+        "INTERNAL_AUTH_MODE": "dev"
+      },
+      "expect": "exit"
+    }
+  ],
+  "constants": {
+    "caller": "arn:aws:sts::111111111111:assumed-role/test-caller/session",
+    "allowed_prefix": "arn:aws:sts::111111111111:assumed-role/test-caller",
+    "other_caller": "arn:aws:sts::999999999999:assumed-role/other/session",
+    "user_id": "11111111-1111-4111-8111-111111111111"
+  }
+}
