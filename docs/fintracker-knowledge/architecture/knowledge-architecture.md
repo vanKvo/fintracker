@@ -114,6 +114,7 @@ Until user documents ship, a user owns nothing here, so this is a no-op that sti
 | Interface | Type | Caller / producer | Purpose |
 |---|---|---|---|
 | `retrieve(query, scope, k)` | Internal API (IAM) | AI assistant | Relevant chunks with sources |
+| Liveness and readiness probes | Operational, never routed through the API gateway | Orchestrator | Alive without touching dependencies; ready only when the database and the embedding model are reachable |
 | System-docs prefix storage event | System trigger | CI uploads | Start ingestion |
 | `UserAccountDeleted` | Event consumed | User profile | Delete the user's documents and chunks |
 | `UserDataDeleted` | Event published | → User profile | Report deletion complete |
@@ -127,6 +128,8 @@ Until user documents ship, a user owns nothing here, so this is a no-op that sti
   - Row-Level Security allows `scope = system` or `user_id = current user`.
   - The user context is set in the same Data API transaction as the search.
   - Only Knowledge's role has grants on the `knowledge` database.
+  - The service connects as a role that cannot bypass Row-Level Security: never a superuser, never `BYPASSRLS`. It checks this at startup and refuses to start otherwise, so RLS cannot be silently off in any environment, local included.
+  - Each workflow has its own database role with only its own grants (retrieve reads, indexing writes, deletion deletes).
 - **Embedding model:** only Knowledge's IAM role may invoke it.
 
 ### 3.3 Flow: how does it depend on other services?
@@ -166,6 +169,7 @@ Embeddings are derived data: the source docs are the backup, and any version can
 
 ### 3.7 Observe: how do we know it is healthy?
 
+- Readiness: the service reports not ready, without failing liveness, when the database or the embedding model is unreachable.
 - Index freshness: the last indexed commit compared with main.
 - Ingestion success and failure per doc.
 - Retrieval latency and the empty-result rate.
@@ -183,6 +187,8 @@ Embeddings are derived data: the source docs are the backup, and any version can
 | S3 | Chunking | Split by headings, keeping doc path and heading as metadata; sizes are config | Help docs are structured by heading, and citations need the path | Recall@k shows chunks are too coarse or too fine | Proposed |
 | S4 | Versioning | A doc version is identified by path + content hash; replace in one transaction | Idempotent re-runs, no half-indexed docs | Never | Accepted |
 | S5 | Embedding model | One Bedrock embedding model, pinned (candidate: Amazon Titan Text Embeddings V2) | Low cost, stays in AWS; switching models means a full re-index | Evaluation shows better recall elsewhere | Proposed |
+| S7 | Runtime | One web application, one container image; the same code also runs behind a Lambda adapter. Environments differ by configuration only, and settings that exist only for a laptop refuse to start in AWS | Same artifact everywhere (invariant 12); no code path that is tested only locally | The deployment shape (Lambda or container service) is chosen | Proposed |
+| S8 | Schema changes | Migrations run as a separate, one-shot step with an administrative user before a new version starts, never from the service | The service's role must not own or alter the schema | Never | Accepted |
 | S6 | Search type | Vector search only at first | Help docs are a small corpus | Keyword-heavy questions (error codes, exact field names) miss; add keyword search alongside | Proposed |
 
 ---
